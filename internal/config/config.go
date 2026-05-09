@@ -13,6 +13,7 @@ import (
 // Config keeps runtime options for the API service.
 type Config struct {
 	AppName            string
+	Env                string
 	Port               string
 	GinMode            string
 	MySQLDSN           string
@@ -26,6 +27,7 @@ func Load() Config {
 
 	cfg := Config{
 		AppName:            envOrDefault("APP_NAME", "jiezhang-backend"),
+		Env:                envOrDefault("ENV", "dev"),
 		Port:               envOrDefault("PORT", "10240"),
 		GinMode:            envOrDefault("GIN_MODE", gin.DebugMode),
 		MySQLDSN:           strings.TrimSpace(envOrDefault("MYSQL_DSN", "")),

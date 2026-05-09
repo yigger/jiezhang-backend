@@ -54,11 +54,14 @@ func NewApp() *App {
 	if err != nil {
 		log.Fatalf("failed to init user repository: %v", err)
 	}
+	statementRepo, err := mysqlrepo.NewStatementRepository(mysqlDB)
+	if err != nil {
+		log.Fatalf("failed to init statement repository: %v", err)
+	}
 
 	userService := service.NewUserService(userRepo)
 	userHandler := handler.NewUserHandler(userService)
 
-	// 注册 AuthHandler 时需要传入 CheckOpenIDService 的实例
 	wechatClient := wechat.NewHTTPClient(cfg.MiniProgramAppID, cfg.MiniProgramSecret)
 	sessionCache := sessioncache.NewMemoryCache()
 	checkOpenIDService := authservice.NewCheckOpenIDService(
@@ -69,7 +72,12 @@ func NewApp() *App {
 	)
 	authHandler := handler.NewAuthHandler(checkOpenIDService)
 
-	router.Register(engine, authHandler, userHandler)
+	// 账单相关
+	statementService := service.NewStatementService(statementRepo)
+	statementsHandler := handler.NewStatementsHandler(statementService)
+
+	authMiddleware := middleware.AuthenticateAPIV1(cfg.Env, cfg.MiniProgramAppID, userRepo, sessionCache)
+	router.Register(engine, authHandler, userHandler, authMiddleware, statementsHandler)
 
 	return &App{cfg: cfg, engine: engine, db: mysqlDB}
 }

@@ -1,11 +1,17 @@
 package handler
 
-import "github.com/gin-gonic/gin"
+import (
+	"github.com/gin-gonic/gin"
+	"github.com/yigger/jiezhang-backend/internal/domain"
+	"github.com/yigger/jiezhang-backend/internal/service"
+)
 
-type StatementsHandler struct{}
+type StatementsHandler struct {
+	service service.StatementService
+}
 
-func NewStatementsHandler() StatementsHandler {
-	return StatementsHandler{}
+func NewStatementsHandler(service service.StatementService) StatementsHandler {
+	return StatementsHandler{service: service}
 }
 
 func (h StatementsHandler) Categories(c *gin.Context) {
@@ -25,7 +31,19 @@ func (h StatementsHandler) AssetFrequent(c *gin.Context) {
 }
 
 func (h StatementsHandler) List(c *gin.Context) {
-	notImplemented(c, "GET /api/statements")
+	var currentUser domain.User
+	var ok bool
+	if currentUser, ok = fetchCurrentUser(c); !ok {
+		return
+	}
+
+	statements, err := h.service.GetUserStatement(currentUser.ID)
+	if err != nil {
+		c.JSON(500, gin.H{"error": "failed to get statements"})
+		return
+	}
+
+	c.JSON(200, gin.H{"data": statements})
 }
 
 func (h StatementsHandler) ListByToken(c *gin.Context) {

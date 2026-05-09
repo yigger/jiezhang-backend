@@ -14,7 +14,7 @@ import (
 type userModel struct {
 	ID           int64     `gorm:"primaryKey;autoIncrement"`
 	Name         string    `gorm:"type:varchar(100);not null;default:''"`
-	Email        string    `gorm:"type:varchar(255);not null;default:'';uniqueIndex"`
+	Email        string    `gorm:"type:varchar(255);default:''"`
 	OpenID       string    `gorm:"column:openid;type:varchar(255);not null;uniqueIndex"`
 	SessionKey   string    `gorm:"column:session_key;type:text;not null;default:''"`
 	ThirdSession string    `gorm:"column:third_session;type:varchar(255);not null;default:'';index"`
@@ -31,10 +31,6 @@ type UserRepository struct {
 }
 
 func NewUserRepository(db *gorm.DB) (*UserRepository, error) {
-	if err := db.AutoMigrate(&userModel{}); err != nil {
-		return nil, err
-	}
-
 	return &UserRepository{db: db}, nil
 }
 
