@@ -2,19 +2,42 @@ package service
 
 import (
 	"context"
+	"time"
 
-	"github.com/yigger/jiezhang-backend/internal/domain"
 	"github.com/yigger/jiezhang-backend/internal/repository"
 )
 
 type StatementService struct {
-	repo repository.StatementRepository
+	queryRepo repository.StatementQueryRepository
 }
 
-func NewStatementService(repo repository.StatementRepository) StatementService {
-	return StatementService{repo: repo}
+func NewStatementService(queryRepo repository.StatementQueryRepository) StatementService {
+	return StatementService{queryRepo: queryRepo}
 }
 
-func (s StatementService) GetUserStatement(userId int64) ([]domain.Statement, error) {
-	return s.repo.List(context.Background(), userId)
+type StatementListInput struct {
+	UserID            int64
+	AccountBookID     int64
+	StartDate         *time.Time
+	EndDate           *time.Time
+	ParentCategoryIDs []int64
+	ExceptIDs         []int64
+	OrderBy           string
+	Limit             int
+	Offset            int
+}
+
+func (s StatementService) GetStatements(ctx context.Context, input StatementListInput) ([]repository.StatementListItem, error) {
+	filter := repository.StatementListFilter{
+		UserID:            input.UserID,
+		AccountBookID:     input.AccountBookID,
+		StartDate:         input.StartDate,
+		EndDate:           input.EndDate,
+		ParentCategoryIDs: input.ParentCategoryIDs,
+		ExceptIDs:         input.ExceptIDs,
+		OrderBy:           input.OrderBy,
+		Limit:             input.Limit,
+		Offset:            input.Offset,
+	}
+	return s.queryRepo.ListWithRelations(ctx, filter)
 }
