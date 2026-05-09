@@ -8,115 +8,114 @@
 .
 ├── cmd/
 │   └── server/
-│       └── main.go                        # 推荐入口（生产常用）
+│       └── main.go
 ├── internal/
 │   ├── bootstrap/
-│   │   └── app.go                         # 组装应用（配置、路由、中间件、依赖注入）
+│   │   └── app.go                         # 应用装配（MySQL + repository 注入）
 │   ├── config/
-│   │   └── config.go                      # 环境变量配置
+│   │   └── config.go                      # 从根目录 .env + 环境变量加载配置
 │   ├── domain/
-│   │   └── user.go                        # 领域模型（不依赖 Gin/ORM）
+│   │   └── user.go
 │   ├── http/
 │   │   ├── handler/
-│   │   │   ├── health_handler.go
-│   │   │   ├── hello_handler.go
-│   │   │   └── user_handler.go
 │   │   ├── middleware/
-│   │   │   └── access_log.go
 │   │   └── router/
-│   │       └── router.go
+│   ├── infrastructure/
+│   │   └── db/
+│   │       └── mysql.go                   # GORM MySQL 连接初始化
 │   ├── repository/
-│   │   ├── user_repository.go             # repository 接口定义
-│   │   └── memory/
-│   │       └── user_repository.go         # 内存实现（用于学习/本地开发）
+│   │   ├── user_repository.go             # 接口定义
+│   │   ├── memory/
+│   │   └── mysql/
+│   │       └── user_repository.go         # GORM 实现（含 users AutoMigrate）
 │   └── service/
-│       ├── hello_service.go
-│       └── user_service.go
-├── main.go                                # 兼容入口（go run .）
-├── go.mod
-└── README.md
+├── .env.example
+├── API.md
+├── main.go
+└── go.mod
 ```
 
-## 为什么这样分层
+## 配置（.env）
 
-- `handler`：处理 HTTP 输入输出（参数、状态码、JSON）
-- `service`：放业务规则，不依赖 Gin
-- `repository`：定义数据库访问接口，并可替换具体实现
-- `domain`：业务实体定义，避免被 HTTP/ORM 污染
-- `router`：集中管理路由和版本分组
-- `bootstrap`：应用装配层，负责把各模块连起来
-- `internal`：限制外部模块直接 import，保持边界清晰
-
-这对应 Ruby 常见思路：
-
-- Controller ~= `handler`
-- Service Object ~= `service`
-- ActiveRecord 查询职责 ~= `repository`
-- Model（领域对象） ~= `domain`
-- routes.rb ~= `router`
-- config/initializers ~= `bootstrap + config`
-
-## 当前用户接口（内存仓储）
-
-- `GET /api/v1/users`：用户列表
-- `GET /api/v1/users/:id`：用户详情
-- `POST /api/v1/users`：创建用户
-
-请求示例：
+在项目根目录创建 `.env`（可从 `.env.example` 复制）：
 
 ```bash
-curl http://localhost:8080/api/v1/users
-curl http://localhost:8080/api/v1/users/1
-curl -X POST http://localhost:8080/api/v1/users \
-  -H "Content-Type: application/json" \
-  -d '{"name":"Jie","email":"jie@example.com"}'
+cp .env.example .env
 ```
 
-## 运行
+默认示例：
 
-### 1) 安装依赖
+```env
+APP_NAME=jiezhang-backend
+PORT=10240
+GIN_MODE=debug
+MYSQL_DSN=root:password@tcp(127.0.0.1:3306)/jiezhang?charset=utf8mb4&parseTime=True&loc=Local
+```
+
+说明：
+
+- `config.Load()` 会先尝试读取根目录 `.env`
+- 已存在的系统环境变量优先生效（不会被 `.env` 覆盖）
+- `MYSQL_DSN` 现在是必填；未配置会启动失败
+
+## 启动
 
 ```bash
 go mod tidy
-```
-
-### 2) 启动服务
-
-推荐入口：
-
-```bash
 go run ./cmd/server
 ```
 
-兼容入口：
+## 请求生命周期（以 GET /api/users 为例）
 
-```bash
-go run .
-```
+1. **程序启动与依赖装配**
+- 入口：`cmd/server/main.go`
+- 调用 `bootstrap.NewApp()`：
+  - `config.Load()` 读取 `.env`
+  - `db.NewMySQL(cfg.MySQLDSN)` 建立 GORM 连接
+  - `mysql.NewUserRepository(mysqlDB)` 初始化仓储（并 AutoMigrate）
+  - `service.NewUserService(userRepo)` 初始化业务层
+  - `handler.NewUserHandler(userService)` 和 `handler.NewUsersAPIHandler(...)`
+  - `router.Register(engine, usersHandler)` 注册路由
 
-### 3) 基础请求示例
+2. **请求进入 Gin**
+- 客户端请求：`GET /api/users`
+- Gin 先经过全局中间件：
+  - `gin.Recovery()`
+  - `middleware.AccessLog()`
 
-```bash
-curl http://localhost:8080/ping
-curl http://localhost:8080/healthz
-curl "http://localhost:8080/api/v1/hello?name=jie"
-```
+3. **路由匹配**
+- `internal/http/router/router.go` 中 `api.GET("/users", usersHandler.GetUserInfo)` 命中。
 
-## 环境变量
+4. **Handler 层（HTTP 适配层）**
+- `UsersAPIHandler.GetUserInfo` 目前转调 `UserHandler.List`。
+- `UserHandler.List` 只做 HTTP 职责：
+  - 取 request context
+  - 调用 service
+  - 把结果转成 JSON + 状态码
 
-- `PORT`：服务端口，默认 `8080`
-- `GIN_MODE`：`debug` / `release` / `test`，默认 `debug`
-- `APP_NAME`：服务名，默认 `jiezhang-backend`
+5. **Service 层（业务规则层）**
+- `UserService.List(ctx)` 处理业务流程。
+- 当前实现是调用 repository，不直接依赖 Gin/GORM。
 
-示例：
+6. **Repository 层（数据访问层）**
+- `mysql.UserRepository.List(ctx)` 用 GORM 查询 `users` 表。
+- 将数据库模型转换为 `domain.User` 返回。
 
-```bash
-APP_NAME=jiezhang-api PORT=9090 GIN_MODE=release go run ./cmd/server
-```
+7. **响应返回**
+- Handler 将数据写回客户端（`200` + `{"data": ...}`）。
+- 中间件记录请求日志，请求结束。
 
-## 下一步建议（接数据库）
+## 这一套分层的意义
 
-1. 新建 `internal/repository/mysql/user_repository.go`（GORM/SQL 实现）
-2. 在 `bootstrap/app.go` 中把 `memory.NewUserRepository()` 切换成 MySQL 实现
-3. 增加迁移工具（`migrate` 或 GORM migration）和 `users` 表
-4. 给 `user_service` 和 `user_handler` 增加单元测试/接口测试
+- Handler：只关心 HTTP
+- Service：只关心业务
+- Repository：只关心数据存取
+- Domain：只关心业务对象
+
+你后续实现其它接口（如 `POST /api/statements`）也按同样生命周期走就行。
+
+## 当前状态
+
+- API 路由已按 `API.md` 注册
+- 未实现逻辑的方法统一返回 `501 not implemented`
+- `GET /api/users` 已切到 MySQL repository（GORM）

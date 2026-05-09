@@ -6,12 +6,9 @@ import (
 	"github.com/yigger/jiezhang-backend/internal/http/handler"
 )
 
-func Register(engine *gin.Engine) {
-	healthHandler := handler.NewHealthHandler()
-	helloHandler := handler.NewHelloHandler()
+func Register(engine *gin.Engine, usersHandler handler.UsersAPIHandler) {
 	authHandler := handler.NewAuthHandler()
 	homeHandler := handler.NewHomeHandler()
-	usersHandler := handler.NewUsersAPIHandler()
 	statementsHandler := handler.NewStatementsHandler()
 	categoriesHandler := handler.NewCategoriesHandler()
 	assetsHandler := handler.NewAssetsHandler()
@@ -25,12 +22,6 @@ func Register(engine *gin.Engine) {
 	payeesHandler := handler.NewPayeesHandler()
 	friendsHandler := handler.NewFriendsHandler()
 	settingsHandler := handler.NewSettingsHandler()
-
-	engine.GET("/ping", func(c *gin.Context) {
-		c.JSON(200, gin.H{"message": "pong"})
-	})
-	engine.GET("/healthz", healthHandler.Health)
-	engine.GET("/hello", helloHandler.Hello)
 
 	api := engine.Group("/api")
 	{

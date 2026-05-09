@@ -2,10 +2,12 @@ package handler
 
 import "github.com/gin-gonic/gin"
 
-type UsersAPIHandler struct{}
+type UsersAPIHandler struct {
+	userHandler UserHandler
+}
 
-func NewUsersAPIHandler() UsersAPIHandler {
-	return UsersAPIHandler{}
+func NewUsersAPIHandler(userHandler UserHandler) UsersAPIHandler {
+	return UsersAPIHandler{userHandler: userHandler}
 }
 
 func (h UsersAPIHandler) GetSettings(c *gin.Context) {
@@ -13,7 +15,7 @@ func (h UsersAPIHandler) GetSettings(c *gin.Context) {
 }
 
 func (h UsersAPIHandler) GetUserInfo(c *gin.Context) {
-	notImplemented(c, "GET /api/users")
+	h.userHandler.List(c)
 }
 
 func (h UsersAPIHandler) UpdateUser(c *gin.Context) {
