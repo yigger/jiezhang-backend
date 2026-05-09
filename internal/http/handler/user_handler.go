@@ -19,6 +19,22 @@ func NewUserHandler(service service.UserService) UserHandler {
 	return UserHandler{service: service}
 }
 
+func (h UserHandler) GetSettings(c *gin.Context) {
+	notImplemented(c, "GET /api/v1/settings")
+}
+
+func (h UserHandler) GetUserInfo(c *gin.Context) {
+	h.List(c)
+}
+
+func (h UserHandler) UpdateUser(c *gin.Context) {
+	notImplemented(c, "PUT /api/v1/users/update_user")
+}
+
+func (h UserHandler) ScanLogin(c *gin.Context) {
+	notImplemented(c, "POST /api/v1/users/scan_login")
+}
+
 func (h UserHandler) List(c *gin.Context) {
 	users, err := h.service.List(c.Request.Context())
 	if err != nil {

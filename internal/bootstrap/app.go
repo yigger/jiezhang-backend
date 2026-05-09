@@ -11,8 +11,11 @@ import (
 	"github.com/yigger/jiezhang-backend/internal/http/middleware"
 	"github.com/yigger/jiezhang-backend/internal/http/router"
 	"github.com/yigger/jiezhang-backend/internal/infrastructure/db"
+	"github.com/yigger/jiezhang-backend/internal/infrastructure/sessioncache"
+	"github.com/yigger/jiezhang-backend/internal/infrastructure/wechat"
 	mysqlrepo "github.com/yigger/jiezhang-backend/internal/repository/mysql"
 	"github.com/yigger/jiezhang-backend/internal/service"
+	authservice "github.com/yigger/jiezhang-backend/internal/service/auth"
 )
 
 // App represents the HTTP API application.
@@ -35,6 +38,12 @@ func NewApp() *App {
 	if cfg.MySQLDSN == "" {
 		log.Fatal("MYSQL_DSN is required")
 	}
+	if cfg.MiniProgramAppID == "" || cfg.MiniProgramSecret == "" {
+		log.Fatal("MINIPROGRAM_APPID and MINIPROGRAM_SECRET are required")
+	}
+	if cfg.SessionTokenSecret == "" {
+		log.Fatal("SESSION_TOKEN_SECRET is required")
+	}
 
 	mysqlDB, err := db.NewMySQL(cfg.MySQLDSN)
 	if err != nil {
@@ -48,9 +57,19 @@ func NewApp() *App {
 
 	userService := service.NewUserService(userRepo)
 	userHandler := handler.NewUserHandler(userService)
-	usersAPIHandler := handler.NewUsersAPIHandler(userHandler)
 
-	router.Register(engine, usersAPIHandler)
+	// 注册 AuthHandler 时需要传入 CheckOpenIDService 的实例
+	wechatClient := wechat.NewHTTPClient(cfg.MiniProgramAppID, cfg.MiniProgramSecret)
+	sessionCache := sessioncache.NewMemoryCache()
+	checkOpenIDService := authservice.NewCheckOpenIDService(
+		userRepo,
+		wechatClient,
+		cfg.SessionTokenSecret,
+		sessionCache,
+	)
+	authHandler := handler.NewAuthHandler(checkOpenIDService)
+
+	router.Register(engine, authHandler, userHandler)
 
 	return &App{cfg: cfg, engine: engine, db: mysqlDB}
 }

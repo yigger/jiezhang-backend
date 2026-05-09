@@ -12,24 +12,26 @@ import (
 
 // Config keeps runtime options for the API service.
 type Config struct {
-	AppName  string
-	Port     string
-	GinMode  string
-	MySQLDSN string
-	MINIPROGRAM_APPID string
-	MINIPROGRAM_SECRET string
+	AppName            string
+	Port               string
+	GinMode            string
+	MySQLDSN           string
+	MiniProgramAppID   string
+	MiniProgramSecret  string
+	SessionTokenSecret string
 }
 
 func Load() Config {
 	loadDotEnv()
 
 	cfg := Config{
-		AppName:  envOrDefault("APP_NAME", "jiezhang-backend"),
-		Port:     envOrDefault("PORT", "10240"),
-		GinMode:  envOrDefault("GIN_MODE", gin.DebugMode),
-		MySQLDSN: strings.TrimSpace(envOrDefault("MYSQL_DSN", "")),
-		MINIPROGRAM_APPID: envOrDefault("MINIPROGRAM_APPID", ""),
-		MINIPROGRAM_SECRET: envOrDefault("MINIPROGRAM_SECRET", ""),
+		AppName:            envOrDefault("APP_NAME", "jiezhang-backend"),
+		Port:               envOrDefault("PORT", "10240"),
+		GinMode:            envOrDefault("GIN_MODE", gin.DebugMode),
+		MySQLDSN:           strings.TrimSpace(envOrDefault("MYSQL_DSN", "")),
+		MiniProgramAppID:   strings.TrimSpace(envOrDefault("MINIPROGRAM_APPID", "")),
+		MiniProgramSecret:  strings.TrimSpace(envOrDefault("MINIPROGRAM_SECRET", "")),
+		SessionTokenSecret: strings.TrimSpace(envOrDefault("SESSION_TOKEN_SECRET", "")),
 	}
 
 	if cfg.Port == "" {

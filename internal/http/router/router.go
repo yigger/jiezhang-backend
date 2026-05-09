@@ -6,8 +6,11 @@ import (
 	"github.com/yigger/jiezhang-backend/internal/http/handler"
 )
 
-func Register(engine *gin.Engine, usersHandler handler.UsersAPIHandler) {
-	authHandler := handler.NewAuthHandler()
+func Register(
+	engine *gin.Engine,
+	authHandler handler.AuthHandler,
+	userHandler handler.UserHandler) {
+
 	homeHandler := handler.NewHomeHandler()
 	statementsHandler := handler.NewStatementsHandler()
 	categoriesHandler := handler.NewCategoriesHandler()
@@ -23,7 +26,7 @@ func Register(engine *gin.Engine, usersHandler handler.UsersAPIHandler) {
 	friendsHandler := handler.NewFriendsHandler()
 	settingsHandler := handler.NewSettingsHandler()
 
-	api := engine.Group("/api")
+	api := engine.Group("/api/v1")
 	{
 		api.POST("/check_openid", authHandler.CheckOpenID)
 		api.POST("/upload", authHandler.Upload)
@@ -31,10 +34,10 @@ func Register(engine *gin.Engine, usersHandler handler.UsersAPIHandler) {
 		api.GET("/header", homeHandler.Header)
 		api.GET("/index", homeHandler.Index)
 
-		api.GET("/settings", usersHandler.GetSettings)
-		api.GET("/users", usersHandler.GetUserInfo)
-		api.PUT("/users/update_user", usersHandler.UpdateUser)
-		api.POST("/users/scan_login", usersHandler.ScanLogin)
+		api.GET("/settings", userHandler.GetSettings)
+		api.GET("/users", userHandler.GetUserInfo)
+		api.PUT("/users/update_user", userHandler.UpdateUser)
+		api.POST("/users/scan_login", userHandler.ScanLogin)
 
 		api.GET("/statements/categories", statementsHandler.Categories)
 		api.GET("/statements/assets", statementsHandler.Assets)
