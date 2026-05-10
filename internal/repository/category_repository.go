@@ -4,41 +4,34 @@ import (
 	"context"
 )
 
-type StatementFrequentCategoryItem struct {
-	ID       int64                       `json:"id"`
-	Name     string                      `json:"name"`
-	IconPath string                      `json:"icon_path"`
-	Parent   StatementCategoryParentItem `json:"parent"`
-}
-
-type StatementCategoryParentItem struct {
-	ID   int64  `json:"id"`
-	Name string `json:"name"`
-}
-
-type StatementCategoryChildItem struct {
-	ID       int64  `json:"id"`
-	Name     string `json:"name"`
-	IconPath string `json:"icon_path"`
-}
-
-type StatementCategoryTreeItem struct {
-	ID       int64                        `json:"id"`
-	Name     string                       `json:"name"`
-	IconPath string                       `json:"icon_path"`
-	Childs   []StatementCategoryChildItem `json:"childs"`
-}
-
-type StatementCategoriesResult struct {
-	Frequent   []StatementFrequentCategoryItem `json:"frequent"`
-	Categories []StatementCategoryTreeItem     `json:"categories"`
-}
-
 type CategoryRepository interface {
-	List(ctx context.Context, filter CategoryListFilter) (StatementCategoriesResult, error)
+	ListParents(ctx context.Context, filter CategoryListFilter) ([]CategoryParentRecord, error)
+	ListChildrenByParentIDs(ctx context.Context, filter CategoryListFilter, parentIDs []int64) ([]CategoryChildRecord, error)
+	ListFrequentChildren(ctx context.Context, filter CategoryListFilter, limit int) ([]CategoryFrequentRecord, error)
 }
 
 type CategoryListFilter struct {
 	AccountBookID int64
 	Type          string
+}
+
+type CategoryParentRecord struct {
+	ID       int64
+	Name     string
+	IconPath string
+}
+
+type CategoryChildRecord struct {
+	ID       int64
+	Name     string
+	IconPath string
+	ParentID int64
+}
+
+type CategoryFrequentRecord struct {
+	ID         int64
+	Name       string
+	IconPath   string
+	ParentID   int64
+	ParentName string
 }
