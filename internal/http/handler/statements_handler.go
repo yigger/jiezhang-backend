@@ -21,7 +21,31 @@ func NewStatementsHandler(service service.StatementService) StatementsHandler {
 }
 
 func (h StatementsHandler) Categories(c *gin.Context) {
-	notImplemented(c, "GET /api/statements/categories")
+	var _ domain.User
+	var accountBook domain.AccountBook
+	var ok bool
+	if _, accountBook, ok = fetchCurrentUser(c); !ok {
+		return
+	}
+
+	statementType := c.Query("type")
+	if statementType == "" {
+		statementType = "expend"
+	}
+
+	input := service.GetCategoriesInput{
+		AccountBookID: accountBook.ID,
+		Type:          statementType,
+	}
+
+	categories, err := h.service.GetCategories(c.Request.Context(), input)
+
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "failed to get categories"})
+		return
+	}
+
+	c.JSON(http.StatusOK, gin.H{"data": categories})
 }
 
 func (h StatementsHandler) Assets(c *gin.Context) {
@@ -39,7 +63,7 @@ func (h StatementsHandler) AssetFrequent(c *gin.Context) {
 func (h StatementsHandler) List(c *gin.Context) {
 	var currentUser domain.User
 	var ok bool
-	if currentUser, ok = fetchCurrentUser(c); !ok {
+	if currentUser, _, ok = fetchCurrentUser(c); !ok {
 		return
 	}
 
@@ -48,9 +72,6 @@ func (h StatementsHandler) List(c *gin.Context) {
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 		return
 	}
-
-	// 打印 input 以便调试
-	// log.Printf("StatementListInput: %+v", input)
 
 	statements, err := h.service.GetStatements(c.Request.Context(), input)
 	if err != nil {

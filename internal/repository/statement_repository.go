@@ -30,21 +30,43 @@ type StatementListFilter struct {
 	Offset            int
 }
 
+// :id, :type, :description, :title, :amount, :target_object, :mood
+
+type Payee struct {
+	ID   int64  `json:"id"`
+	Name string `json:"name"`
+}
+
+type StatementBaseItem struct {
+	ID           int64   `json:"id"`
+	Type         string  `json:"type"`
+	Amount       float64 `json:"amount"`
+	Description  string  `json:"description"`
+	Title        string  `json:"title"`
+	TargetObject string  `json:"target_object"`
+	Mood         string  `json:"mood"`
+	Money        string  `json:"money"`
+	Category     string  `json:"category"`
+	IconPath     string  `json:"icon_path"`
+	Asset        string  `json:"asset"`
+	Date         string  `json:"date"`
+	Time         string  `json:"time"`
+	TimeStr      string  `json:"timeStr"`
+	Week         string  `json:"week"`
+	Payee        Payee   `json:"payee"`
+	Remark       string  `json:"remark"`
+}
+
 type StatementListItem struct {
-	ID               int64     `json:"id"`
-	Type             string    `json:"type"`
-	Amount           float64   `json:"amount"`
-	Description      string    `json:"description"`
-	CreatedAt        time.Time `json:"created_at"`
-	UpdatedAt        time.Time `json:"updated_at"`
-	CategoryID       int64     `json:"category_id"`
-	CategoryName     string    `json:"category_name"`
-	ParentCategoryID int64     `json:"parent_category_id"`
-	ParentCategory   string    `json:"parent_category"`
-	AssetID          int64     `json:"asset_id"`
-	AssetName        string    `json:"asset_name"`
-	PayeeID          int64     `json:"payee_id"`
-	PayeeName        string    `json:"payee_name"`
+	StatementBaseItem
+	Location  string    `json:"location"`
+	Province  string    `json:"province"`
+	City      string    `json:"city"`
+	Street    string    `json:"street"`
+	MonthDay  string    `json:"month_day"`
+	HasPic    bool      `json:"has_pic"`
+	CreatedAt time.Time `json:"created_at"`
+	UpdatedAt time.Time `json:"updated_at"`
 }
 
 // Keep domain import alive for future command-side repository evolution.

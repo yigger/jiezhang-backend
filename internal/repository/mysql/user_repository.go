@@ -12,14 +12,15 @@ import (
 )
 
 type userModel struct {
-	ID           int64     `gorm:"primaryKey;autoIncrement"`
-	Name         string    `gorm:"type:varchar(100);not null;default:''"`
-	Email        string    `gorm:"type:varchar(255);default:''"`
-	OpenID       string    `gorm:"column:openid;type:varchar(255);not null;uniqueIndex"`
-	SessionKey   string    `gorm:"column:session_key;type:text;not null;default:''"`
-	ThirdSession string    `gorm:"column:third_session;type:varchar(255);not null;default:'';index"`
-	CreatedAt    time.Time `gorm:"not null"`
-	UpdatedAt    time.Time `gorm:"not null"`
+	ID            int64     `gorm:"primaryKey;autoIncrement"`
+	Name          string    `gorm:"type:varchar(100);not null;default:''"`
+	Email         string    `gorm:"type:varchar(255);default:''"`
+	OpenID        string    `gorm:"column:openid;type:varchar(255);not null;uniqueIndex"`
+	SessionKey    string    `gorm:"column:session_key;type:text;not null;default:''"`
+	ThirdSession  string    `gorm:"column:third_session;type:varchar(255);not null;default:'';index"`
+	AccountBookId int64     `gorm:"column:account_book_id;not null;default:0"`
+	CreatedAt     time.Time `gorm:"not null"`
+	UpdatedAt     time.Time `gorm:"not null"`
 }
 
 func (userModel) TableName() string {
@@ -102,26 +103,28 @@ func (r *UserRepository) Save(ctx context.Context, user domain.User) (domain.Use
 
 func toDomain(model userModel) domain.User {
 	return domain.User{
-		ID:           model.ID,
-		Name:         model.Name,
-		Email:        model.Email,
-		OpenID:       model.OpenID,
-		SessionKey:   model.SessionKey,
-		ThirdSession: model.ThirdSession,
-		CreatedAt:    model.CreatedAt,
-		UpdatedAt:    model.UpdatedAt,
+		ID:            model.ID,
+		Name:          model.Name,
+		Email:         model.Email,
+		OpenID:        model.OpenID,
+		SessionKey:    model.SessionKey,
+		ThirdSession:  model.ThirdSession,
+		CreatedAt:     model.CreatedAt,
+		UpdatedAt:     model.UpdatedAt,
+		AccountBookId: model.AccountBookId,
 	}
 }
 
 func fromDomain(user domain.User) userModel {
 	return userModel{
-		ID:           user.ID,
-		Name:         user.Name,
-		Email:        user.Email,
-		OpenID:       user.OpenID,
-		SessionKey:   user.SessionKey,
-		ThirdSession: user.ThirdSession,
-		CreatedAt:    user.CreatedAt,
-		UpdatedAt:    user.UpdatedAt,
+		ID:            user.ID,
+		Name:          user.Name,
+		Email:         user.Email,
+		OpenID:        user.OpenID,
+		SessionKey:    user.SessionKey,
+		ThirdSession:  user.ThirdSession,
+		CreatedAt:     user.CreatedAt,
+		UpdatedAt:     user.UpdatedAt,
+		AccountBookId: user.AccountBookId,
 	}
 }

@@ -12,11 +12,11 @@ func Register(
 	userHandler handler.UserHandler,
 	authMiddleware gin.HandlerFunc,
 	statementsHandler handler.StatementsHandler,
+	accountBookHandler handler.AccountBookHandler,
 ) {
 	homeHandler := handler.NewHomeHandler()
 	categoriesHandler := handler.NewCategoriesHandler()
 	assetsHandler := handler.NewAssetsHandler()
-	accountBooksHandler := handler.NewAccountBooksHandler()
 	financesHandler := handler.NewFinancesHandler()
 	budgetsHandler := handler.NewBudgetsHandler()
 	statisticsHandler := handler.NewStatisticsHandler()
@@ -78,14 +78,14 @@ func Register(
 			authRequired.POST("/assets", assetsHandler.Create)
 			authRequired.PUT("/wallet/surplus", assetsHandler.UpdateSurplus)
 
-			authRequired.GET("/account_books", accountBooksHandler.List)
-			authRequired.GET("/account_books/:id", accountBooksHandler.Show)
-			authRequired.GET("/account_books/types", accountBooksHandler.Types)
-			authRequired.GET("/account_books/preset_categories", accountBooksHandler.PresetCategories)
-			authRequired.PUT("/account_books/:id/switch", accountBooksHandler.Switch)
-			authRequired.POST("/account_books", accountBooksHandler.Create)
-			authRequired.PUT("/account_books/:id", accountBooksHandler.Update)
-			authRequired.DELETE("/account_books/:id", accountBooksHandler.Delete)
+			authRequired.GET("/account_books", accountBookHandler.List)
+			authRequired.GET("/account_books/:id", accountBookHandler.Show)
+			authRequired.GET("/account_books/types", accountBookHandler.Types)
+			authRequired.GET("/account_books/preset_categories", accountBookHandler.PresetCategories)
+			authRequired.PUT("/account_books/:id/switch", accountBookHandler.Switch)
+			authRequired.POST("/account_books", accountBookHandler.Create)
+			// authRequired.PUT("/account_books/:id", accountBooksHandler.Update)
+			// authRequired.DELETE("/account_books/:id", accountBooksHandler.Delete)
 
 			authRequired.GET("/wallet", financesHandler.Wallet)
 			authRequired.GET("/wallet/information", financesHandler.WalletInformation)

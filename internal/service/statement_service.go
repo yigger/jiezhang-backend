@@ -8,11 +8,12 @@ import (
 )
 
 type StatementService struct {
-	queryRepo repository.StatementQueryRepository
+	queryRepo    repository.StatementQueryRepository
+	categoryRepo repository.CategoryRepository
 }
 
-func NewStatementService(queryRepo repository.StatementQueryRepository) StatementService {
-	return StatementService{queryRepo: queryRepo}
+func NewStatementService(queryRepo repository.StatementQueryRepository, categoryRepo repository.CategoryRepository) StatementService {
+	return StatementService{queryRepo: queryRepo, categoryRepo: categoryRepo}
 }
 
 type StatementListInput struct {
@@ -40,4 +41,18 @@ func (s StatementService) GetStatements(ctx context.Context, input StatementList
 		Offset:            input.Offset,
 	}
 	return s.queryRepo.ListWithRelations(ctx, filter)
+}
+
+type GetCategoriesInput struct {
+	AccountBookID int64
+	Type          string
+}
+
+func (s StatementService) GetCategories(ctx context.Context, input GetCategoriesInput) ([]repository.CategoryListForStatement, error) {
+
+	filter := repository.CategoryListFilter{
+		AccountBookID: input.AccountBookID,
+		Type:          input.Type,
+	}
+	return s.categoryRepo.List(ctx, filter)
 }

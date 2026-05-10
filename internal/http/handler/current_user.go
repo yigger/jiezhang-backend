@@ -9,15 +9,16 @@ import (
 	"github.com/yigger/jiezhang-backend/internal/http/middleware"
 )
 
-func fetchCurrentUser(c *gin.Context) (domain.User, bool) {
+func fetchCurrentUser(c *gin.Context) (domain.User, domain.AccountBook, bool) {
 	user, ok := middleware.CurrentUser(c)
-	if ok {
-		return user, true
+	accountBook, ok2 := middleware.AccountBook(c)
+	if ok && ok2 {
+		return user, accountBook, true
 	}
 
 	c.AbortWithStatusJSON(http.StatusOK, gin.H{
 		"status": 301,
 		"msg":    "session key overdue",
 	})
-	return domain.User{}, false
+	return domain.User{}, domain.AccountBook{}, false
 }
