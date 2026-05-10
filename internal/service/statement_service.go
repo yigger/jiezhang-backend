@@ -48,8 +48,7 @@ type GetCategoriesInput struct {
 	Type          string
 }
 
-func (s StatementService) GetCategories(ctx context.Context, input GetCategoriesInput) ([]repository.CategoryListForStatement, error) {
-
+func (s StatementService) GetCategories(ctx context.Context, input GetCategoriesInput) (repository.StatementCategoriesResult, error) {
 	filter := repository.CategoryListFilter{
 		AccountBookID: input.AccountBookID,
 		Type:          input.Type,
