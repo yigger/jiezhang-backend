@@ -2,6 +2,8 @@ package bootstrap
 
 import (
 	"log"
+	"os"
+	"path/filepath"
 
 	"github.com/gin-gonic/gin"
 	"gorm.io/gorm"
@@ -29,6 +31,7 @@ func NewApp() *App {
 
 	engine.Use(gin.Recovery())
 	engine.Use(middleware.AccessLog())
+	registerStaticFiles(engine)
 
 	validateRequiredConfig(cfg)
 
@@ -43,11 +46,11 @@ func NewApp() *App {
 	}
 
 	authModule := modules.BuildAuthModule(cfg, userRepo)
-	homeHandler, err := modules.BuildHomeModule(mysqlDB)
+	homeHandler, err := modules.BuildHomeModule(mysqlDB, cfg.PublicBaseURL)
 	if err != nil {
 		log.Fatalf("failed to build home module: %v", err)
 	}
-	statementsHandler, err := modules.BuildStatementModule(mysqlDB)
+	statementsHandler, err := modules.BuildStatementModule(mysqlDB, cfg.PublicBaseURL)
 	if err != nil {
 		log.Fatalf("failed to build statement module: %v", err)
 	}
@@ -80,5 +83,20 @@ func validateRequiredConfig(cfg config.Config) {
 	}
 	if cfg.SessionTokenSecret == "" {
 		log.Fatal("SESSION_TOKEN_SECRET is required")
+	}
+}
+
+func registerStaticFiles(engine *gin.Engine) {
+	if wd, err := os.Getwd(); err == nil {
+		publicDir := filepath.Join(wd, "public")
+		if st, statErr := os.Stat(publicDir); statErr == nil && st.IsDir() {
+			// Keep existing API output contract: icon paths like /images/xxx.
+			imagesDir := filepath.Join(publicDir, "images")
+			if imagesSt, imagesErr := os.Stat(imagesDir); imagesErr == nil && imagesSt.IsDir() {
+				engine.Static("/images", imagesDir)
+			}
+			// Provide a generic static root for future assets.
+			engine.Static("/public", publicDir)
+		}
 	}
 }

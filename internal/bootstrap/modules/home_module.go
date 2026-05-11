@@ -10,7 +10,7 @@ import (
 	"github.com/yigger/jiezhang-backend/internal/service"
 )
 
-func BuildHomeModule(db *gorm.DB) (handler.HomeHandler, error) {
+func BuildHomeModule(db *gorm.DB, publicBaseURL string) (handler.HomeHandler, error) {
 	statementRepo, err := mysqlrepo.NewStatementRepository(db)
 	if err != nil {
 		return handler.HomeHandler{}, fmt.Errorf("init statement repository: %w", err)
@@ -24,6 +24,6 @@ func BuildHomeModule(db *gorm.DB) (handler.HomeHandler, error) {
 		return handler.HomeHandler{}, fmt.Errorf("init asset repository: %w", err)
 	}
 
-	statementService := service.NewStatementService(statementRepo, statementRepo, categoryRepo, assetRepo)
+	statementService := service.NewStatementService(statementRepo, statementRepo, categoryRepo, assetRepo, publicBaseURL)
 	return handler.NewHomeHandler(db, statementService), nil
 }

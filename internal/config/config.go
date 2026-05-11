@@ -16,6 +16,7 @@ type Config struct {
 	Env                string
 	Port               string
 	GinMode            string
+	PublicBaseURL      string
 	MySQLDSN           string
 	MiniProgramAppID   string
 	MiniProgramSecret  string
@@ -30,6 +31,7 @@ func Load() Config {
 		Env:                envOrDefault("ENV", "dev"),
 		Port:               envOrDefault("PORT", "10240"),
 		GinMode:            envOrDefault("GIN_MODE", gin.DebugMode),
+		PublicBaseURL:      strings.TrimSpace(envOrDefault("PUBLIC_BASE_URL", "")),
 		MySQLDSN:           strings.TrimSpace(envOrDefault("MYSQL_DSN", "")),
 		MiniProgramAppID:   strings.TrimSpace(envOrDefault("MINIPROGRAM_APPID", "")),
 		MiniProgramSecret:  strings.TrimSpace(envOrDefault("MINIPROGRAM_SECRET", "")),
@@ -38,6 +40,9 @@ func Load() Config {
 
 	if cfg.Port == "" {
 		cfg.Port = "8080"
+	}
+	if cfg.PublicBaseURL == "" {
+		cfg.PublicBaseURL = "http://localhost:" + cfg.Port
 	}
 
 	return cfg

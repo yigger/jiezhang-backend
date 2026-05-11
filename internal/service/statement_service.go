@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"net/url"
 	"strings"
 	"time"
 
@@ -16,10 +17,17 @@ type StatementService struct {
 	queryRepo     repository.StatementQueryRepository
 	categoryRepo  repository.CategoryRepository
 	assetRepo     repository.AssetRepository
+	publicBaseURL string
 }
 
-func NewStatementService(statementRepo repository.StatementRepository, queryRepo repository.StatementQueryRepository, categoryRepo repository.CategoryRepository, assetRepo repository.AssetRepository) StatementService {
-	return StatementService{statementRepo: statementRepo, queryRepo: queryRepo, categoryRepo: categoryRepo, assetRepo: assetRepo}
+func NewStatementService(statementRepo repository.StatementRepository, queryRepo repository.StatementQueryRepository, categoryRepo repository.CategoryRepository, assetRepo repository.AssetRepository, publicBaseURL string) StatementService {
+	return StatementService{
+		statementRepo: statementRepo,
+		queryRepo:     queryRepo,
+		categoryRepo:  categoryRepo,
+		assetRepo:     assetRepo,
+		publicBaseURL: strings.TrimSpace(publicBaseURL),
+	}
 }
 
 type StatementListInput struct {
@@ -86,7 +94,7 @@ func (s StatementService) GetStatements(ctx context.Context, input StatementList
 
 	items := make([]repository.StatementListItem, 0, len(rows))
 	for _, row := range rows {
-		items = append(items, mapStatementRowToItem(row))
+		items = append(items, s.mapStatementRowToItem(row))
 	}
 
 	return items, nil
@@ -107,7 +115,7 @@ func (s StatementService) CreateStatement(ctx context.Context, input StatementWr
 	if err != nil {
 		return repository.StatementListItem{}, err
 	}
-	return mapStatementRowToItem(row), nil
+	return s.mapStatementRowToItem(row), nil
 }
 
 func (s StatementService) UpdateStatement(ctx context.Context, input StatementWriteInput) (repository.StatementListItem, error) {
@@ -130,7 +138,7 @@ func (s StatementService) UpdateStatement(ctx context.Context, input StatementWr
 	if err != nil {
 		return repository.StatementListItem{}, err
 	}
-	return mapStatementRowToItem(row), nil
+	return s.mapStatementRowToItem(row), nil
 }
 
 func (s StatementService) DeleteStatement(ctx context.Context, statementID int64, userID int64, accountBookID int64) error {
@@ -221,7 +229,7 @@ func int64PtrOrNil(v int64) *int64 {
 	return &n
 }
 
-func mapStatementRowToItem(row repository.StatementListRowRecord) repository.StatementListItem {
+func (s StatementService) mapStatementRowToItem(row repository.StatementListRowRecord) repository.StatementListItem {
 	return repository.StatementListItem{
 		StatementBaseItem: repository.StatementBaseItem{
 			ID:           row.ID,
@@ -233,7 +241,7 @@ func mapStatementRowToItem(row repository.StatementListRowRecord) repository.Sta
 			Mood:         row.Mood,
 			Money:        fmt.Sprintf("%.2f", row.Amount),
 			Category:     row.CategoryName,
-			IconPath:     row.IconPath,
+			IconPath:     s.buildPublicURL(row.IconPath),
 			Asset:        row.AssetName,
 			Date:         row.CreatedAt.Format("2006-01-02"),
 			Time:         row.CreatedAt.Format("15:04:05"),
@@ -319,7 +327,7 @@ func (s StatementService) GetCategories(ctx context.Context, input GetCategories
 		childrenByParent[child.ParentID] = append(childrenByParent[child.ParentID], StatementCategoryChildItem{
 			ID:       child.ID,
 			Name:     child.Name,
-			IconPath: child.IconPath,
+			IconPath: s.buildPublicURL(child.IconPath),
 		})
 	}
 
@@ -332,7 +340,7 @@ func (s StatementService) GetCategories(ctx context.Context, input GetCategories
 		categories = append(categories, StatementCategoryTreeItem{
 			ID:       p.ID,
 			Name:     p.Name,
-			IconPath: p.IconPath,
+			IconPath: s.buildPublicURL(p.IconPath),
 			Childs:   childs,
 		})
 	}
@@ -349,7 +357,7 @@ func (s StatementService) GetCategories(ctx context.Context, input GetCategories
 		frequentItems = append(frequentItems, StatementFrequentCategoryItem{
 			ID:       f.ID,
 			Name:     f.Name,
-			IconPath: f.IconPath,
+			IconPath: s.buildPublicURL(f.IconPath),
 			Parent:   parent,
 		})
 	}
@@ -422,7 +430,7 @@ func (s StatementService) GetAssets(ctx context.Context, input GetCategoriesInpu
 		childrenByParent[child.ParentID] = append(childrenByParent[child.ParentID], StatementAssetChildItem{
 			ID:       child.ID,
 			Name:     child.Name,
-			IconPath: child.IconPath,
+			IconPath: s.buildPublicURL(child.IconPath),
 		})
 	}
 
@@ -434,7 +442,7 @@ func (s StatementService) GetAssets(ctx context.Context, input GetCategoriesInpu
 		assetResult = append(assetResult, StatementAssetTreeItem{
 			ID:       p.ID,
 			Name:     p.Name,
-			IconPath: p.IconPath,
+			IconPath: s.buildPublicURL(p.IconPath),
 			Childs:   childs,
 		})
 	}
@@ -455,7 +463,7 @@ func (s StatementService) GetAssets(ctx context.Context, input GetCategoriesInpu
 		frequentResult = append(frequentResult, StatementFrequentAssetItem{
 			ID:       f.ID,
 			Name:     f.Name,
-			IconPath: f.IconPath,
+			IconPath: s.buildPublicURL(f.IconPath),
 			Parent:   parent,
 		})
 	}
@@ -514,7 +522,7 @@ func (s StatementService) CategoriesGuess(ctx context.Context, input GetCategori
 		items = append(items, StatementFrequentCategoryItem{
 			ID:       row.ID,
 			Name:     row.Name,
-			IconPath: row.IconPath,
+			IconPath: s.buildPublicURL(row.IconPath),
 			Parent:   parent,
 		})
 	}
@@ -543,9 +551,35 @@ func (s StatementService) AssetsGuess(ctx context.Context, input GetCategoriesIn
 		items = append(items, StatementFrequentAssetItem{
 			ID:       row.ID,
 			Name:     row.Name,
-			IconPath: row.IconPath,
+			IconPath: s.buildPublicURL(row.IconPath),
 			Parent:   parent,
 		})
 	}
 	return items, nil
+}
+
+func (s StatementService) buildPublicURL(raw string) string {
+	raw = strings.TrimSpace(raw)
+	if raw == "" {
+		return ""
+	}
+	if strings.HasPrefix(raw, "http://") || strings.HasPrefix(raw, "https://") {
+		return raw
+	}
+	if s.publicBaseURL == "" {
+		return raw
+	}
+
+	base, err := url.Parse(s.publicBaseURL)
+	if err != nil {
+		return raw
+	}
+	path := raw
+	if !strings.HasPrefix(path, "/") {
+		path = "/" + path
+	}
+	base.Path = strings.TrimRight(base.Path, "/") + path
+	base.RawQuery = ""
+	base.Fragment = ""
+	return base.String()
 }

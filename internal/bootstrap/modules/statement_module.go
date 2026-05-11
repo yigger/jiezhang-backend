@@ -10,7 +10,7 @@ import (
 	"github.com/yigger/jiezhang-backend/internal/service"
 )
 
-func BuildStatementModule(db *gorm.DB) (handler.StatementsHandler, error) {
+func BuildStatementModule(db *gorm.DB, publicBaseURL string) (handler.StatementsHandler, error) {
 	statementRepo, err := mysqlrepo.NewStatementRepository(db)
 	categoryRepo, err := mysqlrepo.NewCategoryRepository(db)
 	assetRepo, err := mysqlrepo.NewAssetRepository(db)
@@ -18,7 +18,7 @@ func BuildStatementModule(db *gorm.DB) (handler.StatementsHandler, error) {
 		return handler.StatementsHandler{}, fmt.Errorf("init statement repository: %w", err)
 	}
 
-	statementService := service.NewStatementService(statementRepo, statementRepo, categoryRepo, assetRepo)
+	statementService := service.NewStatementService(statementRepo, statementRepo, categoryRepo, assetRepo, publicBaseURL)
 	statementsHandler := handler.NewStatementsHandler(statementService)
 	return statementsHandler, nil
 }
