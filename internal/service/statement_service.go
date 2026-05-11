@@ -12,6 +12,14 @@ import (
 	"github.com/yigger/jiezhang-backend/internal/service/helper"
 )
 
+type ValidateError struct {
+	Message string
+}
+
+func (e ValidateError) Error() string {
+	return fmt.Sprintf("validate error: %s", e.Message)
+}
+
 type StatementService struct {
 	statementRepo repository.StatementRepository
 	queryRepo     repository.StatementQueryRepository
@@ -155,15 +163,15 @@ func (s StatementService) DeleteStatement(ctx context.Context, statementID int64
 func normalizeStatementWriteInput(input StatementWriteInput) (repository.StatementWriteRecord, error) {
 	statementType := strings.TrimSpace(input.Type)
 	if statementType == "" {
-		return repository.StatementWriteRecord{}, ErrStatementInvalidInput
+		return repository.StatementWriteRecord{}, ValidateError{Message: "invalid statement type"}
 	}
 	if input.Amount <= 0 {
-		return repository.StatementWriteRecord{}, ErrStatementInvalidInput
+		return repository.StatementWriteRecord{}, ValidateError{Message: "invalid amount"}
 	}
 
 	occurredAt, err := parseStatementDateTime(input.Date, input.Time)
 	if err != nil {
-		return repository.StatementWriteRecord{}, ErrStatementInvalidInput
+		return repository.StatementWriteRecord{}, ValidateError{Message: "invalid date or time"}
 	}
 
 	assetID := input.AssetID
@@ -171,12 +179,31 @@ func normalizeStatementWriteInput(input StatementWriteInput) (repository.Stateme
 	if statementType == "transfer" || statementType == "repayment" {
 		assetID = input.FromAssetID
 		if assetID <= 0 || input.ToAssetID <= 0 {
-			return repository.StatementWriteRecord{}, ErrStatementInvalidInput
+			return repository.StatementWriteRecord{}, ValidateError{Message: "invalid asset ID"}
 		}
 		targetAssetID = int64PtrOrNil(input.ToAssetID)
 	}
-	if assetID <= 0 || input.CategoryID <= 0 {
-		return repository.StatementWriteRecord{}, ErrStatementInvalidInput
+
+	switch statementType {
+	case "expend", "income":
+		// 只有收入和支出需要检验分类和资产ID
+		if assetID <= 0 || input.CategoryID <= 0 {
+			return repository.StatementWriteRecord{}, ValidateError{Message: "invalid asset or category ID"}
+		}
+	case "transfer", "repayment":
+		// 转账和还款需要检验转入和转出资产的 ID
+		fromAssetID := input.FromAssetID
+		toAssetID := input.ToAssetID
+		if fromAssetID <= 0 || toAssetID <= 0 {
+			return repository.StatementWriteRecord{}, ValidateError{Message: "invalid from or to asset ID"}
+		}
+	case "loan_in", "loan_out", "reimburse", "payment_proxy":
+		// 借贷、报销、代付需要检验资产ID，分类ID可以为空
+		if assetID <= 0 {
+			return repository.StatementWriteRecord{}, ValidateError{Message: "invalid asset ID"}
+		}
+	default:
+		return repository.StatementWriteRecord{}, ValidateError{Message: "invalid statement type"}
 	}
 
 	return repository.StatementWriteRecord{
@@ -218,7 +245,7 @@ func parseStatementDateTime(dateStr string, timeStr string) (time.Time, error) {
 			return t, nil
 		}
 	}
-	return time.Time{}, ErrStatementInvalidInput
+	return time.Time{}, ValidateError{Message: "invalid date or time"}
 }
 
 func int64PtrOrNil(v int64) *int64 {
@@ -237,7 +264,7 @@ func (s StatementService) mapStatementRowToItem(row repository.StatementListRowR
 			Amount:       row.Amount,
 			Description:  row.Description,
 			Title:        helper.StatementTitle(row),
-			TargetObject: row.AssetName,
+			TargetObject: row.TargetObject,
 			Mood:         row.Mood,
 			Money:        fmt.Sprintf("%.2f", row.Amount),
 			Category:     row.CategoryName,
@@ -556,6 +583,14 @@ func (s StatementService) AssetsGuess(ctx context.Context, input GetCategoriesIn
 		})
 	}
 	return items, nil
+}
+
+func (s StatementService) GetStatementByID(ctx context.Context, statementID int64, accountBookID int64) (repository.StatementListItem, error) {
+	row, err := s.queryRepo.GetRowByIDWithRelations(ctx, statementID, accountBookID)
+	if err != nil {
+		return repository.StatementListItem{}, err
+	}
+	return s.mapStatementRowToItem(row), nil
 }
 
 func (s StatementService) buildPublicURL(raw string) string {

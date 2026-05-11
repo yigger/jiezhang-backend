@@ -129,14 +129,8 @@ func (h StatementsHandler) ListByToken(c *gin.Context) {
 }
 
 func (h StatementsHandler) Create(c *gin.Context) {
-	currentUser, ok := requireCurrentUser(c)
-	if !ok {
-		return
-	}
-	accountBook, ok := requireAccountBook(c)
-	if !ok {
-		return
-	}
+	currentUser, _ := requireCurrentUser(c)
+	accountBook, _ := requireAccountBook(c)
 
 	input, err := buildStatementWriteInput(c)
 	if err != nil {
@@ -148,14 +142,18 @@ func (h StatementsHandler) Create(c *gin.Context) {
 
 	statement, err := h.service.CreateStatement(c.Request.Context(), input)
 	if err != nil {
-		if errors.Is(err, service.ErrStatementInvalidInput) {
-			c.JSON(http.StatusBadRequest, gin.H{"error": "invalid statement"})
+		var ve service.ValidateError
+		if errors.Is(err, &ve) {
+			c.JSON(http.StatusBadRequest, gin.H{"status": 400, "error": ve.Error()})
 			return
 		}
-		c.JSON(http.StatusInternalServerError, gin.H{"error": "failed to create statement"})
+		c.JSON(http.StatusInternalServerError, gin.H{"status": 500, "error": err.Error()})
 		return
 	}
-	c.JSON(http.StatusOK, gin.H{"data": statement})
+	c.JSON(http.StatusOK, gin.H{
+		"status": 200,
+		"data":   statement,
+	})
 }
 
 func (h StatementsHandler) Update(c *gin.Context) {
@@ -188,19 +186,34 @@ func (h StatementsHandler) Update(c *gin.Context) {
 		case errors.Is(err, service.ErrStatementPermissionDenied):
 			c.JSON(http.StatusOK, gin.H{"status": 500, "msg": "不能更改他人账单哦"})
 		case errors.Is(err, service.ErrStatementInvalidInput):
-			c.JSON(http.StatusBadRequest, gin.H{"error": "invalid statement"})
+			c.JSON(http.StatusBadRequest, gin.H{"status": 400, "error": "invalid statement"})
 		case errors.Is(err, repository.ErrStatementNotFound):
-			c.JSON(http.StatusNotFound, gin.H{"error": "statement not found"})
+			c.JSON(http.StatusNotFound, gin.H{"status": 404, "error": "statement not found"})
 		default:
-			c.JSON(http.StatusInternalServerError, gin.H{"error": "failed to update statement"})
+			c.JSON(http.StatusInternalServerError, gin.H{"status": 500, "error": "failed to update statement"})
 		}
 		return
 	}
-	c.JSON(http.StatusOK, gin.H{"data": statement})
+	c.JSON(http.StatusOK, gin.H{"status": 200, "data": statement})
 }
 
 func (h StatementsHandler) Show(c *gin.Context) {
-	notImplemented(c, "GET /api/statements/:statementId")
+	accountBook, _ := requireAccountBook(c)
+
+	statementID := c.Param("statementId")
+	if statementID == "" {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "statement_id is required"})
+		return
+	}
+	statementIDInt, _ := strconv.ParseInt(statementID, 10, 64)
+
+	statement, err := h.service.GetStatementByID(c.Request.Context(), statementIDInt, accountBook.ID)
+	if err != nil {
+		c.JSON(http.StatusOK, gin.H{"status": 500})
+		return
+	}
+
+	c.JSON(http.StatusOK, statement)
 }
 
 func (h StatementsHandler) Delete(c *gin.Context) {
@@ -224,13 +237,13 @@ func (h StatementsHandler) Delete(c *gin.Context) {
 		case errors.Is(err, service.ErrStatementPermissionDenied):
 			c.JSON(http.StatusOK, gin.H{"status": 500, "msg": "只能删除自己创建的账单"})
 		case errors.Is(err, repository.ErrStatementNotFound):
-			c.JSON(http.StatusNotFound, gin.H{"error": "statement not found"})
+			c.JSON(http.StatusNotFound, gin.H{"status": 404, "error": "statement not found"})
 		default:
-			c.JSON(http.StatusInternalServerError, gin.H{"error": "failed to delete statement"})
+			c.JSON(http.StatusInternalServerError, gin.H{"status": 500, "error": "failed to delete statement"})
 		}
 		return
 	}
-	c.JSON(http.StatusOK, gin.H{"data": true})
+	c.JSON(http.StatusOK, gin.H{"status": 200})
 }
 
 func (h StatementsHandler) Images(c *gin.Context) {

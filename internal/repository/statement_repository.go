@@ -97,6 +97,7 @@ type StatementListRowRecord struct {
 	PayeeID         int64
 	PayeeName       string
 	TargetAssetName string
+	TargetObject    string
 }
 
 type StatementWriteRecord struct {

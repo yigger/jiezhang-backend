@@ -11,7 +11,7 @@ func StatementTitle(row repository.StatementListRowRecord) string {
 	if row.Type == "transfer" || row.Type == "repayment" {
 		return fmt.Sprintf("%s->%s", row.AssetName, row.TargetAssetName)
 	}
-	return row.Description
+	return ""
 }
 
 func WeekdayCN(wd time.Weekday) string {
