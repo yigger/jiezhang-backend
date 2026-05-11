@@ -2,6 +2,8 @@ package mysql
 
 import (
 	"context"
+	"database/sql"
+	"time"
 
 	"github.com/yigger/jiezhang-backend/internal/repository"
 	"gorm.io/gorm"
@@ -75,11 +77,11 @@ func (r *AssetRepository) ListChildrenByParentIDs(ctx context.Context, filter re
 }
 
 type assetFrequentRow struct {
-	ID         int64  `gorm:"column:id"`
-	Name       string `gorm:"column:name"`
-	IconPath   string `gorm:"column:icon_path"`
-	ParentID   int64  `gorm:"column:parent_id"`
-	ParentName string `gorm:"column:parent_name"`
+	ID         int64          `gorm:"column:id"`
+	Name       string         `gorm:"column:name"`
+	IconPath   string         `gorm:"column:icon_path"`
+	ParentID   sql.NullInt64  `gorm:"column:parent_id"`
+	ParentName sql.NullString `gorm:"column:parent_name"`
 }
 
 func (r *AssetRepository) ListFrequentChildren(ctx context.Context, filter repository.AssetFilter, limit int) ([]repository.AssetFrequentRecord, error) {
@@ -103,8 +105,50 @@ func (r *AssetRepository) ListFrequentChildren(ctx context.Context, filter repos
 			ID:         row.ID,
 			Name:       row.Name,
 			IconPath:   row.IconPath,
-			ParentID:   row.ParentID,
-			ParentName: row.ParentName,
+			ParentID:   row.ParentID.Int64,
+			ParentName: row.ParentName.String,
+			HasParent:  row.ParentID.Valid,
+		})
+	}
+	return records, nil
+}
+
+func (r *AssetRepository) ListGuessedFrequentByStatementTime(ctx context.Context, filter repository.AssetGuessFilter) ([]repository.AssetFrequentRecord, error) {
+	limit := filter.Limit
+	if limit <= 0 {
+		limit = 3
+	}
+
+	windowStart := filter.Now.Add(-30 * time.Minute).Format("15:04:05")
+	windowEnd := filter.Now.Add(30 * time.Minute).Format("15:04:05")
+
+	var rows []assetFrequentRow
+	err := r.db.WithContext(ctx).
+		Table("assets a").
+		Joins("INNER JOIN statements s ON s.asset_id = a.id").
+		Joins("LEFT JOIN assets parent ON parent.id = a.parent_id").
+		Select("a.id AS id, a.name AS name, a.icon_path AS icon_path, parent.id AS parent_id, parent.name AS parent_name").
+		Where("a.account_book_id = ?", filter.AccountBookID).
+		Where("a.parent_id > 0").
+		Where("a.frequent >= 5").
+		Where("TIME(s.created_at) <= ? AND TIME(s.created_at) >= ?", windowEnd, windowStart).
+		Group("a.id").
+		Order("a.frequent DESC").
+		Limit(limit).
+		Scan(&rows).Error
+	if err != nil {
+		return nil, err
+	}
+
+	records := make([]repository.AssetFrequentRecord, 0, len(rows))
+	for _, row := range rows {
+		records = append(records, repository.AssetFrequentRecord{
+			ID:         row.ID,
+			Name:       row.Name,
+			IconPath:   row.IconPath,
+			ParentID:   row.ParentID.Int64,
+			ParentName: row.ParentName.String,
+			HasParent:  row.ParentID.Valid,
 		})
 	}
 	return records, nil

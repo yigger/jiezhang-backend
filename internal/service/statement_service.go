@@ -94,10 +94,10 @@ type GetCategoriesInput struct {
 }
 
 type StatementFrequentCategoryItem struct {
-	ID       int64                       `json:"id"`
-	Name     string                      `json:"name"`
-	IconPath string                      `json:"icon_path"`
-	Parent   StatementCategoryParentItem `json:"parent"`
+	ID       int64                        `json:"id"`
+	Name     string                       `json:"name"`
+	IconPath string                       `json:"icon_path"`
+	Parent   *StatementCategoryParentItem `json:"parent"`
 }
 
 type StatementCategoryParentItem struct {
@@ -171,14 +171,18 @@ func (s StatementService) GetCategories(ctx context.Context, input GetCategories
 
 	frequentItems := make([]StatementFrequentCategoryItem, 0, len(frequents))
 	for _, f := range frequents {
+		var parent *StatementCategoryParentItem
+		if f.HasParent {
+			parent = &StatementCategoryParentItem{
+				ID:   f.ParentID,
+				Name: f.ParentName,
+			}
+		}
 		frequentItems = append(frequentItems, StatementFrequentCategoryItem{
 			ID:       f.ID,
 			Name:     f.Name,
 			IconPath: f.IconPath,
-			Parent: StatementCategoryParentItem{
-				ID:   f.ParentID,
-				Name: f.ParentName,
-			},
+			Parent:   parent,
 		})
 	}
 
@@ -189,10 +193,10 @@ func (s StatementService) GetCategories(ctx context.Context, input GetCategories
 }
 
 type StatementFrequentAssetItem struct {
-	ID       int64                    `json:"id"`
-	Name     string                   `json:"name"`
-	IconPath string                   `json:"icon_path"`
-	Parent   StatementAssetParentItem `json:"parent"`
+	ID       int64                     `json:"id"`
+	Name     string                    `json:"name"`
+	IconPath string                    `json:"icon_path"`
+	Parent   *StatementAssetParentItem `json:"parent"`
 }
 
 type StatementAssetParentItem struct {
@@ -266,14 +270,18 @@ func (s StatementService) GetAssets(ctx context.Context, input GetCategoriesInpu
 		return nil, err
 	}
 	for _, f := range frequent {
+		var parent *StatementAssetParentItem
+		if f.HasParent {
+			parent = &StatementAssetParentItem{
+				ID:   f.ParentID,
+				Name: f.ParentName,
+			}
+		}
 		frequentResult = append(frequentResult, StatementFrequentAssetItem{
 			ID:       f.ID,
 			Name:     f.Name,
 			IconPath: f.IconPath,
-			Parent: StatementAssetParentItem{
-				ID:   f.ParentID,
-				Name: f.ParentName,
-			},
+			Parent:   parent,
 		})
 	}
 	return []StatementAssetsResult{
@@ -282,4 +290,69 @@ func (s StatementService) GetAssets(ctx context.Context, input GetCategoriesInpu
 			Categories: assetResult,
 		},
 	}, nil
+}
+
+func (s StatementService) CategoriesGuess(ctx context.Context, input GetCategoriesInput) ([]StatementFrequentCategoryItem, error) {
+	statementType := input.Type
+	if statementType == "" {
+		statementType = "expend"
+	}
+
+	filter := repository.CategoryGuessFilter{
+		AccountBookID: input.AccountBookID,
+		StatementType: statementType,
+		Now:           time.Now(),
+		Limit:         3,
+	}
+	rows, err := s.categoryRepo.ListGuessedFrequentByStatementType(ctx, filter)
+	if err != nil {
+		return nil, err
+	}
+
+	items := make([]StatementFrequentCategoryItem, 0, len(rows))
+	for _, row := range rows {
+		var parent *StatementCategoryParentItem
+		if row.HasParent {
+			parent = &StatementCategoryParentItem{
+				ID:   row.ParentID,
+				Name: row.ParentName,
+			}
+		}
+		items = append(items, StatementFrequentCategoryItem{
+			ID:       row.ID,
+			Name:     row.Name,
+			IconPath: row.IconPath,
+			Parent:   parent,
+		})
+	}
+	return items, nil
+}
+
+func (s StatementService) AssetsGuess(ctx context.Context, input GetCategoriesInput) ([]StatementFrequentAssetItem, error) {
+	rows, err := s.assetRepo.ListGuessedFrequentByStatementTime(ctx, repository.AssetGuessFilter{
+		AccountBookID: input.AccountBookID,
+		Now:           time.Now(),
+		Limit:         3,
+	})
+	if err != nil {
+		return nil, err
+	}
+
+	items := make([]StatementFrequentAssetItem, 0, len(rows))
+	for _, row := range rows {
+		var parent *StatementAssetParentItem
+		if row.HasParent {
+			parent = &StatementAssetParentItem{
+				ID:   row.ParentID,
+				Name: row.ParentName,
+			}
+		}
+		items = append(items, StatementFrequentAssetItem{
+			ID:       row.ID,
+			Name:     row.Name,
+			IconPath: row.IconPath,
+			Parent:   parent,
+		})
+	}
+	return items, nil
 }

@@ -20,7 +20,10 @@ func NewStatementsHandler(service service.StatementService) StatementsHandler {
 }
 
 func (h StatementsHandler) Categories(c *gin.Context) {
-	accountBook, _ := requireAccountBook(c)
+	accountBook, ok := requireAccountBook(c)
+	if !ok {
+		return
+	}
 
 	statementType := c.Query("type")
 	if statementType == "" {
@@ -40,7 +43,10 @@ func (h StatementsHandler) Categories(c *gin.Context) {
 }
 
 func (h StatementsHandler) Assets(c *gin.Context) {
-	accountBook, _ := requireAccountBook(c)
+	accountBook, ok := requireAccountBook(c)
+	if !ok {
+		return
+	}
 
 	filter := service.GetCategoriesInput{
 		AccountBookID: accountBook.ID,
@@ -56,16 +62,47 @@ func (h StatementsHandler) Assets(c *gin.Context) {
 }
 
 func (h StatementsHandler) CategoryFrequent(c *gin.Context) {
-	notImplemented(c, "GET /api/statements/category_frequent")
+	accountBook, ok := requireAccountBook(c)
+	if !ok {
+		return
+	}
+
+	filter := service.GetCategoriesInput{
+		AccountBookID: accountBook.ID,
+		Type:          c.Query("type"),
+	}
+
+	categories, err := h.service.CategoriesGuess(c.Request.Context(), filter)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "failed to get frequent categories"})
+		return
+	}
+	c.JSON(http.StatusOK, gin.H{"data": categories})
 }
 
 func (h StatementsHandler) AssetFrequent(c *gin.Context) {
-	notImplemented(c, "GET /api/statements/asset_frequent")
+	accountBook, _ := requireAccountBook(c)
+
+	assets, err := h.service.AssetsGuess(c.Request.Context(), service.GetCategoriesInput{
+		AccountBookID: accountBook.ID,
+		Type:          c.Query("type"),
+	})
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "failed to get frequent assets"})
+		return
+	}
+	c.JSON(http.StatusOK, gin.H{"data": assets})
 }
 
 func (h StatementsHandler) List(c *gin.Context) {
-	currentUser, _ := requireCurrentUser(c)
-	accountBook, _ := requireAccountBook(c)
+	currentUser, ok := requireCurrentUser(c)
+	if !ok {
+		return
+	}
+	accountBook, ok := requireAccountBook(c)
+	if !ok {
+		return
+	}
 
 	input, err := buildStatementListInput(c, currentUser.ID, accountBook.ID)
 	if err != nil {

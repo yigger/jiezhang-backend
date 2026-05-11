@@ -2,6 +2,8 @@ package mysql
 
 import (
 	"context"
+	"database/sql"
+	"time"
 
 	"github.com/yigger/jiezhang-backend/internal/repository"
 	"gorm.io/gorm"
@@ -29,11 +31,11 @@ type categoryChildRow struct {
 }
 
 type frequentCategoryRow struct {
-	ID         int64  `gorm:"column:id"`
-	Name       string `gorm:"column:name"`
-	IconPath   string `gorm:"column:icon_path"`
-	ParentID   int64  `gorm:"column:parent_id"`
-	ParentName string `gorm:"column:parent_name"`
+	ID         int64          `gorm:"column:id"`
+	Name       string         `gorm:"column:name"`
+	IconPath   string         `gorm:"column:icon_path"`
+	ParentID   sql.NullInt64  `gorm:"column:parent_id"`
+	ParentName sql.NullString `gorm:"column:parent_name"`
 }
 
 func (r *CategoryRepository) ListParents(ctx context.Context, filter repository.CategoryListFilter) ([]repository.CategoryParentRecord, error) {
@@ -101,11 +103,12 @@ func (r *CategoryRepository) ListFrequentChildren(ctx context.Context, filter re
 	records := make([]repository.CategoryFrequentRecord, 0, len(frequentRows))
 	for _, row := range frequentRows {
 		records = append(records, repository.CategoryFrequentRecord{
-			ID:       row.ID,
-			Name:     row.Name,
-			IconPath: row.IconPath,
-			ParentID: row.ParentID,
-			ParentName: row.ParentName,
+			ID:         row.ID,
+			Name:       row.Name,
+			IconPath:   row.IconPath,
+			ParentID:   row.ParentID.Int64,
+			ParentName: row.ParentName.String,
+			HasParent:  row.ParentID.Valid,
 		})
 	}
 	return records, nil
@@ -120,4 +123,46 @@ func (r *CategoryRepository) buildCategoryBaseQuery(ctx context.Context, filter 
 		query = query.Where("c.type = ?", filter.Type)
 	}
 	return query
+}
+
+func (r *CategoryRepository) ListGuessedFrequentByStatementType(ctx context.Context, filter repository.CategoryGuessFilter) ([]repository.CategoryFrequentRecord, error) {
+	limit := filter.Limit
+	if limit <= 0 {
+		limit = 3
+	}
+
+	windowStart := filter.Now.Add(-30 * time.Minute).Format("15:04:05")
+	windowEnd := filter.Now.Add(30 * time.Minute).Format("15:04:05")
+
+	var rows []frequentCategoryRow
+	err := r.db.WithContext(ctx).
+		Table("categories c").
+		Joins("INNER JOIN statements s ON s.category_id = c.id").
+		Joins("LEFT JOIN categories parent ON parent.id = c.parent_id").
+		Select("c.id AS id, c.name AS name, c.icon_path AS icon_path, parent.id AS parent_id, parent.name AS parent_name").
+		Where("c.account_book_id = ?", filter.AccountBookID).
+		Where("c.parent_id > 0").
+		Where("c.frequent >= 5").
+		Where("s.type = ?", filter.StatementType).
+		Where("TIME(s.created_at) <= ? AND TIME(s.created_at) >= ?", windowEnd, windowStart).
+		Group("c.id").
+		Order("c.frequent DESC").
+		Limit(limit).
+		Scan(&rows).Error
+	if err != nil {
+		return nil, err
+	}
+
+	records := make([]repository.CategoryFrequentRecord, 0, len(rows))
+	for _, row := range rows {
+		records = append(records, repository.CategoryFrequentRecord{
+			ID:         row.ID,
+			Name:       row.Name,
+			IconPath:   row.IconPath,
+			ParentID:   row.ParentID.Int64,
+			ParentName: row.ParentName.String,
+			HasParent:  row.ParentID.Valid,
+		})
+	}
+	return records, nil
 }
