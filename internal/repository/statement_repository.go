@@ -15,7 +15,7 @@ type StatementRepository interface {
 
 // StatementQueryRepository is for read-side complex queries.
 type StatementQueryRepository interface {
-	ListWithRelations(ctx context.Context, filter StatementListFilter) ([]StatementListItem, error)
+	ListRowsWithRelations(ctx context.Context, filter StatementListFilter) ([]StatementListRowRecord, error)
 }
 
 type StatementListFilter struct {
@@ -67,6 +67,28 @@ type StatementListItem struct {
 	HasPic    bool      `json:"has_pic"`
 	CreatedAt time.Time `json:"created_at"`
 	UpdatedAt time.Time `json:"updated_at"`
+}
+
+type StatementListRowRecord struct {
+	ID              int64
+	Type            string
+	Amount          float64
+	Description     string
+	Remark          string
+	Mood            string
+	IconPath        string
+	CreatedAt       time.Time
+	UpdatedAt       time.Time
+	CategoryName    string
+	AssetName       string
+	Location        string
+	Province        string
+	City            string
+	Street          string
+	HasPic          bool
+	PayeeID         int64
+	PayeeName       string
+	TargetAssetName string
 }
 
 // Keep domain import alive for future command-side repository evolution.

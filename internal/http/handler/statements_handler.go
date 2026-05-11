@@ -8,7 +8,6 @@ import (
 
 	"github.com/gin-gonic/gin"
 
-	"github.com/yigger/jiezhang-backend/internal/domain"
 	"github.com/yigger/jiezhang-backend/internal/service"
 )
 
@@ -21,12 +20,7 @@ func NewStatementsHandler(service service.StatementService) StatementsHandler {
 }
 
 func (h StatementsHandler) Categories(c *gin.Context) {
-	var _ domain.User
-	var accountBook domain.AccountBook
-	var ok bool
-	if _, accountBook, ok = fetchCurrentUser(c); !ok {
-		return
-	}
+	accountBook, _ := requireAccountBook(c)
 
 	statementType := c.Query("type")
 	if statementType == "" {
@@ -37,19 +31,28 @@ func (h StatementsHandler) Categories(c *gin.Context) {
 		AccountBookID: accountBook.ID,
 		Type:          statementType,
 	}
-
 	categories, err := h.service.GetCategories(c.Request.Context(), input)
-
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "failed to get categories"})
 		return
 	}
-
 	c.JSON(http.StatusOK, gin.H{"data": categories})
 }
 
 func (h StatementsHandler) Assets(c *gin.Context) {
-	notImplemented(c, "GET /api/statements/assets")
+	accountBook, _ := requireAccountBook(c)
+
+	filter := service.GetCategoriesInput{
+		AccountBookID: accountBook.ID,
+		Type:          c.Query("type"),
+	}
+
+	assets, err := h.service.GetAssets(c.Request.Context(), filter)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "failed to get assets"})
+		return
+	}
+	c.JSON(http.StatusOK, gin.H{"data": assets})
 }
 
 func (h StatementsHandler) CategoryFrequent(c *gin.Context) {
@@ -61,13 +64,10 @@ func (h StatementsHandler) AssetFrequent(c *gin.Context) {
 }
 
 func (h StatementsHandler) List(c *gin.Context) {
-	var currentUser domain.User
-	var ok bool
-	if currentUser, _, ok = fetchCurrentUser(c); !ok {
-		return
-	}
+	currentUser, _ := requireCurrentUser(c)
+	accountBook, _ := requireAccountBook(c)
 
-	input, err := buildStatementListInput(c, currentUser.ID)
+	input, err := buildStatementListInput(c, currentUser.ID, accountBook.ID)
 	if err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 		return
@@ -134,7 +134,7 @@ func (h StatementsHandler) ExportExcel(c *gin.Context) {
 	notImplemented(c, "GET /api/statements/export_excel")
 }
 
-func buildStatementListInput(c *gin.Context, userID int64) (service.StatementListInput, error) {
+func buildStatementListInput(c *gin.Context, userID int64, accountBookID int64) (service.StatementListInput, error) {
 	var startDate *time.Time
 	var endDate *time.Time
 	var err error
@@ -152,14 +152,6 @@ func buildStatementListInput(c *gin.Context, userID int64) (service.StatementLis
 			return service.StatementListInput{}, parseErr
 		}
 		endDate = &t
-	}
-
-	accountBookID := int64(0)
-	if v := strings.TrimSpace(c.Query("account_book_id")); v != "" {
-		accountBookID, err = strconv.ParseInt(v, 10, 64)
-		if err != nil || accountBookID < 0 {
-			return service.StatementListInput{}, errInvalidParam("account_book_id")
-		}
 	}
 
 	limit := 50

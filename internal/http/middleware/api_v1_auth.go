@@ -12,12 +12,11 @@ import (
 	"github.com/yigger/jiezhang-backend/internal/repository"
 )
 
-const currentUserContextKey = "current_user"
-const accountBookContextKey = "account_book"
+const CurrentUserContextKey = "current_user"
+const AccountBookContextKey = "account_book"
 
 func AuthenticateAPIV1(env, appID string, users repository.UserRepository, accountBooks repository.AccountBookRepository, cache sessioncache.Cache) gin.HandlerFunc {
 	return func(c *gin.Context) {
-		// .env 的开发环境，默认找 ID 为 1 的用户
 		if env == "dev" {
 			user, err := users.FindByID(c.Request.Context(), 1)
 			if err != nil {
@@ -27,33 +26,10 @@ func AuthenticateAPIV1(env, appID string, users repository.UserRepository, accou
 				})
 				return
 			}
-			c.Set(currentUserContextKey, user)
-			// 设置当前会话默认账本，查看请求中是否存在 account_book_id 参数，若存在则使用该账本，否则使用默认账本
-			accountBookId := c.Query("account_book_id")
-			var accountBookIdInt int64
-			if accountBookId == "" {
-				accountBookIdInt = user.AccountBookId
-			} else {
-				accountBookIdInt, err = strconv.ParseInt(accountBookId, 10, 64)
-				if err != nil {
-					c.AbortWithStatusJSON(http.StatusOK, gin.H{
-						"status": 400,
-						"msg":    "[dev] invalid account book id",
-					})
-					return
-				}
-			}
-
-			accountBook, err := accountBooks.FindByID(c.Request.Context(), accountBookIdInt, user.ID)
-			if err != nil {
-				c.AbortWithStatusJSON(http.StatusOK, gin.H{
-					"status": 404,
-					"msg":    "[dev] account book not found",
-				})
+			c.Set(CurrentUserContextKey, user)
+			if !attachAccountBook(c, accountBooks, user, true) {
 				return
 			}
-			c.Set(accountBookContextKey, accountBook)
-
 			c.Next()
 			return
 		}
@@ -94,27 +70,55 @@ func AuthenticateAPIV1(env, appID string, users repository.UserRepository, accou
 			return
 		}
 
-		c.Set(currentUserContextKey, user)
+		c.Set(CurrentUserContextKey, user)
+		if !attachAccountBook(c, accountBooks, user, false) {
+			return
+		}
 		c.Next()
 	}
 }
 
-func CurrentUser(c *gin.Context) (domain.User, bool) {
-	v, ok := c.Get(currentUserContextKey)
-	if !ok {
-		return domain.User{}, false
+func attachAccountBook(c *gin.Context, accountBooks repository.AccountBookRepository, user domain.User, isDev bool) bool {
+	accountBookID, err := resolveAccountBookID(c, user)
+	if err != nil {
+		msg := "invalid account book id"
+		if isDev {
+			msg = "[dev] invalid account book id"
+		}
+		c.AbortWithStatusJSON(http.StatusOK, gin.H{
+			"status": 400,
+			"msg":    msg,
+		})
+		return false
 	}
 
-	user, ok := v.(domain.User)
-	return user, ok
+	accountBook, err := accountBooks.FindByID(c.Request.Context(), accountBookID, user.ID)
+	if err != nil {
+		msg := "account book not found"
+		if isDev {
+			msg = "[dev] account book not found"
+		}
+		c.AbortWithStatusJSON(http.StatusOK, gin.H{
+			"status": 404,
+			"msg":    msg,
+		})
+		return false
+	}
+
+	c.Set(AccountBookContextKey, accountBook)
+	return true
 }
 
-func AccountBook(c *gin.Context) (domain.AccountBook, bool) {
-	v, ok := c.Get(accountBookContextKey)
-	if !ok {
-		return domain.AccountBook{}, false
+func resolveAccountBookID(c *gin.Context, user domain.User) (int64, error) {
+	if v := strings.TrimSpace(c.Query("account_book_id")); v != "" {
+		id, err := strconv.ParseInt(v, 10, 64)
+		if err != nil || id <= 0 {
+			return 0, strconv.ErrSyntax
+		}
+		return id, nil
 	}
-
-	accountBook, ok := v.(domain.AccountBook)
-	return accountBook, ok
+	if user.AccountBookId <= 0 {
+		return 0, strconv.ErrSyntax
+	}
+	return user.AccountBookId, nil
 }

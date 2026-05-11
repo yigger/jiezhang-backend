@@ -13,11 +13,12 @@ import (
 func BuildStatementModule(db *gorm.DB) (handler.StatementsHandler, error) {
 	statementRepo, err := mysqlrepo.NewStatementRepository(db)
 	categoryRepo, err := mysqlrepo.NewCategoryRepository(db)
+	assetRepo, err := mysqlrepo.NewAssetRepository(db)
 	if err != nil {
 		return handler.StatementsHandler{}, fmt.Errorf("init statement repository: %w", err)
 	}
 
-	statementService := service.NewStatementService(statementRepo, categoryRepo)
+	statementService := service.NewStatementService(statementRepo, categoryRepo, assetRepo)
 	statementsHandler := handler.NewStatementsHandler(statementService)
 	return statementsHandler, nil
 }
