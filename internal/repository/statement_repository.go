@@ -2,20 +2,26 @@ package repository
 
 import (
 	"context"
+	"errors"
 	"time"
 
 	"github.com/yigger/jiezhang-backend/internal/domain"
 )
 
-// StatementRepository is for command-side writes (create/update/delete) in future.
+var ErrStatementNotFound = errors.New("statement not found")
+
+// StatementRepository is for command-side writes (create/update/delete).
 type StatementRepository interface {
-	// Create(ctx context.Context, statement domain.Statement) (domain.Statement, error)
-	// Save(ctx context.Context, statement domain.Statement) (domain.Statement, error)
+	Create(ctx context.Context, input StatementWriteRecord) (int64, error)
+	GetOwnerID(ctx context.Context, statementID int64, accountBookID int64) (int64, error)
+	UpdateByID(ctx context.Context, statementID int64, accountBookID int64, input StatementWriteRecord) error
+	DeleteByID(ctx context.Context, statementID int64, accountBookID int64) error
 }
 
 // StatementQueryRepository is for read-side complex queries.
 type StatementQueryRepository interface {
 	ListRowsWithRelations(ctx context.Context, filter StatementListFilter) ([]StatementListRowRecord, error)
+	GetRowByIDWithRelations(ctx context.Context, statementID int64, accountBookID int64) (StatementListRowRecord, error)
 }
 
 type StatementListFilter struct {
@@ -89,6 +95,27 @@ type StatementListRowRecord struct {
 	PayeeID         int64
 	PayeeName       string
 	TargetAssetName string
+}
+
+type StatementWriteRecord struct {
+	UserID        int64
+	AccountBookID int64
+	Type          string
+	Amount        float64
+	Description   string
+	Mood          string
+	CategoryID    int64
+	AssetID       int64
+	TargetAssetID *int64
+	PayeeID       *int64
+	TargetObject  string
+	Location      string
+	Nation        string
+	Province      string
+	City          string
+	District      string
+	Street        string
+	OccurredAt    time.Time
 }
 
 // Keep domain import alive for future command-side repository evolution.

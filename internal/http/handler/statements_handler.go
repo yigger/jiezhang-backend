@@ -1,6 +1,7 @@
 package handler
 
 import (
+	"errors"
 	"net/http"
 	"strconv"
 	"strings"
@@ -8,6 +9,7 @@ import (
 
 	"github.com/gin-gonic/gin"
 
+	"github.com/yigger/jiezhang-backend/internal/repository"
 	"github.com/yigger/jiezhang-backend/internal/service"
 )
 
@@ -81,7 +83,10 @@ func (h StatementsHandler) CategoryFrequent(c *gin.Context) {
 }
 
 func (h StatementsHandler) AssetFrequent(c *gin.Context) {
-	accountBook, _ := requireAccountBook(c)
+	accountBook, ok := requireAccountBook(c)
+	if !ok {
+		return
+	}
 
 	assets, err := h.service.AssetsGuess(c.Request.Context(), service.GetCategoriesInput{
 		AccountBookID: accountBook.ID,
@@ -124,11 +129,74 @@ func (h StatementsHandler) ListByToken(c *gin.Context) {
 }
 
 func (h StatementsHandler) Create(c *gin.Context) {
-	notImplemented(c, "POST /api/statements")
+	currentUser, ok := requireCurrentUser(c)
+	if !ok {
+		return
+	}
+	accountBook, ok := requireAccountBook(c)
+	if !ok {
+		return
+	}
+
+	input, err := buildStatementWriteInput(c)
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		return
+	}
+	input.UserID = currentUser.ID
+	input.AccountBookID = accountBook.ID
+
+	statement, err := h.service.CreateStatement(c.Request.Context(), input)
+	if err != nil {
+		if errors.Is(err, service.ErrStatementInvalidInput) {
+			c.JSON(http.StatusBadRequest, gin.H{"error": "invalid statement"})
+			return
+		}
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "failed to create statement"})
+		return
+	}
+	c.JSON(http.StatusOK, gin.H{"data": statement})
 }
 
 func (h StatementsHandler) Update(c *gin.Context) {
-	notImplemented(c, "PUT /api/statements/:statementId")
+	currentUser, ok := requireCurrentUser(c)
+	if !ok {
+		return
+	}
+	accountBook, ok := requireAccountBook(c)
+	if !ok {
+		return
+	}
+	statementID, err := parseStatementID(c)
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "invalid statementId"})
+		return
+	}
+
+	input, err := buildStatementWriteInput(c)
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		return
+	}
+	input.StatementID = statementID
+	input.UserID = currentUser.ID
+	input.AccountBookID = accountBook.ID
+
+	statement, err := h.service.UpdateStatement(c.Request.Context(), input)
+	if err != nil {
+		switch {
+		case errors.Is(err, service.ErrStatementPermissionDenied):
+			c.JSON(http.StatusOK, gin.H{"status": 500, "msg": "不能更改他人账单哦"})
+		case errors.Is(err, service.ErrStatementInvalidInput):
+			c.JSON(http.StatusBadRequest, gin.H{"error": "invalid statement"})
+		case errors.Is(err, repository.ErrStatementNotFound):
+			c.JSON(http.StatusNotFound, gin.H{"error": "statement not found"})
+		default:
+			c.JSON(http.StatusInternalServerError, gin.H{"error": "failed to update statement"})
+		}
+		return
+	}
+	c.JSON(http.StatusOK, gin.H{"data": statement})
 }
 
 func (h StatementsHandler) Show(c *gin.Context) {
@@ -136,11 +204,33 @@ func (h StatementsHandler) Show(c *gin.Context) {
 }
 
 func (h StatementsHandler) Delete(c *gin.Context) {
-	notImplemented(c, "DELETE /api/statements/:statementId")
-}
+	currentUser, ok := requireCurrentUser(c)
+	if !ok {
+		return
+	}
+	accountBook, ok := requireAccountBook(c)
+	if !ok {
+		return
+	}
+	statementID, err := parseStatementID(c)
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "invalid statementId"})
+		return
+	}
 
-func (h StatementsHandler) Search(c *gin.Context) {
-	notImplemented(c, "GET /api/search")
+	err = h.service.DeleteStatement(c.Request.Context(), statementID, currentUser.ID, accountBook.ID)
+	if err != nil {
+		switch {
+		case errors.Is(err, service.ErrStatementPermissionDenied):
+			c.JSON(http.StatusOK, gin.H{"status": 500, "msg": "只能删除自己创建的账单"})
+		case errors.Is(err, repository.ErrStatementNotFound):
+			c.JSON(http.StatusNotFound, gin.H{"error": "statement not found"})
+		default:
+			c.JSON(http.StatusInternalServerError, gin.H{"error": "failed to delete statement"})
+		}
+		return
+	}
+	c.JSON(http.StatusOK, gin.H{"data": true})
 }
 
 func (h StatementsHandler) Images(c *gin.Context) {
@@ -272,4 +362,67 @@ func (e invalidParamError) Error() string {
 
 func errInvalidParam(field string) error {
 	return invalidParamError{field: field}
+}
+
+type statementWritePayload struct {
+	Type         string  `json:"type"`
+	Amount       float64 `json:"amount"`
+	Description  string  `json:"description"`
+	Mood         string  `json:"mood"`
+	CategoryID   int64   `json:"category_id"`
+	AssetID      int64   `json:"asset_id"`
+	FromAssetID  int64   `json:"from_asset_id"`
+	ToAssetID    int64   `json:"to_asset_id"`
+	PayeeID      int64   `json:"payee_id"`
+	TargetObject string  `json:"target_object"`
+	Location     string  `json:"location"`
+	Nation       string  `json:"nation"`
+	Province     string  `json:"province"`
+	City         string  `json:"city"`
+	District     string  `json:"district"`
+	Street       string  `json:"street"`
+	Date         string  `json:"date"`
+	Time         string  `json:"time"`
+}
+
+type statementWriteRequest struct {
+	Statement statementWritePayload `json:"statement"`
+}
+
+func buildStatementWriteInput(c *gin.Context) (service.StatementWriteInput, error) {
+	var req statementWriteRequest
+	if err := c.ShouldBindJSON(&req); err != nil {
+		return service.StatementWriteInput{}, err
+	}
+
+	p := req.Statement
+	return service.StatementWriteInput{
+		Type:         p.Type,
+		Amount:       p.Amount,
+		Description:  p.Description,
+		Mood:         p.Mood,
+		CategoryID:   p.CategoryID,
+		AssetID:      p.AssetID,
+		FromAssetID:  p.FromAssetID,
+		ToAssetID:    p.ToAssetID,
+		PayeeID:      p.PayeeID,
+		TargetObject: p.TargetObject,
+		Location:     p.Location,
+		Nation:       p.Nation,
+		Province:     p.Province,
+		City:         p.City,
+		District:     p.District,
+		Street:       p.Street,
+		Date:         p.Date,
+		Time:         p.Time,
+	}, nil
+}
+
+func parseStatementID(c *gin.Context) (int64, error) {
+	v := strings.TrimSpace(c.Param("statementId"))
+	id, err := strconv.ParseInt(v, 10, 64)
+	if err != nil || id <= 0 {
+		return 0, errInvalidParam("statementId")
+	}
+	return id, nil
 }

@@ -2,7 +2,9 @@ package service
 
 import (
 	"context"
+	"errors"
 	"fmt"
+	"strings"
 	"time"
 
 	"github.com/yigger/jiezhang-backend/internal/repository"
@@ -10,13 +12,14 @@ import (
 )
 
 type StatementService struct {
-	queryRepo    repository.StatementQueryRepository
-	categoryRepo repository.CategoryRepository
-	assetRepo    repository.AssetRepository
+	statementRepo repository.StatementRepository
+	queryRepo     repository.StatementQueryRepository
+	categoryRepo  repository.CategoryRepository
+	assetRepo     repository.AssetRepository
 }
 
-func NewStatementService(queryRepo repository.StatementQueryRepository, categoryRepo repository.CategoryRepository, assetRepo repository.AssetRepository) StatementService {
-	return StatementService{queryRepo: queryRepo, categoryRepo: categoryRepo, assetRepo: assetRepo}
+func NewStatementService(statementRepo repository.StatementRepository, queryRepo repository.StatementQueryRepository, categoryRepo repository.CategoryRepository, assetRepo repository.AssetRepository) StatementService {
+	return StatementService{statementRepo: statementRepo, queryRepo: queryRepo, categoryRepo: categoryRepo, assetRepo: assetRepo}
 }
 
 type StatementListInput struct {
@@ -29,6 +32,38 @@ type StatementListInput struct {
 	OrderBy           string
 	Limit             int
 	Offset            int
+}
+
+var (
+	ErrStatementPermissionDenied = errors.New("statement permission denied")
+	ErrStatementInvalidInput     = errors.New("statement invalid input")
+)
+
+type StatementWriteInput struct {
+	StatementID   int64
+	UserID        int64
+	AccountBookID int64
+
+	Type         string
+	Amount       float64
+	Description  string
+	Mood         string
+	CategoryID   int64
+	AssetID      int64
+	FromAssetID  int64
+	ToAssetID    int64
+	PayeeID      int64
+	TargetObject string
+
+	Location string
+	Nation   string
+	Province string
+	City     string
+	District string
+	Street   string
+
+	Date string
+	Time string
 }
 
 // 账单列表
@@ -51,41 +86,174 @@ func (s StatementService) GetStatements(ctx context.Context, input StatementList
 
 	items := make([]repository.StatementListItem, 0, len(rows))
 	for _, row := range rows {
-		items = append(items, repository.StatementListItem{
-			StatementBaseItem: repository.StatementBaseItem{
-				ID:           row.ID,
-				Type:         row.Type,
-				Amount:       row.Amount,
-				Description:  row.Description,
-				Title:        helper.StatementTitle(row),
-				TargetObject: row.AssetName,
-				Mood:         row.Mood,
-				Money:        fmt.Sprintf("%.2f", row.Amount),
-				Category:     row.CategoryName,
-				IconPath:     row.IconPath,
-				Asset:        row.AssetName,
-				Date:         row.CreatedAt.Format("2006-01-02"),
-				Time:         row.CreatedAt.Format("15:04:05"),
-				TimeStr:      row.CreatedAt.Format("01-02 15:04"),
-				Week:         helper.WeekdayCN(row.CreatedAt.Weekday()),
-				Payee: repository.Payee{
-					ID:   row.PayeeID,
-					Name: row.PayeeName,
-				},
-				Remark: row.Remark,
-			},
-			Location:  row.Location,
-			Province:  row.Province,
-			City:      row.City,
-			Street:    row.Street,
-			MonthDay:  row.CreatedAt.Format("01-02"),
-			HasPic:    row.HasPic,
-			CreatedAt: row.CreatedAt,
-			UpdatedAt: row.UpdatedAt,
-		})
+		items = append(items, mapStatementRowToItem(row))
 	}
 
 	return items, nil
+}
+
+func (s StatementService) CreateStatement(ctx context.Context, input StatementWriteInput) (repository.StatementListItem, error) {
+	record, err := normalizeStatementWriteInput(input)
+	if err != nil {
+		return repository.StatementListItem{}, err
+	}
+
+	statementID, err := s.statementRepo.Create(ctx, record)
+	if err != nil {
+		return repository.StatementListItem{}, err
+	}
+
+	row, err := s.queryRepo.GetRowByIDWithRelations(ctx, statementID, input.AccountBookID)
+	if err != nil {
+		return repository.StatementListItem{}, err
+	}
+	return mapStatementRowToItem(row), nil
+}
+
+func (s StatementService) UpdateStatement(ctx context.Context, input StatementWriteInput) (repository.StatementListItem, error) {
+	ownerID, err := s.statementRepo.GetOwnerID(ctx, input.StatementID, input.AccountBookID)
+	if err != nil {
+		return repository.StatementListItem{}, err
+	}
+	if ownerID != input.UserID {
+		return repository.StatementListItem{}, ErrStatementPermissionDenied
+	}
+
+	record, err := normalizeStatementWriteInput(input)
+	if err != nil {
+		return repository.StatementListItem{}, err
+	}
+	if err := s.statementRepo.UpdateByID(ctx, input.StatementID, input.AccountBookID, record); err != nil {
+		return repository.StatementListItem{}, err
+	}
+	row, err := s.queryRepo.GetRowByIDWithRelations(ctx, input.StatementID, input.AccountBookID)
+	if err != nil {
+		return repository.StatementListItem{}, err
+	}
+	return mapStatementRowToItem(row), nil
+}
+
+func (s StatementService) DeleteStatement(ctx context.Context, statementID int64, userID int64, accountBookID int64) error {
+	ownerID, err := s.statementRepo.GetOwnerID(ctx, statementID, accountBookID)
+	if err != nil {
+		return err
+	}
+	if ownerID != userID {
+		return ErrStatementPermissionDenied
+	}
+	return s.statementRepo.DeleteByID(ctx, statementID, accountBookID)
+}
+
+func normalizeStatementWriteInput(input StatementWriteInput) (repository.StatementWriteRecord, error) {
+	statementType := strings.TrimSpace(input.Type)
+	if statementType == "" {
+		return repository.StatementWriteRecord{}, ErrStatementInvalidInput
+	}
+	if input.Amount <= 0 {
+		return repository.StatementWriteRecord{}, ErrStatementInvalidInput
+	}
+
+	occurredAt, err := parseStatementDateTime(input.Date, input.Time)
+	if err != nil {
+		return repository.StatementWriteRecord{}, ErrStatementInvalidInput
+	}
+
+	assetID := input.AssetID
+	targetAssetID := int64PtrOrNil(input.ToAssetID)
+	if statementType == "transfer" || statementType == "repayment" {
+		assetID = input.FromAssetID
+		if assetID <= 0 || input.ToAssetID <= 0 {
+			return repository.StatementWriteRecord{}, ErrStatementInvalidInput
+		}
+		targetAssetID = int64PtrOrNil(input.ToAssetID)
+	}
+	if assetID <= 0 || input.CategoryID <= 0 {
+		return repository.StatementWriteRecord{}, ErrStatementInvalidInput
+	}
+
+	return repository.StatementWriteRecord{
+		UserID:        input.UserID,
+		AccountBookID: input.AccountBookID,
+		Type:          statementType,
+		Amount:        input.Amount,
+		Description:   input.Description,
+		Mood:          input.Mood,
+		CategoryID:    input.CategoryID,
+		AssetID:       assetID,
+		TargetAssetID: targetAssetID,
+		PayeeID:       int64PtrOrNil(input.PayeeID),
+		TargetObject:  input.TargetObject,
+		Location:      input.Location,
+		Nation:        input.Nation,
+		Province:      input.Province,
+		City:          input.City,
+		District:      input.District,
+		Street:        input.Street,
+		OccurredAt:    occurredAt,
+	}, nil
+}
+
+func parseStatementDateTime(dateStr string, timeStr string) (time.Time, error) {
+	dateStr = strings.TrimSpace(dateStr)
+	timeStr = strings.TrimSpace(timeStr)
+	if dateStr == "" {
+		now := time.Now()
+		dateStr = now.Format("2006-01-02")
+	}
+	if timeStr == "" {
+		timeStr = "00:00:00"
+	}
+
+	layouts := []string{"2006-01-02 15:04:05", "2006-01-02 15:04"}
+	for _, layout := range layouts {
+		if t, err := time.ParseInLocation(layout, dateStr+" "+timeStr, time.Local); err == nil {
+			return t, nil
+		}
+	}
+	return time.Time{}, ErrStatementInvalidInput
+}
+
+func int64PtrOrNil(v int64) *int64 {
+	if v <= 0 {
+		return nil
+	}
+	n := v
+	return &n
+}
+
+func mapStatementRowToItem(row repository.StatementListRowRecord) repository.StatementListItem {
+	return repository.StatementListItem{
+		StatementBaseItem: repository.StatementBaseItem{
+			ID:           row.ID,
+			Type:         row.Type,
+			Amount:       row.Amount,
+			Description:  row.Description,
+			Title:        helper.StatementTitle(row),
+			TargetObject: row.AssetName,
+			Mood:         row.Mood,
+			Money:        fmt.Sprintf("%.2f", row.Amount),
+			Category:     row.CategoryName,
+			IconPath:     row.IconPath,
+			Asset:        row.AssetName,
+			Date:         row.CreatedAt.Format("2006-01-02"),
+			Time:         row.CreatedAt.Format("15:04:05"),
+			TimeStr:      row.CreatedAt.Format("01-02 15:04"),
+			Week:         helper.WeekdayCN(row.CreatedAt.Weekday()),
+			Payee: repository.Payee{
+				ID:   row.PayeeID,
+				Name: row.PayeeName,
+			},
+			Remark: row.Remark,
+		},
+		Location:  row.Location,
+		Province:  row.Province,
+		City:      row.City,
+		Street:    row.Street,
+		MonthDay:  row.CreatedAt.Format("01-02"),
+		HasPic:    row.HasPic,
+		CreatedAt: row.CreatedAt,
+		UpdatedAt: row.UpdatedAt,
+	}
 }
 
 type GetCategoriesInput struct {

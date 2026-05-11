@@ -18,7 +18,7 @@ func BuildStatementModule(db *gorm.DB) (handler.StatementsHandler, error) {
 		return handler.StatementsHandler{}, fmt.Errorf("init statement repository: %w", err)
 	}
 
-	statementService := service.NewStatementService(statementRepo, categoryRepo, assetRepo)
+	statementService := service.NewStatementService(statementRepo, statementRepo, categoryRepo, assetRepo)
 	statementsHandler := handler.NewStatementsHandler(statementService)
 	return statementsHandler, nil
 }
