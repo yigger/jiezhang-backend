@@ -390,6 +390,13 @@ type StatementAssetsResult struct {
 	Categories []StatementAssetTreeItem     `json:"categories"`
 }
 
+type StatementDefaultCategoryAssetItem struct {
+	CategoryName string `json:"category_name"`
+	AssetName    string `json:"asset_name"`
+	CategoryID   int64  `json:"category_id"`
+	AssetID      int64  `json:"asset_id"`
+}
+
 func (s StatementService) GetAssets(ctx context.Context, input GetCategoriesInput) ([]StatementAssetsResult, error) {
 	filter := repository.AssetFilter{
 		AccountBookID: input.AccountBookID,
@@ -457,6 +464,22 @@ func (s StatementService) GetAssets(ctx context.Context, input GetCategoriesInpu
 			Frequent:   frequentResult,
 			Categories: assetResult,
 		},
+	}, nil
+}
+
+func (s StatementService) GetDefaultCategoryAsset(ctx context.Context, input GetCategoriesInput) (*StatementDefaultCategoryAssetItem, error) {
+	record, err := s.queryRepo.GetLatestCategoryAssetByType(ctx, input.AccountBookID, input.Type)
+	if err != nil {
+		return nil, err
+	}
+	if record == nil {
+		return nil, nil
+	}
+	return &StatementDefaultCategoryAssetItem{
+		CategoryName: record.CategoryName,
+		AssetName:    record.AssetName,
+		CategoryID:   record.CategoryID,
+		AssetID:      record.AssetID,
 	}, nil
 }
 

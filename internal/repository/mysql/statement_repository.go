@@ -39,6 +39,13 @@ type statementListRow struct {
 	TargetAssetName string    `gorm:"column:target_asset_name"`
 }
 
+type defaultCategoryAssetRow struct {
+	CategoryID   int64  `gorm:"column:category_id"`
+	AssetID      int64  `gorm:"column:asset_id"`
+	CategoryName string `gorm:"column:category_name"`
+	AssetName    string `gorm:"column:asset_name"`
+}
+
 type statementMutationModel struct {
 	ID            int64     `gorm:"column:id;primaryKey;autoIncrement"`
 	UserID        int64     `gorm:"column:user_id"`
@@ -374,6 +381,38 @@ func (r *StatementRepository) GetRowByIDWithRelations(ctx context.Context, state
 		return repository.StatementListRowRecord{}, repository.ErrStatementNotFound
 	}
 	return rows[0], nil
+}
+
+func (r *StatementRepository) GetLatestCategoryAssetByType(ctx context.Context, accountBookID int64, statementType string) (*repository.StatementDefaultCategoryAssetRecord, error) {
+	var row defaultCategoryAssetRow
+	err := r.db.WithContext(ctx).
+		Table("statements s").
+		Joins("LEFT JOIN categories c ON c.id = s.category_id").
+		Joins("LEFT JOIN categories cp ON cp.id = c.parent_id").
+		Joins("LEFT JOIN assets a ON a.id = s.asset_id").
+		Joins("LEFT JOIN assets ap ON ap.id = a.parent_id").
+		Select(strings.Join([]string{
+			"s.category_id AS category_id",
+			"s.asset_id AS asset_id",
+			"CASE WHEN c.parent_id > 0 THEN CONCAT(COALESCE(cp.name, ''), ' -> ', COALESCE(c.name, '')) ELSE COALESCE(c.name, '') END AS category_name",
+			"CASE WHEN a.parent_id > 0 THEN CONCAT(COALESCE(ap.name, ''), ' -> ', COALESCE(a.name, '')) ELSE COALESCE(a.name, '') END AS asset_name",
+		}, ", ")).
+		Where("s.account_book_id = ? AND s.type = ?", accountBookID, statementType).
+		Order("s.created_at DESC").
+		Take(&row).Error
+	if err != nil {
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			return nil, nil
+		}
+		return nil, err
+	}
+
+	return &repository.StatementDefaultCategoryAssetRecord{
+		CategoryID:   row.CategoryID,
+		AssetID:      row.AssetID,
+		CategoryName: row.CategoryName,
+		AssetName:    row.AssetName,
+	}, nil
 }
 
 func (r *StatementRepository) baseStatementListQuery(ctx context.Context) *gorm.DB {

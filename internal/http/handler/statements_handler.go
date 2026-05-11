@@ -254,7 +254,20 @@ func (h StatementsHandler) RemoveAvatar(c *gin.Context) {
 }
 
 func (h StatementsHandler) DefaultCategoryAsset(c *gin.Context) {
-	notImplemented(c, "GET /api/statements/default_category_asset")
+	accountBook, ok := requireAccountBook(c)
+	if !ok {
+		return
+	}
+
+	item, err := h.service.GetDefaultCategoryAsset(c.Request.Context(), service.GetCategoriesInput{
+		AccountBookID: accountBook.ID,
+		Type:          c.Query("type"),
+	})
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "failed to get default category asset"})
+		return
+	}
+	c.JSON(http.StatusOK, gin.H{"data": item})
 }
 
 func (h StatementsHandler) ExportExcel(c *gin.Context) {

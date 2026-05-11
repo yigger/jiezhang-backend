@@ -22,6 +22,7 @@ type StatementRepository interface {
 type StatementQueryRepository interface {
 	ListRowsWithRelations(ctx context.Context, filter StatementListFilter) ([]StatementListRowRecord, error)
 	GetRowByIDWithRelations(ctx context.Context, statementID int64, accountBookID int64) (StatementListRowRecord, error)
+	GetLatestCategoryAssetByType(ctx context.Context, accountBookID int64, statementType string) (*StatementDefaultCategoryAssetRecord, error)
 }
 
 type StatementListFilter struct {
@@ -116,6 +117,13 @@ type StatementWriteRecord struct {
 	District      string
 	Street        string
 	OccurredAt    time.Time
+}
+
+type StatementDefaultCategoryAssetRecord struct {
+	CategoryID   int64
+	AssetID      int64
+	CategoryName string
+	AssetName    string
 }
 
 // Keep domain import alive for future command-side repository evolution.
