@@ -43,6 +43,10 @@ func NewApp() *App {
 	}
 
 	authModule := modules.BuildAuthModule(cfg, userRepo)
+	homeHandler, err := modules.BuildHomeModule(mysqlDB)
+	if err != nil {
+		log.Fatalf("failed to build home module: %v", err)
+	}
 	statementsHandler, err := modules.BuildStatementModule(mysqlDB)
 	if err != nil {
 		log.Fatalf("failed to build statement module: %v", err)
@@ -54,7 +58,7 @@ func NewApp() *App {
 	}
 
 	authMiddleware := middleware.AuthenticateAPIV1(cfg.Env, cfg.MiniProgramAppID, userRepo, accountBookRepo, authModule.SessionCache)
-	router.Register(engine, authModule.Handler, userHandler, authMiddleware, statementsHandler, accountBookHandler)
+	router.Register(engine, authModule.Handler, userHandler, authMiddleware, homeHandler, statementsHandler, accountBookHandler)
 
 	return &App{cfg: cfg, engine: engine, db: mysqlDB}
 }

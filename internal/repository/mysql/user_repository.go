@@ -13,8 +13,10 @@ import (
 
 type userModel struct {
 	ID            int64     `gorm:"primaryKey;autoIncrement"`
-	Name          string    `gorm:"type:varchar(100);not null;default:''"`
+	UID           int64     `gorm:"column:uid;not null;default:0;uniqueIndex"`
+	Nickname      string    `gorm:"type:varchar(100);not null;default:''"`
 	Email         string    `gorm:"type:varchar(255);default:''"`
+	ThemeID       int64     `gorm:"column:theme_id;not null;default:0"`
 	OpenID        string    `gorm:"column:openid;type:varchar(255);not null;uniqueIndex"`
 	SessionKey    string    `gorm:"column:session_key;type:text;not null;default:''"`
 	ThirdSession  string    `gorm:"column:third_session;type:varchar(255);not null;default:'';index"`
@@ -104,7 +106,8 @@ func (r *UserRepository) Save(ctx context.Context, user domain.User) (domain.Use
 func toDomain(model userModel) domain.User {
 	return domain.User{
 		ID:            model.ID,
-		Name:          model.Name,
+		UID:           model.UID,
+		Nickname:      model.Nickname,
 		Email:         model.Email,
 		OpenID:        model.OpenID,
 		SessionKey:    model.SessionKey,
@@ -112,13 +115,14 @@ func toDomain(model userModel) domain.User {
 		CreatedAt:     model.CreatedAt,
 		UpdatedAt:     model.UpdatedAt,
 		AccountBookId: model.AccountBookId,
+		ThemeID:       model.ThemeID,
 	}
 }
 
 func fromDomain(user domain.User) userModel {
 	return userModel{
 		ID:            user.ID,
-		Name:          user.Name,
+		Nickname:      user.Nickname,
 		Email:         user.Email,
 		OpenID:        user.OpenID,
 		SessionKey:    user.SessionKey,
@@ -126,5 +130,6 @@ func fromDomain(user domain.User) userModel {
 		CreatedAt:     user.CreatedAt,
 		UpdatedAt:     user.UpdatedAt,
 		AccountBookId: user.AccountBookId,
+		ThemeID:       user.ThemeID,
 	}
 }

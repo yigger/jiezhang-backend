@@ -11,10 +11,10 @@ func Register(
 	authHandler handler.AuthHandler,
 	userHandler handler.UserHandler,
 	authMiddleware gin.HandlerFunc,
+	homeHandler handler.HomeHandler,
 	statementsHandler handler.StatementsHandler,
 	accountBookHandler handler.AccountBookHandler,
 ) {
-	homeHandler := handler.NewHomeHandler()
 	categoriesHandler := handler.NewCategoriesHandler()
 	assetsHandler := handler.NewAssetsHandler()
 	financesHandler := handler.NewFinancesHandler()
@@ -27,7 +27,7 @@ func Register(
 	friendsHandler := handler.NewFriendsHandler()
 	settingsHandler := handler.NewSettingsHandler()
 
-	api := engine.Group("/api/v1")
+	api := engine.Group("/api")
 	{
 		api.POST("/check_openid", authHandler.CheckOpenID)
 
@@ -38,8 +38,8 @@ func Register(
 
 			authRequired.GET("/header", homeHandler.Header)
 			authRequired.GET("/index", homeHandler.Index)
+			authRequired.GET("/settings", homeHandler.GetSettings)
 
-			authRequired.GET("/settings", userHandler.GetSettings)
 			authRequired.GET("/users", userHandler.GetUserInfo)
 			authRequired.PUT("/users/update_user", userHandler.UpdateUser)
 			authRequired.POST("/users/scan_login", userHandler.ScanLogin)
@@ -54,7 +54,7 @@ func Register(
 			authRequired.PUT("/statements/:statementId", statementsHandler.Update)
 			authRequired.GET("/statements/:statementId", statementsHandler.Show)
 			authRequired.DELETE("/statements/:statementId", statementsHandler.Delete)
-			authRequired.GET("/search", statementsHandler.Search)
+			// authRequired.GET("/search", statementsHandler.Search)
 			authRequired.GET("/statements/images", statementsHandler.Images)
 			authRequired.POST("/statements/generate_share_key", statementsHandler.GenerateShareKey)
 			authRequired.POST("/statements/export_check", statementsHandler.ExportCheck)

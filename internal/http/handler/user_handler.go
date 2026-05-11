@@ -19,10 +19,6 @@ func NewUserHandler(service service.UserService) UserHandler {
 	return UserHandler{service: service}
 }
 
-func (h UserHandler) GetSettings(c *gin.Context) {
-	notImplemented(c, "GET /api/v1/settings")
-}
-
 func (h UserHandler) GetUserInfo(c *gin.Context) {
 	h.List(c)
 }

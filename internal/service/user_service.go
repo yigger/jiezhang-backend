@@ -26,8 +26,8 @@ func (s UserService) List(ctx context.Context) ([]domain.User, error) {
 
 func (s UserService) Create(ctx context.Context, name, email string) (domain.User, error) {
 	user := domain.User{
-		Name:  strings.TrimSpace(name),
-		Email: strings.TrimSpace(strings.ToLower(email)),
+		Nickname: strings.TrimSpace(name),
+		Email:    strings.TrimSpace(strings.ToLower(email)),
 	}
 	return s.repo.Create(ctx, user)
 }
