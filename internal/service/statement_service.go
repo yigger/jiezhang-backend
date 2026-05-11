@@ -397,7 +397,7 @@ type StatementDefaultCategoryAssetItem struct {
 	AssetID      int64  `json:"asset_id"`
 }
 
-func (s StatementService) GetAssets(ctx context.Context, input GetCategoriesInput) ([]StatementAssetsResult, error) {
+func (s StatementService) GetAssets(ctx context.Context, input GetCategoriesInput) (StatementAssetsResult, error) {
 	filter := repository.AssetFilter{
 		AccountBookID: input.AccountBookID,
 		Type:          input.Type,
@@ -406,7 +406,7 @@ func (s StatementService) GetAssets(ctx context.Context, input GetCategoriesInpu
 	var assetResult []StatementAssetTreeItem
 	parents, err := s.assetRepo.ListParents(ctx, filter)
 	if err != nil {
-		return nil, err
+		return StatementAssetsResult{}, err
 	}
 	parentsIDs := make([]int64, 0, len(parents))
 	for _, p := range parents {
@@ -415,7 +415,7 @@ func (s StatementService) GetAssets(ctx context.Context, input GetCategoriesInpu
 
 	children, err := s.assetRepo.ListChildrenByParentIDs(ctx, filter, parentsIDs)
 	if err != nil {
-		return nil, err
+		return StatementAssetsResult{}, err
 	}
 	childrenByParent := make(map[int64][]StatementAssetChildItem, len(parents))
 	for _, child := range children {
@@ -442,7 +442,7 @@ func (s StatementService) GetAssets(ctx context.Context, input GetCategoriesInpu
 	frequentResult := make([]StatementFrequentAssetItem, 0)
 	frequent, err := s.assetRepo.ListFrequentChildren(ctx, filter, 10)
 	if err != nil {
-		return nil, err
+		return StatementAssetsResult{}, err
 	}
 	for _, f := range frequent {
 		var parent *StatementAssetParentItem
@@ -459,11 +459,9 @@ func (s StatementService) GetAssets(ctx context.Context, input GetCategoriesInpu
 			Parent:   parent,
 		})
 	}
-	return []StatementAssetsResult{
-		{
-			Frequent:   frequentResult,
-			Categories: assetResult,
-		},
+	return StatementAssetsResult{
+		Frequent:   frequentResult,
+		Categories: assetResult,
 	}, nil
 }
 
@@ -481,6 +479,10 @@ func (s StatementService) GetDefaultCategoryAsset(ctx context.Context, input Get
 		CategoryID:   record.CategoryID,
 		AssetID:      record.AssetID,
 	}, nil
+}
+
+func (s StatementService) GetTargetObjects(ctx context.Context, input GetCategoriesInput) ([]string, error) {
+	return s.queryRepo.ListDistinctTargetObjectsByType(ctx, input.AccountBookID, input.Type)
 }
 
 func (s StatementService) CategoriesGuess(ctx context.Context, input GetCategoriesInput) ([]StatementFrequentCategoryItem, error) {

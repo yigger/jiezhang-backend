@@ -415,6 +415,23 @@ func (r *StatementRepository) GetLatestCategoryAssetByType(ctx context.Context, 
 	}, nil
 }
 
+func (r *StatementRepository) ListDistinctTargetObjectsByType(ctx context.Context, accountBookID int64, statementType string) ([]string, error) {
+	if strings.TrimSpace(statementType) == "" {
+		return []string{}, nil
+	}
+
+	rows := make([]string, 0)
+	err := r.db.WithContext(ctx).
+		Table("statements").
+		Where("account_book_id = ? AND type = ?", accountBookID, statementType).
+		Distinct("target_object").
+		Pluck("target_object", &rows).Error
+	if err != nil {
+		return nil, err
+	}
+	return rows, nil
+}
+
 func (r *StatementRepository) baseStatementListQuery(ctx context.Context) *gorm.DB {
 	return r.db.WithContext(ctx).
 		Table("statements s").

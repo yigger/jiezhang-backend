@@ -14,6 +14,7 @@ func Register(
 	homeHandler handler.HomeHandler,
 	statementsHandler handler.StatementsHandler,
 	accountBookHandler handler.AccountBookHandler,
+	payeesHandler handler.PayeesHandler,
 ) {
 	categoriesHandler := handler.NewCategoriesHandler()
 	assetsHandler := handler.NewAssetsHandler()
@@ -23,7 +24,6 @@ func Register(
 	superStatementsHandler := handler.NewSuperStatementsHandler()
 	superChartHandler := handler.NewSuperChartHandler()
 	messagesHandler := handler.NewMessagesHandler()
-	payeesHandler := handler.NewPayeesHandler()
 	friendsHandler := handler.NewFriendsHandler()
 	settingsHandler := handler.NewSettingsHandler()
 

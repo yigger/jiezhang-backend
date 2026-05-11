@@ -41,7 +41,7 @@ func (h StatementsHandler) Categories(c *gin.Context) {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "failed to get categories"})
 		return
 	}
-	c.JSON(http.StatusOK, gin.H{"data": categories})
+	c.JSON(http.StatusOK, categories)
 }
 
 func (h StatementsHandler) Assets(c *gin.Context) {
@@ -60,7 +60,7 @@ func (h StatementsHandler) Assets(c *gin.Context) {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "failed to get assets"})
 		return
 	}
-	c.JSON(http.StatusOK, gin.H{"data": assets})
+	c.JSON(http.StatusOK, assets)
 }
 
 func (h StatementsHandler) CategoryFrequent(c *gin.Context) {
@@ -79,7 +79,7 @@ func (h StatementsHandler) CategoryFrequent(c *gin.Context) {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "failed to get frequent categories"})
 		return
 	}
-	c.JSON(http.StatusOK, gin.H{"data": categories})
+	c.JSON(http.StatusOK, categories)
 }
 
 func (h StatementsHandler) AssetFrequent(c *gin.Context) {
@@ -96,7 +96,7 @@ func (h StatementsHandler) AssetFrequent(c *gin.Context) {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "failed to get frequent assets"})
 		return
 	}
-	c.JSON(http.StatusOK, gin.H{"data": assets})
+	c.JSON(http.StatusOK, assets)
 }
 
 func (h StatementsHandler) List(c *gin.Context) {
@@ -246,7 +246,20 @@ func (h StatementsHandler) ExportCheck(c *gin.Context) {
 }
 
 func (h StatementsHandler) TargetObjects(c *gin.Context) {
-	notImplemented(c, "GET /api/statements/target_objects")
+	accountBook, ok := requireAccountBook(c)
+	if !ok {
+		return
+	}
+
+	targetObjects, err := h.service.GetTargetObjects(c.Request.Context(), service.GetCategoriesInput{
+		AccountBookID: accountBook.ID,
+		Type:          c.Query("type"),
+	})
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "failed to get target objects"})
+		return
+	}
+	c.JSON(http.StatusOK, gin.H{"data": targetObjects})
 }
 
 func (h StatementsHandler) RemoveAvatar(c *gin.Context) {
