@@ -10,6 +10,7 @@ import (
 
 	"github.com/yigger/jiezhang-backend/internal/repository"
 	"github.com/yigger/jiezhang-backend/internal/service/helper"
+	statementdto "github.com/yigger/jiezhang-backend/internal/service/statement"
 )
 
 type ValidateError struct {
@@ -38,80 +39,13 @@ func NewStatementService(statementRepo repository.StatementRepository, queryRepo
 	}
 }
 
-type StatementListInput struct {
-	UserID            int64
-	AccountBookID     int64
-	StartDate         *time.Time
-	EndDate           *time.Time
-	ParentCategoryIDs []int64
-	ExceptIDs         []int64
-	OrderBy           string
-	Limit             int
-	Offset            int
-}
-
 var (
 	ErrStatementPermissionDenied = errors.New("statement permission denied")
 	ErrStatementInvalidInput     = errors.New("statement invalid input")
 )
 
-type StatementWriteInput struct {
-	StatementID   int64
-	UserID        int64
-	AccountBookID int64
-
-	Type         string
-	Amount       float64
-	Description  string
-	Mood         string
-	CategoryID   int64
-	AssetID      int64
-	FromAssetID  int64
-	ToAssetID    int64
-	PayeeID      int64
-	TargetObject string
-
-	Location string
-	Nation   string
-	Province string
-	City     string
-	District string
-	Street   string
-
-	Date string
-	Time string
-}
-
-type StatementPatchInput struct {
-	Type         *string
-	Amount       *float64
-	Description  *string
-	Mood         *string
-	CategoryID   *int64
-	AssetID      *int64
-	FromAssetID  *int64
-	ToAssetID    *int64
-	PayeeID      *int64
-	TargetObject *string
-	Location     *string
-	Nation       *string
-	Province     *string
-	City         *string
-	District     *string
-	Street       *string
-	Date         *string
-	Time         *string
-}
-
-type StatementUpdateInput struct {
-	StatementID   int64
-	UserID        int64
-	AccountBookID int64
-	Patch         StatementPatchInput
-}
-
 // 账单列表
-func (s StatementService) GetStatements(ctx context.Context, input StatementListInput) ([]repository.StatementListItem, error) {
+func (s StatementService) GetStatements(ctx context.Context, input statementdto.ListInput) ([]statementdto.ListItem, error) {
 	filter := repository.StatementListFilter{
 		UserID:            input.UserID,
 		AccountBookID:     input.AccountBookID,
@@ -128,7 +62,7 @@ func (s StatementService) GetStatements(ctx context.Context, input StatementList
 		return nil, err
 	}
 
-	items := make([]repository.StatementListItem, 0, len(rows))
+	items := make([]statementdto.ListItem, 0, len(rows))
 	for _, row := range rows {
 		items = append(items, s.mapStatementRowToItem(row))
 	}
@@ -136,49 +70,49 @@ func (s StatementService) GetStatements(ctx context.Context, input StatementList
 	return items, nil
 }
 
-func (s StatementService) CreateStatement(ctx context.Context, input StatementWriteInput) (repository.StatementListItem, error) {
+func (s StatementService) CreateStatement(ctx context.Context, input statementdto.WriteInput) (statementdto.ListItem, error) {
 	record, err := normalizeStatementWriteInput(input)
 	if err != nil {
-		return repository.StatementListItem{}, err
+		return statementdto.ListItem{}, err
 	}
 
 	statementID, err := s.statementRepo.Create(ctx, record)
 	if err != nil {
-		return repository.StatementListItem{}, err
+		return statementdto.ListItem{}, err
 	}
 
 	row, err := s.queryRepo.GetRowByIDWithRelations(ctx, statementID, input.AccountBookID)
 	if err != nil {
-		return repository.StatementListItem{}, err
+		return statementdto.ListItem{}, err
 	}
 	return s.mapStatementRowToItem(row), nil
 }
 
-func (s StatementService) UpdateStatement(ctx context.Context, input StatementUpdateInput) (repository.StatementListItem, error) {
+func (s StatementService) UpdateStatement(ctx context.Context, input statementdto.UpdateInput) (statementdto.ListItem, error) {
 	ownerID, err := s.statementRepo.GetOwnerID(ctx, input.StatementID, input.AccountBookID)
 	if err != nil {
-		return repository.StatementListItem{}, err
+		return statementdto.ListItem{}, err
 	}
 	if ownerID != input.UserID {
-		return repository.StatementListItem{}, ErrStatementPermissionDenied
+		return statementdto.ListItem{}, ErrStatementPermissionDenied
 	}
 
 	currentRow, err := s.queryRepo.GetRowByIDWithRelations(ctx, input.StatementID, input.AccountBookID)
 	if err != nil {
-		return repository.StatementListItem{}, err
+		return statementdto.ListItem{}, err
 	}
 
 	merged := s.mergeStatementPatch(currentRow, input)
 	record, err := normalizeStatementWriteInput(merged)
 	if err != nil {
-		return repository.StatementListItem{}, err
+		return statementdto.ListItem{}, err
 	}
 	if err := s.statementRepo.UpdateByID(ctx, input.StatementID, input.AccountBookID, record); err != nil {
-		return repository.StatementListItem{}, err
+		return statementdto.ListItem{}, err
 	}
 	row, err := s.queryRepo.GetRowByIDWithRelations(ctx, input.StatementID, input.AccountBookID)
 	if err != nil {
-		return repository.StatementListItem{}, err
+		return statementdto.ListItem{}, err
 	}
 	return s.mapStatementRowToItem(row), nil
 }
@@ -194,7 +128,7 @@ func (s StatementService) DeleteStatement(ctx context.Context, statementID int64
 	return s.statementRepo.DeleteByID(ctx, statementID, accountBookID)
 }
 
-func normalizeStatementWriteInput(input StatementWriteInput) (repository.StatementWriteRecord, error) {
+func normalizeStatementWriteInput(input statementdto.WriteInput) (repository.StatementWriteRecord, error) {
 	statementType := strings.TrimSpace(input.Type)
 	if statementType == "" {
 		return repository.StatementWriteRecord{}, ValidateError{Message: "invalid statement type"}
@@ -290,8 +224,8 @@ func int64PtrOrNil(v int64) *int64 {
 	return &n
 }
 
-func (s StatementService) mergeStatementPatch(current repository.StatementListRowRecord, update StatementUpdateInput) StatementWriteInput {
-	input := StatementWriteInput{
+func (s StatementService) mergeStatementPatch(current repository.StatementListRowRecord, update statementdto.UpdateInput) statementdto.WriteInput {
+	input := statementdto.WriteInput{
 		StatementID:   update.StatementID,
 		UserID:        update.UserID,
 		AccountBookID: update.AccountBookID,
@@ -378,9 +312,9 @@ func (s StatementService) mergeStatementPatch(current repository.StatementListRo
 	return input
 }
 
-func (s StatementService) mapStatementRowToItem(row repository.StatementListRowRecord) repository.StatementListItem {
-	return repository.StatementListItem{
-		StatementBaseItem: repository.StatementBaseItem{
+func (s StatementService) mapStatementRowToItem(row repository.StatementListRowRecord) statementdto.ListItem {
+	return statementdto.ListItem{
+		BaseItem: statementdto.BaseItem{
 			ID:           row.ID,
 			Type:         row.Type,
 			Amount:       row.Amount,
@@ -398,7 +332,7 @@ func (s StatementService) mapStatementRowToItem(row repository.StatementListRowR
 			Time:         row.CreatedAt.Format("15:04:05"),
 			TimeStr:      row.CreatedAt.Format("01-02 15:04"),
 			Week:         helper.WeekdayCN(row.CreatedAt.Weekday()),
-			Payee: repository.Payee{
+			Payee: statementdto.Payee{
 				ID:   row.PayeeID,
 				Name: row.PayeeName,
 			},
@@ -709,14 +643,14 @@ func (s StatementService) AssetsGuess(ctx context.Context, input GetCategoriesIn
 	return items, nil
 }
 
-func (s StatementService) GetStatementByID(ctx context.Context, statementID int64, accountBookID int64) (repository.StatementDetailItem, error) {
+func (s StatementService) GetStatementByID(ctx context.Context, statementID int64, accountBookID int64) (statementdto.DetailItem, error) {
 	row, err := s.queryRepo.GetRowByIDWithRelations(ctx, statementID, accountBookID)
 	if err != nil {
-		return repository.StatementDetailItem{}, err
+		return statementdto.DetailItem{}, err
 	}
 
-	return repository.StatementDetailItem{
-		StatementBaseItem: repository.StatementBaseItem{
+	return statementdto.DetailItem{
+		BaseItem: statementdto.BaseItem{
 			ID:           row.ID,
 			Type:         row.Type,
 			Amount:       row.Amount,
@@ -734,7 +668,7 @@ func (s StatementService) GetStatementByID(ctx context.Context, statementID int6
 			Time:         row.CreatedAt.Format("15:04:05"),
 			TimeStr:      row.CreatedAt.Format("01-02 15:04"),
 			Week:         helper.WeekdayCN(row.CreatedAt.Weekday()),
-			Payee: repository.Payee{
+			Payee: statementdto.Payee{
 				ID:   row.PayeeID,
 				Name: row.PayeeName,
 			},
@@ -748,7 +682,7 @@ func (s StatementService) GetStatementByID(ctx context.Context, statementID int6
 		HasPic:      row.HasPic,
 		CreatedAt:   row.CreatedAt,
 		UpdatedAt:   row.UpdatedAt,
-		UploadFIles: []interface{}{},
+		UploadFiles: []interface{}{},
 	}, nil
 }
 

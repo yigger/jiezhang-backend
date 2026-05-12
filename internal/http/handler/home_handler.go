@@ -13,6 +13,7 @@ import (
 
 	"github.com/yigger/jiezhang-backend/internal/domain"
 	"github.com/yigger/jiezhang-backend/internal/service"
+	statementdto "github.com/yigger/jiezhang-backend/internal/service/statement"
 )
 
 type HomeHandler struct {
@@ -152,7 +153,7 @@ func (h HomeHandler) Index(c *gin.Context) {
 	offset := 0
 	limit := 200
 	for {
-		list, err := h.statement.GetStatements(c.Request.Context(), service.StatementListInput{
+		list, err := h.statement.GetStatements(c.Request.Context(), statementdto.ListInput{
 			UserID:        currentUser.ID,
 			AccountBookID: accountBook.ID,
 			StartDate:     &start,

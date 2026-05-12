@@ -36,60 +36,6 @@ type StatementListFilter struct {
 	Offset            int
 }
 
-// :id, :type, :description, :title, :amount, :target_object, :mood
-
-type Payee struct {
-	ID   int64  `json:"id"`
-	Name string `json:"name"`
-}
-
-type StatementBaseItem struct {
-	ID           int64   `json:"id"`
-	Type         string  `json:"type"`
-	Amount       float64 `json:"amount"`
-	Description  string  `json:"description"`
-	Title        string  `json:"title"`
-	TargetObject string  `json:"target_object"`
-	Mood         string  `json:"mood"`
-	Money        string  `json:"money"`
-	Category     string  `json:"category"`
-	IconPath     string  `json:"icon_path"`
-	Asset        string  `json:"asset"`
-	Date         string  `json:"date"`
-	Time         string  `json:"time"`
-	TimeStr      string  `json:"timeStr"`
-	Week         string  `json:"week"`
-	Payee        Payee   `json:"payee"`
-	Remark       string  `json:"remark"`
-	CategoryID   int64   `json:"category_id"`
-	AssetID      int64   `json:"asset_id"`
-}
-
-type StatementListItem struct {
-	StatementBaseItem
-	Location  string    `json:"location"`
-	Province  string    `json:"province"`
-	City      string    `json:"city"`
-	Street    string    `json:"street"`
-	MonthDay  string    `json:"month_day"`
-	HasPic    bool      `json:"has_pic"`
-	CreatedAt time.Time `json:"created_at"`
-	UpdatedAt time.Time `json:"updated_at"`
-}
-
-type StatementDetailItem struct {
-	StatementBaseItem
-	Location    string        `json:"location"`
-	Province    string        `json:"province"`
-	City        string        `json:"city"`
-	Street      string        `json:"street"`
-	MonthDay    string        `json:"month_day"`
-	HasPic      bool          `json:"has_pic"`
-	CreatedAt   time.Time     `json:"created_at"`
-	UpdatedAt   time.Time     `json:"updated_at"`
-	UploadFIles []interface{} `json:"upload_files"`
-}
-
 type StatementListRowRecord struct {
 	ID              int64
 	Type            string

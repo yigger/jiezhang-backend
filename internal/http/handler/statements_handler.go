@@ -9,8 +9,10 @@ import (
 
 	"github.com/gin-gonic/gin"
 
+	httpdto "github.com/yigger/jiezhang-backend/internal/http/dto"
 	"github.com/yigger/jiezhang-backend/internal/repository"
 	"github.com/yigger/jiezhang-backend/internal/service"
+	statementdto "github.com/yigger/jiezhang-backend/internal/service/statement"
 )
 
 type StatementsHandler struct {
@@ -177,7 +179,7 @@ func (h StatementsHandler) Update(c *gin.Context) {
 		return
 	}
 
-	statement, err := h.service.UpdateStatement(c.Request.Context(), service.StatementUpdateInput{
+	statement, err := h.service.UpdateStatement(c.Request.Context(), statementdto.UpdateInput{
 		StatementID:   statementID,
 		UserID:        currentUser.ID,
 		AccountBookID: accountBook.ID,
@@ -300,7 +302,7 @@ func (h StatementsHandler) ExportExcel(c *gin.Context) {
 	notImplemented(c, "GET /api/statements/export_excel")
 }
 
-func buildStatementListInput(c *gin.Context, userID int64, accountBookID int64) (service.StatementListInput, error) {
+func buildStatementListInput(c *gin.Context, userID int64, accountBookID int64) (statementdto.ListInput, error) {
 	var startDate *time.Time
 	var endDate *time.Time
 	var err error
@@ -308,14 +310,14 @@ func buildStatementListInput(c *gin.Context, userID int64, accountBookID int64) 
 	if v := strings.TrimSpace(c.Query("start_date")); v != "" {
 		t, parseErr := parseFlexibleDateTime(v)
 		if parseErr != nil {
-			return service.StatementListInput{}, parseErr
+			return statementdto.ListInput{}, parseErr
 		}
 		startDate = &t
 	}
 	if v := strings.TrimSpace(c.Query("end_date")); v != "" {
 		t, parseErr := parseFlexibleDateTime(v)
 		if parseErr != nil {
-			return service.StatementListInput{}, parseErr
+			return statementdto.ListInput{}, parseErr
 		}
 		endDate = &t
 	}
@@ -324,7 +326,7 @@ func buildStatementListInput(c *gin.Context, userID int64, accountBookID int64) 
 	if v := strings.TrimSpace(c.Query("limit")); v != "" {
 		limit, err = strconv.Atoi(v)
 		if err != nil || limit <= 0 {
-			return service.StatementListInput{}, errInvalidParam("limit")
+			return statementdto.ListInput{}, errInvalidParam("limit")
 		}
 	}
 
@@ -332,21 +334,21 @@ func buildStatementListInput(c *gin.Context, userID int64, accountBookID int64) 
 	if v := strings.TrimSpace(c.Query("offset")); v != "" {
 		offset, err = strconv.Atoi(v)
 		if err != nil || offset < 0 {
-			return service.StatementListInput{}, errInvalidParam("offset")
+			return statementdto.ListInput{}, errInvalidParam("offset")
 		}
 	}
 
 	parentCategoryIDs, err := parseCSVInt64(c.Query("category_ids"))
 	if err != nil {
-		return service.StatementListInput{}, errInvalidParam("category_ids")
+		return statementdto.ListInput{}, errInvalidParam("category_ids")
 	}
 
 	exceptIDs, err := parseCSVInt64(c.Query("except_ids"))
 	if err != nil {
-		return service.StatementListInput{}, errInvalidParam("except_ids")
+		return statementdto.ListInput{}, errInvalidParam("except_ids")
 	}
 
-	return service.StatementListInput{
+	return statementdto.ListInput{
 		UserID:            userID,
 		AccountBookID:     accountBookID,
 		StartDate:         startDate,
@@ -403,70 +405,20 @@ func errInvalidParam(field string) error {
 	return invalidParamError{field: field}
 }
 
-type statementWritePayload struct {
-	Type         string `json:"type"`
-	Amount       string `json:"amount"`
-	Description  string `json:"description"`
-	Mood         string `json:"mood"`
-	CategoryID   int64  `json:"category_id"`
-	AssetID      int64  `json:"asset_id"`
-	FromAssetID  int64  `json:"from_asset_id"`
-	ToAssetID    int64  `json:"to_asset_id"`
-	PayeeID      int64  `json:"payee_id"`
-	TargetObject string `json:"target_object"`
-	Location     string `json:"location"`
-	Nation       string `json:"nation"`
-	Province     string `json:"province"`
-	City         string `json:"city"`
-	District     string `json:"district"`
-	Street       string `json:"street"`
-	Date         string `json:"date"`
-	Time         string `json:"time"`
-}
-
-type statementPatchPayload struct {
-	Type         *string `json:"type"`
-	Amount       *string `json:"amount"`
-	Description  *string `json:"description"`
-	Mood         *string `json:"mood"`
-	CategoryID   *int64  `json:"category_id"`
-	AssetID      *int64  `json:"asset_id"`
-	FromAssetID  *int64  `json:"from_asset_id"`
-	ToAssetID    *int64  `json:"to_asset_id"`
-	PayeeID      *int64  `json:"payee_id"`
-	TargetObject *string `json:"target_object"`
-	Location     *string `json:"location"`
-	Nation       *string `json:"nation"`
-	Province     *string `json:"province"`
-	City         *string `json:"city"`
-	District     *string `json:"district"`
-	Street       *string `json:"street"`
-	Date         *string `json:"date"`
-	Time         *string `json:"time"`
-}
-
-type statementWriteRequest struct {
-	Statement statementWritePayload `json:"statement"`
-}
-
-type statementPatchRequest struct {
-	Statement statementPatchPayload `json:"statement"`
-}
-
-func buildStatementWriteInput(c *gin.Context) (service.StatementWriteInput, error) {
-	var req statementWriteRequest
+func buildStatementWriteInput(c *gin.Context) (statementdto.WriteInput, error) {
+	var req httpdto.StatementWriteRequest
 	if err := c.ShouldBindJSON(&req); err != nil {
-		return service.StatementWriteInput{}, err
+		return statementdto.WriteInput{}, err
 	}
 
 	p := req.Statement
 
 	amount, err := strconv.ParseFloat(p.Amount, 64)
 	if err != nil {
-		return service.StatementWriteInput{}, errInvalidParam("amount")
+		return statementdto.WriteInput{}, errInvalidParam("amount")
 	}
 
-	return service.StatementWriteInput{
+	return statementdto.WriteInput{
 		Type:         p.Type,
 		Amount:       amount,
 		Description:  p.Description,
@@ -488,15 +440,15 @@ func buildStatementWriteInput(c *gin.Context) (service.StatementWriteInput, erro
 	}, nil
 }
 
-func buildStatementPatchInput(c *gin.Context) (service.StatementPatchInput, error) {
-	var req statementPatchRequest
+func buildStatementPatchInput(c *gin.Context) (statementdto.PatchInput, error) {
+	var req httpdto.StatementPatchRequest
 	// 不用指针时，ShouldBindJSON 后 1 和 2 会混在一起，Go 看起来都像零值，没法判断“用户是没传，还是故意要改成零值”。
 	if err := c.ShouldBindJSON(&req); err != nil {
-		return service.StatementPatchInput{}, err
+		return statementdto.PatchInput{}, err
 	}
 
 	p := req.Statement
-	input := service.StatementPatchInput{
+	input := statementdto.PatchInput{
 		Type:         p.Type,
 		Description:  p.Description,
 		Mood:         p.Mood,
@@ -519,7 +471,7 @@ func buildStatementPatchInput(c *gin.Context) (service.StatementPatchInput, erro
 	if p.Amount != nil {
 		amount, err := strconv.ParseFloat(strings.TrimSpace(*p.Amount), 64)
 		if err != nil {
-			return service.StatementPatchInput{}, errInvalidParam("amount")
+			return statementdto.PatchInput{}, errInvalidParam("amount")
 		}
 		input.Amount = &amount
 	}
