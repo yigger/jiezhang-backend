@@ -15,12 +15,12 @@ func Register(
 	statementsHandler handler.StatementsHandler,
 	accountBookHandler handler.AccountBookHandler,
 	payeesHandler handler.PayeesHandler,
+	statisticsHandler handler.StatisticsHandler,
 ) {
 	categoriesHandler := handler.NewCategoriesHandler()
 	assetsHandler := handler.NewAssetsHandler()
 	financesHandler := handler.NewFinancesHandler()
 	budgetsHandler := handler.NewBudgetsHandler()
-	statisticsHandler := handler.NewStatisticsHandler()
 	superStatementsHandler := handler.NewSuperStatementsHandler()
 	superChartHandler := handler.NewSuperChartHandler()
 	messagesHandler := handler.NewMessagesHandler()

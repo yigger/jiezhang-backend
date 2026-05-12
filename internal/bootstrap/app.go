@@ -64,8 +64,17 @@ func NewApp() *App {
 		log.Fatalf("failed to build account book module: %v", err)
 	}
 
+	statisticHandler, err := modules.BuildStatisticModule(mysqlDB)
+	if err != nil {
+		log.Fatalf("failed to build statistic module: %v", err)
+	}
+
 	authMiddleware := middleware.AuthenticateAPIV1(cfg.Env, cfg.MiniProgramAppID, userRepo, accountBookRepo, authModule.SessionCache)
-	router.Register(engine, authModule.Handler, userHandler, authMiddleware, homeHandler, statementsHandler, accountBookHandler, payeesHandler)
+	router.Register(engine, authModule.Handler,
+		userHandler, authMiddleware,
+		homeHandler, statementsHandler,
+		accountBookHandler, payeesHandler,
+		statisticHandler)
 
 	return &App{cfg: cfg, engine: engine, db: mysqlDB}
 }

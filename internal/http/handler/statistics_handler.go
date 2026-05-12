@@ -1,15 +1,37 @@
 package handler
 
-import "github.com/gin-gonic/gin"
+import (
+	"fmt"
+	"net/http"
+	"time"
 
-type StatisticsHandler struct{}
+	"github.com/gin-gonic/gin"
+	"github.com/yigger/jiezhang-backend/internal/service"
+)
 
-func NewStatisticsHandler() StatisticsHandler {
-	return StatisticsHandler{}
+type StatisticsHandler struct {
+	service service.StatisticsService
+}
+
+func NewStatisticsHandler(service service.StatisticsService) StatisticsHandler {
+	return StatisticsHandler{service: service}
 }
 
 func (h StatisticsHandler) CalendarData(c *gin.Context) {
-	notImplemented(c, "GET /api/chart/calendar_data")
+	accountBook, _ := requireAccountBook(c)
+	query := c.Query("date")
+	dateQuery := fmt.Sprintf("%s-01", query)
+	date, err := time.Parse("2006-01-02", dateQuery)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "invalid date params"})
+		return
+	}
+
+	data, err := h.service.GetCalendarData(c, date, accountBook.ID)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+	}
+	c.JSON(http.StatusOK, data)
 }
 
 func (h StatisticsHandler) OverviewHeader(c *gin.Context) {

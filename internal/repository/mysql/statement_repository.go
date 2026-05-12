@@ -17,6 +17,30 @@ type StatementRepository struct {
 	db *gorm.DB
 }
 
+type statementBase struct {
+	ID            int64     `gorm:"column:id"`
+	Type          string    `gorm:"column:type"`
+	Amount        float64   `gorm:"column:amount"`
+	CategoryID    int64     `gorm:"column:category_id"`
+	AssetID       int64     `gorm:"column:asset_id"`
+	TargetAssetID int64     `gorm:"column:target_asset_id"`
+	TargetObject  string    `gorm:"column:target_object"`
+	Description   string    `gorm:"column:description"`
+	Remark        string    `gorm:"column:remark"`
+	Mood          string    `gorm:"column:mood"`
+	IconPath      string    `gorm:"column:icon_path"`
+	CreatedAt     time.Time `gorm:"column:created_at"`
+	UpdatedAt     time.Time `gorm:"column:updated_at"`
+	CategoryName  string    `gorm:"column:category_name"`
+	AssetName     string    `gorm:"column:asset_name"`
+	Location      string    `gorm:"column:location"`
+	Nation        string    `gorm:"column:nation"`
+	Province      string    `gorm:"column:province"`
+	City          string    `gorm:"column:city"`
+	District      string    `gorm:"column:district"`
+	Street        string    `gorm:"column:street"`
+}
+
 type statementListRow struct {
 	ID              int64     `gorm:"column:id"`
 	Type            string    `gorm:"column:type"`
@@ -235,6 +259,26 @@ func (r *StatementRepository) DeleteByID(ctx context.Context, statementID int64,
 		}
 		return nil
 	})
+}
+
+func (r *StatementRepository) StatisticGroupDate(ctx context.Context, date time.Time, accountBookID int64) ([]repository.CalendarDataItem, error) {
+	var rows []repository.CalendarDataItem
+	err := r.db.WithContext(ctx).
+		Table("statements").
+		Select("day, SUM(CASE WHEN type = 'income' THEN amount ELSE 0 END) as income, SUM(CASE WHEN type = 'expend' THEN amount ELSE 0 END) as expend").
+		Where("account_book_id = ? AND year = ? AND month = ?", accountBookID, date.Year(), int(date.Month())).
+		Group("day").
+		Order("day ASC").
+		Scan(&rows).Error
+
+	if err != nil {
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			return nil, nil
+		}
+		return nil, err
+	}
+
+	return rows, nil
 }
 
 func (r *StatementRepository) getStatementForUpdate(tx *gorm.DB, statementID int64, accountBookID int64) (statementMutationModel, error) {
