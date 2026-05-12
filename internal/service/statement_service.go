@@ -82,6 +82,34 @@ type StatementWriteInput struct {
 	Time string
 }
 
+type StatementPatchInput struct {
+	Type         *string
+	Amount       *float64
+	Description  *string
+	Mood         *string
+	CategoryID   *int64
+	AssetID      *int64
+	FromAssetID  *int64
+	ToAssetID    *int64
+	PayeeID      *int64
+	TargetObject *string
+	Location     *string
+	Nation       *string
+	Province     *string
+	City         *string
+	District     *string
+	Street       *string
+	Date         *string
+	Time         *string
+}
+
+type StatementUpdateInput struct {
+	StatementID   int64
+	UserID        int64
+	AccountBookID int64
+	Patch         StatementPatchInput
+}
+
 // 账单列表
 func (s StatementService) GetStatements(ctx context.Context, input StatementListInput) ([]repository.StatementListItem, error) {
 	filter := repository.StatementListFilter{
@@ -126,7 +154,7 @@ func (s StatementService) CreateStatement(ctx context.Context, input StatementWr
 	return s.mapStatementRowToItem(row), nil
 }
 
-func (s StatementService) UpdateStatement(ctx context.Context, input StatementWriteInput) (repository.StatementListItem, error) {
+func (s StatementService) UpdateStatement(ctx context.Context, input StatementUpdateInput) (repository.StatementListItem, error) {
 	ownerID, err := s.statementRepo.GetOwnerID(ctx, input.StatementID, input.AccountBookID)
 	if err != nil {
 		return repository.StatementListItem{}, err
@@ -135,7 +163,13 @@ func (s StatementService) UpdateStatement(ctx context.Context, input StatementWr
 		return repository.StatementListItem{}, ErrStatementPermissionDenied
 	}
 
-	record, err := normalizeStatementWriteInput(input)
+	currentRow, err := s.queryRepo.GetRowByIDWithRelations(ctx, input.StatementID, input.AccountBookID)
+	if err != nil {
+		return repository.StatementListItem{}, err
+	}
+
+	merged := s.mergeStatementPatch(currentRow, input)
+	record, err := normalizeStatementWriteInput(merged)
 	if err != nil {
 		return repository.StatementListItem{}, err
 	}
@@ -256,6 +290,94 @@ func int64PtrOrNil(v int64) *int64 {
 	return &n
 }
 
+func (s StatementService) mergeStatementPatch(current repository.StatementListRowRecord, update StatementUpdateInput) StatementWriteInput {
+	input := StatementWriteInput{
+		StatementID:   update.StatementID,
+		UserID:        update.UserID,
+		AccountBookID: update.AccountBookID,
+		Type:          current.Type,
+		Amount:        current.Amount,
+		Description:   current.Description,
+		Mood:          current.Mood,
+		CategoryID:    current.CategoryID,
+		AssetID:       current.AssetID,
+		FromAssetID:   current.AssetID,
+		TargetObject:  current.TargetObject,
+		Location:      current.Location,
+		Nation:        current.Nation,
+		Province:      current.Province,
+		City:          current.City,
+		District:      current.District,
+		Street:        current.Street,
+		Date:          current.CreatedAt.Format("2006-01-02"),
+		Time:          current.CreatedAt.Format("15:04:05"),
+	}
+	if current.TargetAssetID > 0 {
+		input.ToAssetID = current.TargetAssetID
+	}
+	if current.PayeeID > 0 {
+		input.PayeeID = current.PayeeID
+	}
+
+	p := update.Patch
+	if p.Type != nil {
+		input.Type = strings.TrimSpace(*p.Type)
+	}
+	if p.Amount != nil {
+		input.Amount = *p.Amount
+	}
+	if p.Description != nil {
+		input.Description = *p.Description
+	}
+	if p.Mood != nil {
+		input.Mood = *p.Mood
+	}
+	if p.CategoryID != nil {
+		input.CategoryID = *p.CategoryID
+	}
+	if p.AssetID != nil {
+		input.AssetID = *p.AssetID
+	}
+	if p.FromAssetID != nil {
+		input.FromAssetID = *p.FromAssetID
+	}
+	if p.ToAssetID != nil {
+		input.ToAssetID = *p.ToAssetID
+	}
+	if p.PayeeID != nil {
+		input.PayeeID = *p.PayeeID
+	}
+	if p.TargetObject != nil {
+		input.TargetObject = *p.TargetObject
+	}
+	if p.Location != nil {
+		input.Location = *p.Location
+	}
+	if p.Nation != nil {
+		input.Nation = *p.Nation
+	}
+	if p.Province != nil {
+		input.Province = *p.Province
+	}
+	if p.City != nil {
+		input.City = *p.City
+	}
+	if p.District != nil {
+		input.District = *p.District
+	}
+	if p.Street != nil {
+		input.Street = *p.Street
+	}
+	if p.Date != nil {
+		input.Date = strings.TrimSpace(*p.Date)
+	}
+	if p.Time != nil {
+		input.Time = strings.TrimSpace(*p.Time)
+	}
+
+	return input
+}
+
 func (s StatementService) mapStatementRowToItem(row repository.StatementListRowRecord) repository.StatementListItem {
 	return repository.StatementListItem{
 		StatementBaseItem: repository.StatementBaseItem{
@@ -263,6 +385,8 @@ func (s StatementService) mapStatementRowToItem(row repository.StatementListRowR
 			Type:         row.Type,
 			Amount:       row.Amount,
 			Description:  row.Description,
+			CategoryID:   row.CategoryID,
+			AssetID:      row.AssetID,
 			Title:        helper.StatementTitle(row),
 			TargetObject: row.TargetObject,
 			Mood:         row.Mood,
@@ -585,12 +709,47 @@ func (s StatementService) AssetsGuess(ctx context.Context, input GetCategoriesIn
 	return items, nil
 }
 
-func (s StatementService) GetStatementByID(ctx context.Context, statementID int64, accountBookID int64) (repository.StatementListItem, error) {
+func (s StatementService) GetStatementByID(ctx context.Context, statementID int64, accountBookID int64) (repository.StatementDetailItem, error) {
 	row, err := s.queryRepo.GetRowByIDWithRelations(ctx, statementID, accountBookID)
 	if err != nil {
-		return repository.StatementListItem{}, err
+		return repository.StatementDetailItem{}, err
 	}
-	return s.mapStatementRowToItem(row), nil
+
+	return repository.StatementDetailItem{
+		StatementBaseItem: repository.StatementBaseItem{
+			ID:           row.ID,
+			Type:         row.Type,
+			Amount:       row.Amount,
+			Description:  row.Description,
+			CategoryID:   row.CategoryID,
+			AssetID:      row.AssetID,
+			Title:        helper.StatementTitle(row),
+			TargetObject: row.TargetObject,
+			Mood:         row.Mood,
+			Money:        fmt.Sprintf("%.2f", row.Amount),
+			Category:     row.CategoryName,
+			IconPath:     s.buildPublicURL(row.IconPath),
+			Asset:        row.AssetName,
+			Date:         row.CreatedAt.Format("2006-01-02"),
+			Time:         row.CreatedAt.Format("15:04:05"),
+			TimeStr:      row.CreatedAt.Format("01-02 15:04"),
+			Week:         helper.WeekdayCN(row.CreatedAt.Weekday()),
+			Payee: repository.Payee{
+				ID:   row.PayeeID,
+				Name: row.PayeeName,
+			},
+			Remark: row.Remark,
+		},
+		Location:    row.Location,
+		Province:    row.Province,
+		City:        row.City,
+		Street:      row.Street,
+		MonthDay:    row.CreatedAt.Format("01-02"),
+		HasPic:      row.HasPic,
+		CreatedAt:   row.CreatedAt,
+		UpdatedAt:   row.UpdatedAt,
+		UploadFIles: []interface{}{},
+	}, nil
 }
 
 func (s StatementService) buildPublicURL(raw string) string {

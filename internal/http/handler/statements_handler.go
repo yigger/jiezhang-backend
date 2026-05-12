@@ -171,16 +171,18 @@ func (h StatementsHandler) Update(c *gin.Context) {
 		return
 	}
 
-	input, err := buildStatementWriteInput(c)
+	patch, err := buildStatementPatchInput(c)
 	if err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 		return
 	}
-	input.StatementID = statementID
-	input.UserID = currentUser.ID
-	input.AccountBookID = accountBook.ID
 
-	statement, err := h.service.UpdateStatement(c.Request.Context(), input)
+	statement, err := h.service.UpdateStatement(c.Request.Context(), service.StatementUpdateInput{
+		StatementID:   statementID,
+		UserID:        currentUser.ID,
+		AccountBookID: accountBook.ID,
+		Patch:         patch,
+	})
 	if err != nil {
 		switch {
 		case errors.Is(err, service.ErrStatementPermissionDenied):
@@ -199,15 +201,13 @@ func (h StatementsHandler) Update(c *gin.Context) {
 
 func (h StatementsHandler) Show(c *gin.Context) {
 	accountBook, _ := requireAccountBook(c)
-
-	statementID := c.Param("statementId")
-	if statementID == "" {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "statement_id is required"})
+	statementID, err := parseStatementID(c)
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "invalid statementId"})
 		return
 	}
-	statementIDInt, _ := strconv.ParseInt(statementID, 10, 64)
 
-	statement, err := h.service.GetStatementByID(c.Request.Context(), statementIDInt, accountBook.ID)
+	statement, err := h.service.GetStatementByID(c.Request.Context(), statementID, accountBook.ID)
 	if err != nil {
 		c.JSON(http.StatusOK, gin.H{"status": 500})
 		return
@@ -424,8 +424,33 @@ type statementWritePayload struct {
 	Time         string `json:"time"`
 }
 
+type statementPatchPayload struct {
+	Type         *string `json:"type"`
+	Amount       *string `json:"amount"`
+	Description  *string `json:"description"`
+	Mood         *string `json:"mood"`
+	CategoryID   *int64  `json:"category_id"`
+	AssetID      *int64  `json:"asset_id"`
+	FromAssetID  *int64  `json:"from_asset_id"`
+	ToAssetID    *int64  `json:"to_asset_id"`
+	PayeeID      *int64  `json:"payee_id"`
+	TargetObject *string `json:"target_object"`
+	Location     *string `json:"location"`
+	Nation       *string `json:"nation"`
+	Province     *string `json:"province"`
+	City         *string `json:"city"`
+	District     *string `json:"district"`
+	Street       *string `json:"street"`
+	Date         *string `json:"date"`
+	Time         *string `json:"time"`
+}
+
 type statementWriteRequest struct {
 	Statement statementWritePayload `json:"statement"`
+}
+
+type statementPatchRequest struct {
+	Statement statementPatchPayload `json:"statement"`
 }
 
 func buildStatementWriteInput(c *gin.Context) (service.StatementWriteInput, error) {
@@ -461,6 +486,44 @@ func buildStatementWriteInput(c *gin.Context) (service.StatementWriteInput, erro
 		Date:         p.Date,
 		Time:         p.Time,
 	}, nil
+}
+
+func buildStatementPatchInput(c *gin.Context) (service.StatementPatchInput, error) {
+	var req statementPatchRequest
+	// 不用指针时，ShouldBindJSON 后 1 和 2 会混在一起，Go 看起来都像零值，没法判断“用户是没传，还是故意要改成零值”。
+	if err := c.ShouldBindJSON(&req); err != nil {
+		return service.StatementPatchInput{}, err
+	}
+
+	p := req.Statement
+	input := service.StatementPatchInput{
+		Type:         p.Type,
+		Description:  p.Description,
+		Mood:         p.Mood,
+		CategoryID:   p.CategoryID,
+		AssetID:      p.AssetID,
+		FromAssetID:  p.FromAssetID,
+		ToAssetID:    p.ToAssetID,
+		PayeeID:      p.PayeeID,
+		TargetObject: p.TargetObject,
+		Location:     p.Location,
+		Nation:       p.Nation,
+		Province:     p.Province,
+		City:         p.City,
+		District:     p.District,
+		Street:       p.Street,
+		Date:         p.Date,
+		Time:         p.Time,
+	}
+
+	if p.Amount != nil {
+		amount, err := strconv.ParseFloat(strings.TrimSpace(*p.Amount), 64)
+		if err != nil {
+			return service.StatementPatchInput{}, errInvalidParam("amount")
+		}
+		input.Amount = &amount
+	}
+	return input, nil
 }
 
 func parseStatementID(c *gin.Context) (int64, error) {

@@ -21,6 +21,10 @@ type statementListRow struct {
 	ID              int64     `gorm:"column:id"`
 	Type            string    `gorm:"column:type"`
 	Amount          float64   `gorm:"column:amount"`
+	CategoryID      int64     `gorm:"column:category_id"`
+	AssetID         int64     `gorm:"column:asset_id"`
+	TargetAssetID   int64     `gorm:"column:target_asset_id"`
+	TargetObject    string    `gorm:"column:target_object"`
 	Description     string    `gorm:"column:description"`
 	Remark          string    `gorm:"column:remark"`
 	Mood            string    `gorm:"column:mood"`
@@ -30,8 +34,10 @@ type statementListRow struct {
 	CategoryName    string    `gorm:"column:category_name"`
 	AssetName       string    `gorm:"column:asset_name"`
 	Location        string    `gorm:"column:location"`
+	Nation          string    `gorm:"column:nation"`
 	Province        string    `gorm:"column:province"`
 	City            string    `gorm:"column:city"`
+	District        string    `gorm:"column:district"`
 	Street          string    `gorm:"column:street"`
 	HasPic          bool      `gorm:"column:has_pic"`
 	PayeeID         int64     `gorm:"column:payee_id"`
@@ -449,14 +455,20 @@ func (r *StatementRepository) scanStatementRows(query *gorm.DB) ([]repository.St
 		"s.type AS type",
 		"s.amount AS amount",
 		"s.mood AS mood",
+		"s.category_id AS category_id",
+		"s.asset_id AS asset_id",
 		"s.description AS description",
 		"COALESCE(abc.remark, '') AS remark",
 		"s.created_at AS created_at",
 		"s.updated_at AS updated_at",
 		"s.location AS location",
+		"s.nation AS nation",
 		"s.province AS province",
 		"s.city AS city",
+		"s.district AS district",
 		"s.street AS street",
+		"COALESCE(s.target_asset_id, 0) AS target_asset_id",
+		"COALESCE(s.target_object, '') AS target_object",
 		"EXISTS (SELECT 1 FROM user_assets ua WHERE ua.imageable_type = 'Statement' AND ua.type = 'StatementAvatar' AND ua.imageable_id = s.id) AS has_pic",
 		"c.icon_path AS icon_path",
 		"ta.name AS target_asset_name",
@@ -484,13 +496,19 @@ func (r *StatementRepository) scanStatementRows(query *gorm.DB) ([]repository.St
 			CategoryName:    row.CategoryName,
 			AssetName:       row.AssetName,
 			Location:        row.Location,
+			Nation:          row.Nation,
 			Province:        row.Province,
 			City:            row.City,
+			District:        row.District,
 			Street:          row.Street,
 			HasPic:          row.HasPic,
 			PayeeID:         row.PayeeID,
 			PayeeName:       row.PayeeName,
+			TargetAssetID:   row.TargetAssetID,
 			TargetAssetName: row.TargetAssetName,
+			TargetObject:    row.TargetObject,
+			CategoryID:      row.CategoryID,
+			AssetID:         row.AssetID,
 		})
 	}
 	return items, nil

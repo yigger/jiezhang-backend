@@ -4,8 +4,6 @@ import (
 	"context"
 	"errors"
 	"time"
-
-	"github.com/yigger/jiezhang-backend/internal/domain"
 )
 
 var ErrStatementNotFound = errors.New("statement not found")
@@ -63,6 +61,8 @@ type StatementBaseItem struct {
 	Week         string  `json:"week"`
 	Payee        Payee   `json:"payee"`
 	Remark       string  `json:"remark"`
+	CategoryID   int64   `json:"category_id"`
+	AssetID      int64   `json:"asset_id"`
 }
 
 type StatementListItem struct {
@@ -75,6 +75,19 @@ type StatementListItem struct {
 	HasPic    bool      `json:"has_pic"`
 	CreatedAt time.Time `json:"created_at"`
 	UpdatedAt time.Time `json:"updated_at"`
+}
+
+type StatementDetailItem struct {
+	StatementBaseItem
+	Location    string        `json:"location"`
+	Province    string        `json:"province"`
+	City        string        `json:"city"`
+	Street      string        `json:"street"`
+	MonthDay    string        `json:"month_day"`
+	HasPic      bool          `json:"has_pic"`
+	CreatedAt   time.Time     `json:"created_at"`
+	UpdatedAt   time.Time     `json:"updated_at"`
+	UploadFIles []interface{} `json:"upload_files"`
 }
 
 type StatementListRowRecord struct {
@@ -90,14 +103,19 @@ type StatementListRowRecord struct {
 	CategoryName    string
 	AssetName       string
 	Location        string
+	Nation          string
 	Province        string
 	City            string
+	District        string
 	Street          string
 	HasPic          bool
 	PayeeID         int64
 	PayeeName       string
+	TargetAssetID   int64
 	TargetAssetName string
 	TargetObject    string
+	CategoryID      int64
+	AssetID         int64
 }
 
 type StatementWriteRecord struct {
@@ -129,4 +147,4 @@ type StatementDefaultCategoryAssetRecord struct {
 }
 
 // Keep domain import alive for future command-side repository evolution.
-var _ domain.Statement
+// var _ domain.Statement
