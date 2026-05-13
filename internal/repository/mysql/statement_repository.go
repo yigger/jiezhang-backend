@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"strconv"
 	"strings"
 	"time"
 
@@ -383,6 +384,17 @@ func (r *StatementRepository) ListRowsWithRelations(ctx context.Context, filter 
 		)
 		query = query.Where("s.created_at BETWEEN ? AND ?", *filter.StartDate, endOfDay)
 	}
+
+	if filter.Keyword != "" {
+		amount, err := strconv.ParseFloat(filter.Keyword, 64)
+		if err == nil {
+			query = query.Where("s.amount = ?", amount)
+		} else {
+			likePattern := "%" + strings.TrimSpace(filter.Keyword) + "%"
+			query = query.Where("s.description LIKE ?", likePattern)
+		}
+	}
+
 	if len(filter.ParentCategoryIDs) > 0 {
 		query = query.Where("c.parent_id IN ?", filter.ParentCategoryIDs)
 	}

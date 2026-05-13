@@ -101,6 +101,24 @@ func (h StatementsHandler) AssetFrequent(c *gin.Context) {
 	c.JSON(http.StatusOK, assets)
 }
 
+func (h StatementsHandler) Search(c *gin.Context) {
+	accountBook, _ := requireAccountBook(c)
+	keyword := strings.TrimSpace(c.Query("keyword"))
+	if keyword == "" {
+		c.JSON(http.StatusOK, []interface{}{})
+		return
+	}
+
+	statements, err := h.service.SearchStatements(c.Request.Context(), accountBook.ID, keyword)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		return
+	}
+
+	c.JSON(http.StatusOK, statements)
+
+}
+
 func (h StatementsHandler) List(c *gin.Context) {
 	currentUser, ok := requireCurrentUser(c)
 	if !ok {

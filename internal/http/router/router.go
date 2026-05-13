@@ -54,7 +54,7 @@ func Register(
 			authRequired.PUT("/statements/:statementId", statementsHandler.Update)
 			authRequired.GET("/statements/:statementId", statementsHandler.Show)
 			authRequired.DELETE("/statements/:statementId", statementsHandler.Delete)
-			// authRequired.GET("/search", statementsHandler.Search)
+			authRequired.GET("/search", statementsHandler.Search)
 			authRequired.GET("/statements/images", statementsHandler.Images)
 			authRequired.POST("/statements/generate_share_key", statementsHandler.GenerateShareKey)
 			authRequired.POST("/statements/export_check", statementsHandler.ExportCheck)

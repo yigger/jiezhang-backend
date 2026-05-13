@@ -36,6 +36,7 @@ type StatementListFilter struct {
 	OrderBy           string
 	Limit             int
 	Offset            int
+	Keyword           string
 }
 
 type StatementRowRecord struct {

@@ -68,6 +68,25 @@ func (s StatementService) GetStatements(ctx context.Context, input statementdto.
 	return items, nil
 }
 
+func (s StatementService) SearchStatements(ctx context.Context, accountBookID int64, keyword string) ([]statementdto.ListItem, error) {
+	filter := repository.StatementListFilter{
+		AccountBookID: accountBookID,
+		Keyword:       keyword,
+		OrderBy:       "created_at desc",
+	}
+	rows, err := s.queryRepo.ListRowsWithRelations(ctx, filter)
+	if err != nil {
+		return nil, err
+	}
+
+	items := make([]statementdto.ListItem, 0, len(rows))
+	for _, row := range rows {
+		items = append(items, s.rowMapper.ToListItem(row))
+	}
+
+	return items, nil
+}
+
 func (s StatementService) CreateStatement(ctx context.Context, input statementdto.WriteInput) (statementdto.ListItem, error) {
 	record, err := normalizeStatementWriteInput(input)
 	if err != nil {
