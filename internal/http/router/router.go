@@ -13,13 +13,13 @@ func Register(
 	authMiddleware gin.HandlerFunc,
 	homeHandler handler.HomeHandler,
 	statementsHandler handler.StatementsHandler,
+	financesHandler handler.FinancesHandler,
 	accountBookHandler handler.AccountBookHandler,
 	payeesHandler handler.PayeesHandler,
 	statisticsHandler handler.StatisticsHandler,
 ) {
 	categoriesHandler := handler.NewCategoriesHandler()
 	assetsHandler := handler.NewAssetsHandler()
-	financesHandler := handler.NewFinancesHandler()
 	budgetsHandler := handler.NewBudgetsHandler()
 	superStatementsHandler := handler.NewSuperStatementsHandler()
 	superChartHandler := handler.NewSuperChartHandler()

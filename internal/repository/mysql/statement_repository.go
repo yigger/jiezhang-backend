@@ -369,6 +369,9 @@ func (r *StatementRepository) ListRowsWithRelations(ctx context.Context, filter 
 	if filter.Type != "" {
 		query = query.Where("s.type = ?", filter.Type)
 	}
+	if filter.AssetID > 0 {
+		query = query.Where("s.asset_id = ?", filter.AssetID)
+	}
 
 	if filter.StartDate != nil && filter.EndDate != nil {
 		endOfDay := time.Date(
