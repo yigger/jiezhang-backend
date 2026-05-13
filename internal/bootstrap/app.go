@@ -88,6 +88,14 @@ func NewApp() *App {
 	if err != nil {
 		log.Fatalf("failed to build setting module: %v", err)
 	}
+	superStatementsHandler, err := modules.BuildSuperStatementModule(mysqlDB, cfg.PublicBaseURL)
+	if err != nil {
+		log.Fatalf("failed to build super statement module: %v", err)
+	}
+	superChartHandler, err := modules.BuildSuperChartModule(mysqlDB)
+	if err != nil {
+		log.Fatalf("failed to build super chart module: %v", err)
+	}
 
 	accountBookHandler, accountBookRepo, err := modules.BuildAccountBookModule(mysqlDB)
 	if err != nil {
@@ -104,6 +112,7 @@ func NewApp() *App {
 		userHandler, authMiddleware,
 		homeHandler, statementsHandler, financesHandler, categoriesHandler, assetsHandler,
 		accountBookHandler, budgetsHandler, messagesHandler, payeesHandler, friendsHandler, settingsHandler,
+		superStatementsHandler, superChartHandler,
 		statisticHandler)
 
 	return &App{cfg: cfg, engine: engine, db: mysqlDB}

@@ -22,10 +22,10 @@ func Register(
 	payeesHandler handler.PayeesHandler,
 	friendsHandler handler.FriendsHandler,
 	settingsHandler handler.SettingsHandler,
+	superStatementsHandler handler.SuperStatementsHandler,
+	superChartHandler handler.SuperChartHandler,
 	statisticsHandler handler.StatisticsHandler,
 ) {
-	superStatementsHandler := handler.NewSuperStatementsHandler()
-	superChartHandler := handler.NewSuperChartHandler()
 
 	api := engine.Group("/api")
 	{
