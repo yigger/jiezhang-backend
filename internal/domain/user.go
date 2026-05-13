@@ -17,8 +17,20 @@ type User struct {
 	SessionKey    string
 	ThirdSession  string
 	AccountBookId int64
-	CreatedAt     time.Time
-	UpdatedAt     time.Time
+
+	Country          string
+	City             string
+	Gender           int
+	Language         string
+	Province         string
+	BGAvatarID       int64
+	BGAvatarURL      string
+	Remind           int
+	HiddenAssetMoney bool
+	AlreadyLogin     bool
+
+	CreatedAt time.Time
+	UpdatedAt time.Time
 }
 
 func (u User) RedisSessionKey() string {

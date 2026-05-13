@@ -14,8 +14,11 @@ type AuthModule struct {
 	SessionCache sessioncache.Cache
 }
 
-func BuildAuthModule(cfg config.Config, users repository.UserRepository) AuthModule {
-	sessionCache := sessioncache.NewMemoryCache()
+func BuildAuthModule(cfg config.Config, users repository.UserRepository, cache sessioncache.Cache) AuthModule {
+	sessionCache := cache
+	if sessionCache == nil {
+		sessionCache = sessioncache.NewMemoryCache()
+	}
 	wechatClient := wechat.NewHTTPClient(cfg.MiniProgramAppID, cfg.MiniProgramSecret)
 
 	checkOpenIDService := authservice.NewCheckOpenIDService(

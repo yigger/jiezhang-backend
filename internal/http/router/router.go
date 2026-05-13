@@ -17,15 +17,15 @@ func Register(
 	categoriesHandler handler.CategoriesHandler,
 	assetsHandler handler.AssetsHandler,
 	accountBookHandler handler.AccountBookHandler,
+	budgetsHandler handler.BudgetsHandler,
+	messagesHandler handler.MessagesHandler,
 	payeesHandler handler.PayeesHandler,
+	friendsHandler handler.FriendsHandler,
+	settingsHandler handler.SettingsHandler,
 	statisticsHandler handler.StatisticsHandler,
 ) {
-	budgetsHandler := handler.NewBudgetsHandler()
 	superStatementsHandler := handler.NewSuperStatementsHandler()
 	superChartHandler := handler.NewSuperChartHandler()
-	messagesHandler := handler.NewMessagesHandler()
-	friendsHandler := handler.NewFriendsHandler()
-	settingsHandler := handler.NewSettingsHandler()
 
 	api := engine.Group("/api")
 	{

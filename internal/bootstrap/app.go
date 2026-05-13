@@ -13,6 +13,7 @@ import (
 	"github.com/yigger/jiezhang-backend/internal/http/middleware"
 	"github.com/yigger/jiezhang-backend/internal/http/router"
 	"github.com/yigger/jiezhang-backend/internal/infrastructure/db"
+	"github.com/yigger/jiezhang-backend/internal/infrastructure/sessioncache"
 )
 
 // App represents the HTTP API application.
@@ -40,12 +41,13 @@ func NewApp() *App {
 		log.Fatalf("failed to connect mysql: %v", err)
 	}
 
-	userHandler, userRepo, err := modules.BuildUserModule(mysqlDB)
+	sessionCache := sessioncache.NewMemoryCache()
+	userHandler, userRepo, err := modules.BuildUserModule(mysqlDB, sessionCache)
 	if err != nil {
 		log.Fatalf("failed to build user module: %v", err)
 	}
 
-	authModule := modules.BuildAuthModule(cfg, userRepo)
+	authModule := modules.BuildAuthModule(cfg, userRepo, sessionCache)
 	homeHandler, err := modules.BuildHomeModule(mysqlDB, cfg.PublicBaseURL)
 	if err != nil {
 		log.Fatalf("failed to build home module: %v", err)
@@ -70,6 +72,22 @@ func NewApp() *App {
 	if err != nil {
 		log.Fatalf("failed to build payee module: %v", err)
 	}
+	friendsHandler, err := modules.BuildFriendModule(mysqlDB, cfg.PublicBaseURL, cfg.SessionTokenSecret)
+	if err != nil {
+		log.Fatalf("failed to build friend module: %v", err)
+	}
+	budgetsHandler, err := modules.BuildBudgetModule(mysqlDB, cfg.PublicBaseURL)
+	if err != nil {
+		log.Fatalf("failed to build budget module: %v", err)
+	}
+	messagesHandler, err := modules.BuildMessageModule(mysqlDB, cfg.PublicBaseURL)
+	if err != nil {
+		log.Fatalf("failed to build message module: %v", err)
+	}
+	settingsHandler, err := modules.BuildSettingModule(mysqlDB)
+	if err != nil {
+		log.Fatalf("failed to build setting module: %v", err)
+	}
 
 	accountBookHandler, accountBookRepo, err := modules.BuildAccountBookModule(mysqlDB)
 	if err != nil {
@@ -85,7 +103,7 @@ func NewApp() *App {
 	router.Register(engine, authModule.Handler,
 		userHandler, authMiddleware,
 		homeHandler, statementsHandler, financesHandler, categoriesHandler, assetsHandler,
-		accountBookHandler, payeesHandler,
+		accountBookHandler, budgetsHandler, messagesHandler, payeesHandler, friendsHandler, settingsHandler,
 		statisticHandler)
 
 	return &App{cfg: cfg, engine: engine, db: mysqlDB}
