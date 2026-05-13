@@ -2,15 +2,26 @@ package modules
 
 import (
 	"github.com/yigger/jiezhang-backend/internal/http/handler"
+	"github.com/yigger/jiezhang-backend/internal/infrastructure/urlbuilder"
 	mysqlrepo "github.com/yigger/jiezhang-backend/internal/repository/mysql"
 	"github.com/yigger/jiezhang-backend/internal/service"
+	statementdto "github.com/yigger/jiezhang-backend/internal/service/statement"
 	"gorm.io/gorm"
 )
 
-func BuildStatisticModule(db *gorm.DB) (handler.StatisticsHandler, error) {
-	statisticsRepo, _ := mysqlrepo.NewStatisticsRepository(db)
+func BuildStatisticModule(db *gorm.DB, publicBaseURL string) (handler.StatisticsHandler, error) {
+	statementRepo, err := mysqlrepo.NewStatementRepository(db)
+	if err != nil {
+		return handler.StatisticsHandler{}, err
+	}
+	statisticsRepo, err := mysqlrepo.NewStatisticsRepository(db)
+	if err != nil {
+		return handler.StatisticsHandler{}, err
+	}
 
-	statisticService := service.NewStatisticsService(statisticsRepo)
+	publicURLBuilder := urlbuilder.NewPublicURLBuilder(publicBaseURL)
+	rowMapper := statementdto.NewRowMapper(publicURLBuilder)
+	statisticService := service.NewStatisticsService(statisticsRepo, statementRepo, rowMapper)
 	statisticHandler := handler.NewStatisticsHandler(statisticService)
 	return statisticHandler, nil
 }

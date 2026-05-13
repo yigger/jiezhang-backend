@@ -366,6 +366,10 @@ func (r *StatementRepository) ListRowsWithRelations(ctx context.Context, filter 
 		query = query.Where("s.user_id = ?", filter.UserID)
 	}
 
+	if filter.Type != "" {
+		query = query.Where("s.type = ?", filter.Type)
+	}
+
 	if filter.StartDate != nil && filter.EndDate != nil {
 		endOfDay := time.Date(
 			filter.EndDate.Year(),
@@ -385,7 +389,7 @@ func (r *StatementRepository) ListRowsWithRelations(ctx context.Context, filter 
 	query = query.Order(mapOrderBy(filter.OrderBy))
 
 	if filter.Limit <= 0 || filter.Limit > 200 {
-		filter.Limit = 50
+		filter.Limit = 1000
 	}
 	if filter.Offset < 0 {
 		filter.Offset = 0

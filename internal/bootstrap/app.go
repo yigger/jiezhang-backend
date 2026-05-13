@@ -64,7 +64,7 @@ func NewApp() *App {
 		log.Fatalf("failed to build account book module: %v", err)
 	}
 
-	statisticHandler, err := modules.BuildStatisticModule(mysqlDB)
+	statisticHandler, err := modules.BuildStatisticModule(mysqlDB, cfg.PublicBaseURL)
 	if err != nil {
 		log.Fatalf("failed to build statistic module: %v", err)
 	}

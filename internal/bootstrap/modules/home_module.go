@@ -6,8 +6,10 @@ import (
 	"gorm.io/gorm"
 
 	"github.com/yigger/jiezhang-backend/internal/http/handler"
+	"github.com/yigger/jiezhang-backend/internal/infrastructure/urlbuilder"
 	mysqlrepo "github.com/yigger/jiezhang-backend/internal/repository/mysql"
 	"github.com/yigger/jiezhang-backend/internal/service"
+	statementdto "github.com/yigger/jiezhang-backend/internal/service/statement"
 )
 
 func BuildHomeModule(db *gorm.DB, publicBaseURL string) (handler.HomeHandler, error) {
@@ -24,6 +26,8 @@ func BuildHomeModule(db *gorm.DB, publicBaseURL string) (handler.HomeHandler, er
 		return handler.HomeHandler{}, fmt.Errorf("init asset repository: %w", err)
 	}
 
-	statementService := service.NewStatementService(statementRepo, statementRepo, categoryRepo, assetRepo, publicBaseURL)
+	publicURLBuilder := urlbuilder.NewPublicURLBuilder(publicBaseURL)
+	rowMapper := statementdto.NewRowMapper(publicURLBuilder)
+	statementService := service.NewStatementService(statementRepo, statementRepo, categoryRepo, assetRepo, rowMapper)
 	return handler.NewHomeHandler(db, statementService), nil
 }

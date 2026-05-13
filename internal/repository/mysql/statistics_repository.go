@@ -13,7 +13,7 @@ type StatisticsRepository struct {
 	db *gorm.DB
 }
 
-func NewStatisticsRepository(db *gorm.DB) (repository.StatisticsRepository, error) {
+func NewStatisticsRepository(db *gorm.DB) (*StatisticsRepository, error) {
 	return &StatisticsRepository{db: db}, nil
 }
 
@@ -35,4 +35,20 @@ func (r *StatisticsRepository) StatisticGroupDate(ctx context.Context, date time
 	}
 
 	return rows, nil
+}
+
+func (r *StatisticsRepository) OverviewHeader(ctx context.Context, date time.Time, accountBookID int64) (repository.OverviewHeaderData, error) {
+	var row repository.OverviewHeaderData
+	err := r.db.WithContext(ctx).
+		Table("statements").
+		Select([]string{
+			"SUM(CASE WHEN type = 'income' THEN amount ELSE 0 END) as income",
+			"SUM(CASE WHEN type = 'expend' THEN amount ELSE 0 END) as expend",
+			"SUM(CASE WHEN type = 'transfer' THEN amount ELSE 0 END) as transfer",
+			"SUM(CASE WHEN type = 'repayment' THEN amount ELSE 0 END) as repayment",
+		}).
+		Where("account_book_id = ? AND year = ? AND month = ?", accountBookID, date.Year(), int(date.Month())).
+		Take(&row).Error
+
+	return row, err
 }

@@ -123,7 +123,7 @@ func (h StatementsHandler) List(c *gin.Context) {
 		return
 	}
 
-	c.JSON(http.StatusOK, gin.H{"data": statements})
+	c.JSON(http.StatusOK, statements)
 }
 
 func (h StatementsHandler) ListByToken(c *gin.Context) {

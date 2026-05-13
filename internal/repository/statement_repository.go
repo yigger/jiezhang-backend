@@ -27,6 +27,7 @@ type StatementQueryRepository interface {
 type StatementListFilter struct {
 	UserID            int64
 	AccountBookID     int64
+	Type              string
 	StartDate         *time.Time
 	EndDate           *time.Time
 	ParentCategoryIDs []int64
