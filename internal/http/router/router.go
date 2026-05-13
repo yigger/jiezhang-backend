@@ -14,12 +14,12 @@ func Register(
 	homeHandler handler.HomeHandler,
 	statementsHandler handler.StatementsHandler,
 	financesHandler handler.FinancesHandler,
+	categoriesHandler handler.CategoriesHandler,
+	assetsHandler handler.AssetsHandler,
 	accountBookHandler handler.AccountBookHandler,
 	payeesHandler handler.PayeesHandler,
 	statisticsHandler handler.StatisticsHandler,
 ) {
-	categoriesHandler := handler.NewCategoriesHandler()
-	assetsHandler := handler.NewAssetsHandler()
 	budgetsHandler := handler.NewBudgetsHandler()
 	superStatementsHandler := handler.NewSuperStatementsHandler()
 	superChartHandler := handler.NewSuperChartHandler()
@@ -64,6 +64,9 @@ func Register(
 			authRequired.GET("/statements/export_excel", statementsHandler.ExportExcel)
 
 			authRequired.GET("/categories/category_list", categoriesHandler.List)
+			authRequired.GET("/categories/parent", categoriesHandler.Parent)
+			authRequired.GET("/categories/category_childs", categoriesHandler.CategoryChilds)
+			authRequired.GET("/categories/category_statements", categoriesHandler.CategoryStatements)
 			authRequired.GET("/categories/:id", categoriesHandler.Show)
 			authRequired.DELETE("/categories/:id", categoriesHandler.Delete)
 			authRequired.GET("/icons/categories_with_url", categoriesHandler.Icons)
@@ -84,8 +87,8 @@ func Register(
 			authRequired.GET("/account_books/preset_categories", accountBookHandler.PresetCategories)
 			authRequired.PUT("/account_books/:id/switch", accountBookHandler.Switch)
 			authRequired.POST("/account_books", accountBookHandler.Create)
-			// authRequired.PUT("/account_books/:id", accountBooksHandler.Update)
-			// authRequired.DELETE("/account_books/:id", accountBooksHandler.Delete)
+			authRequired.PUT("/account_books/:id", accountBookHandler.Update)
+			authRequired.DELETE("/account_books/:id", accountBookHandler.Delete)
 
 			authRequired.GET("/wallet", financesHandler.Wallet)
 			authRequired.GET("/wallet/information", financesHandler.WalletInformation)

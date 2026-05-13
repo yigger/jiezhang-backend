@@ -25,9 +25,14 @@ func BuildHomeModule(db *gorm.DB, publicBaseURL string) (handler.HomeHandler, er
 	if err != nil {
 		return handler.HomeHandler{}, fmt.Errorf("init asset repository: %w", err)
 	}
+	homeRepo, err := mysqlrepo.NewHomeRepository(db)
+	if err != nil {
+		return handler.HomeHandler{}, fmt.Errorf("init home repository: %w", err)
+	}
 
 	publicURLBuilder := urlbuilder.NewPublicURLBuilder(publicBaseURL)
 	rowMapper := statementdto.NewRowMapper(publicURLBuilder)
 	statementService := service.NewStatementService(statementRepo, statementRepo, categoryRepo, assetRepo, rowMapper)
-	return handler.NewHomeHandler(db, statementService), nil
+	homeService := service.NewHomeService(homeRepo, statementService)
+	return handler.NewHomeHandler(homeService), nil
 }

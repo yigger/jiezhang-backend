@@ -8,10 +8,16 @@ import (
 	"github.com/yigger/jiezhang-backend/internal/http/handler"
 	"github.com/yigger/jiezhang-backend/internal/infrastructure/urlbuilder"
 	mysqlrepo "github.com/yigger/jiezhang-backend/internal/repository/mysql"
+	"github.com/yigger/jiezhang-backend/internal/service"
 	statementdto "github.com/yigger/jiezhang-backend/internal/service/statement"
 )
 
 func BuildFinanceModule(db *gorm.DB, publicBaseURL string) (handler.FinancesHandler, error) {
+	financeRepo, err := mysqlrepo.NewFinanceRepository(db)
+	if err != nil {
+		return handler.FinancesHandler{}, fmt.Errorf("init finance repository: %w", err)
+	}
+
 	statementRepo, err := mysqlrepo.NewStatementRepository(db)
 	if err != nil {
 		return handler.FinancesHandler{}, fmt.Errorf("init statement repository: %w", err)
@@ -19,5 +25,7 @@ func BuildFinanceModule(db *gorm.DB, publicBaseURL string) (handler.FinancesHand
 
 	publicURLBuilder := urlbuilder.NewPublicURLBuilder(publicBaseURL)
 	rowMapper := statementdto.NewRowMapper(publicURLBuilder)
-	return handler.NewFinancesHandler(db, statementRepo, rowMapper), nil
+	financeService := service.NewFinanceService(financeRepo, statementRepo, rowMapper)
+
+	return handler.NewFinancesHandler(financeService), nil
 }

@@ -58,6 +58,14 @@ func NewApp() *App {
 	if err != nil {
 		log.Fatalf("failed to build finance module: %v", err)
 	}
+	categoriesHandler, err := modules.BuildCategoryModule(mysqlDB, cfg.PublicBaseURL)
+	if err != nil {
+		log.Fatalf("failed to build category module: %v", err)
+	}
+	assetsHandler, err := modules.BuildAssetModule(mysqlDB, cfg.PublicBaseURL)
+	if err != nil {
+		log.Fatalf("failed to build asset module: %v", err)
+	}
 	payeesHandler, err := modules.BuildPayeeModule(mysqlDB)
 	if err != nil {
 		log.Fatalf("failed to build payee module: %v", err)
@@ -76,7 +84,7 @@ func NewApp() *App {
 	authMiddleware := middleware.AuthenticateAPIV1(cfg.Env, cfg.MiniProgramAppID, userRepo, accountBookRepo, authModule.SessionCache)
 	router.Register(engine, authModule.Handler,
 		userHandler, authMiddleware,
-		homeHandler, statementsHandler, financesHandler,
+		homeHandler, statementsHandler, financesHandler, categoriesHandler, assetsHandler,
 		accountBookHandler, payeesHandler,
 		statisticHandler)
 
