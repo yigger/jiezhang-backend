@@ -2,11 +2,20 @@ package service
 
 import (
 	"context"
+	"crypto/aes"
+	"crypto/cipher"
+	"crypto/rand"
+	"crypto/sha256"
+	"encoding/base64"
+	"encoding/json"
 	"errors"
 	"fmt"
+	"io"
 	"strings"
 	"time"
 
+	"github.com/yigger/jiezhang-backend/internal/domain"
+	"github.com/yigger/jiezhang-backend/internal/infrastructure/sessioncache"
 	"github.com/yigger/jiezhang-backend/internal/repository"
 	statementdto "github.com/yigger/jiezhang-backend/internal/service/statement"
 )
@@ -25,6 +34,9 @@ type StatementService struct {
 	categoryRepo  repository.CategoryRepository
 	assetRepo     repository.AssetRepository
 	rowMapper     statementdto.RowMapper
+	userRepo      repository.UserRepository
+	cache         sessioncache.Cache
+	tokenSecret   string
 }
 
 func NewStatementService(statementRepo repository.StatementRepository, queryRepo repository.StatementQueryRepository, categoryRepo repository.CategoryRepository, assetRepo repository.AssetRepository, rowMapper statementdto.RowMapper) StatementService {
@@ -37,10 +49,116 @@ func NewStatementService(statementRepo repository.StatementRepository, queryRepo
 	}
 }
 
+func NewStatementServiceWithSession(
+	statementRepo repository.StatementRepository,
+	queryRepo repository.StatementQueryRepository,
+	categoryRepo repository.CategoryRepository,
+	assetRepo repository.AssetRepository,
+	userRepo repository.UserRepository,
+	cache sessioncache.Cache,
+	tokenSecret string,
+	rowMapper statementdto.RowMapper,
+) StatementService {
+	svc := NewStatementService(statementRepo, queryRepo, categoryRepo, assetRepo, rowMapper)
+	svc.userRepo = userRepo
+	svc.cache = cache
+	svc.tokenSecret = strings.TrimSpace(tokenSecret)
+	return svc
+}
+
 var (
 	ErrStatementPermissionDenied = errors.New("statement permission denied")
 	ErrStatementInvalidInput     = errors.New("statement invalid input")
+	ErrStatementInvalidToken     = errors.New("statement share token invalid")
+	ErrStatementDecodeFailed     = errors.New("statement share token decode failed")
+	ErrStatementExportLimited    = errors.New("statement export daily limit reached")
 )
+
+type StatementShareTokenPayload struct {
+	AccountBookID      int64  `json:"account_book_id"`
+	UserID             int64  `json:"user_id"`
+	StartDate          string `json:"start_date"`
+	EndDate            string `json:"end_date"`
+	CategoryIDs        string `json:"category_ids"`
+	ExceptStatementIDs string `json:"except_statement_ids"`
+}
+
+type StatementGenerateShareKeyInput struct {
+	AccountBookID      int64
+	UserID             int64
+	StartDate          string
+	EndDate            string
+	CategoryIDs        string
+	ExceptStatementIDs string
+}
+
+type StatementListByTokenInput struct {
+	Token   string
+	OrderBy string
+}
+
+type StatementDateRangeItem struct {
+	StartDate string `json:"start_date"`
+	EndDate   string `json:"end_date"`
+}
+
+type StatementSharedUserItem struct {
+	Nickname   string `json:"nickname"`
+	AvatarPath string `json:"avatar_path"`
+}
+
+type StatementListByTokenResult struct {
+	Data       []statementdto.ListItem `json:"data"`
+	DateRange  StatementDateRangeItem  `json:"date_range"`
+	SharedUser StatementSharedUserItem `json:"shared_user"`
+}
+
+type StatementImageItem struct {
+	StatementID int64  `json:"statement_id"`
+	AvatarID    int64  `json:"avatar_id"`
+	Path        string `json:"path"`
+}
+
+type StatementImageMonthGroup struct {
+	Month int                  `json:"month"`
+	Data  []StatementImageItem `json:"data"`
+}
+
+type StatementImageYearGroup struct {
+	Year int                        `json:"year"`
+	Data []StatementImageMonthGroup `json:"data"`
+}
+
+type StatementImagesResult struct {
+	AvatarTimeline []StatementImageYearGroup `json:"avatar_timeline"`
+	Avatars        []string                  `json:"avatars"`
+}
+
+type StatementExportCheckResult struct {
+	TodayCount int `json:"today_count"`
+}
+
+type StatementExportInput struct {
+	AccountBookID int64
+	UserID        int64
+	Range         string
+}
+
+type StatementExportRowItem struct {
+	Category       string  `json:"category"`
+	ParentCategory string  `json:"parent_category"`
+	Type           string  `json:"type"`
+	TypeName       string  `json:"type_name"`
+	Asset          string  `json:"asset"`
+	Description    string  `json:"description"`
+	Amount         float64 `json:"amount"`
+	CreatedAt      string  `json:"created_at"`
+	UpdatedAt      string  `json:"updated_at"`
+}
+
+type StatementExportResult struct {
+	Rows []StatementExportRowItem `json:"rows"`
+}
 
 // 账单列表
 func (s StatementService) GetStatements(ctx context.Context, input statementdto.ListInput) ([]statementdto.ListItem, error) {
@@ -631,3 +749,469 @@ func (s StatementService) GetStatementByID(ctx context.Context, statementID int6
 
 	return s.rowMapper.ToDetailItem(row), nil
 }
+
+func (s StatementService) GenerateShareKey(ctx context.Context, input StatementGenerateShareKeyInput) (string, error) {
+	if input.AccountBookID <= 0 || input.UserID <= 0 {
+		return "", ErrStatementInvalidInput
+	}
+
+	cacheKey := statementShareCacheKey(input.AccountBookID, input.UserID, input.StartDate, input.EndDate, input.CategoryIDs)
+	if s.cache != nil {
+		if cached, ok := s.cache.Get(cacheKey); ok && strings.TrimSpace(cached) != "" {
+			return cached, nil
+		}
+	}
+
+	payload := StatementShareTokenPayload{
+		AccountBookID:      input.AccountBookID,
+		UserID:             input.UserID,
+		StartDate:          input.StartDate,
+		EndDate:            input.EndDate,
+		CategoryIDs:        input.CategoryIDs,
+		ExceptStatementIDs: input.ExceptStatementIDs,
+	}
+	token, err := s.encryptSharePayload(payload)
+	if err != nil {
+		return "", err
+	}
+
+	if s.cache != nil {
+		s.cache.Set(cacheKey, token, 365*24*time.Hour)
+	}
+	return token, nil
+}
+
+func (s StatementService) ListByToken(ctx context.Context, input StatementListByTokenInput) (StatementListByTokenResult, error) {
+	token := strings.TrimSpace(input.Token)
+	if token == "" {
+		return StatementListByTokenResult{}, ErrStatementInvalidInput
+	}
+
+	payload, err := s.decryptSharePayload(token)
+	if err != nil {
+		return StatementListByTokenResult{}, ErrStatementDecodeFailed
+	}
+
+	cacheKey := statementShareCacheKey(payload.AccountBookID, payload.UserID, payload.StartDate, payload.EndDate, payload.CategoryIDs)
+	if s.cache == nil {
+		return StatementListByTokenResult{}, ErrStatementInvalidToken
+	}
+	if _, ok := s.cache.Get(cacheKey); !ok {
+		return StatementListByTokenResult{}, ErrStatementInvalidToken
+	}
+
+	listInput := statementdto.ListInput{
+		AccountBookID:     payload.AccountBookID,
+		OrderBy:           input.OrderBy,
+		Limit:             1000,
+		Offset:            0,
+		ParentCategoryIDs: parseCSVInt64OrEmpty(payload.CategoryIDs),
+		ExceptIDs:         parseCSVInt64OrEmpty(payload.ExceptStatementIDs),
+	}
+	if t, ok := parseDateOnly(payload.StartDate); ok {
+		listInput.StartDate = &t
+	}
+	if t, ok := parseDateOnly(payload.EndDate); ok {
+		listInput.EndDate = &t
+	}
+
+	statements, err := s.GetStatements(ctx, listInput)
+	if err != nil {
+		return StatementListByTokenResult{}, err
+	}
+
+	user, err := s.userRepo.FindByID(ctx, payload.UserID)
+	if err != nil {
+		return StatementListByTokenResult{}, err
+	}
+
+	return StatementListByTokenResult{
+		Data: statements,
+		DateRange: StatementDateRangeItem{
+			StartDate: payload.StartDate,
+			EndDate:   payload.EndDate,
+		},
+		SharedUser: StatementSharedUserItem{
+			Nickname:   user.Nickname,
+			AvatarPath: s.rowMapper.BuildPublicURL(user.AvatarUrl),
+		},
+	}, nil
+}
+
+func (s StatementService) GetImages(ctx context.Context, accountBookID int64) (StatementImagesResult, error) {
+	rows, err := s.queryRepo.ListAvatarRows(ctx, accountBookID)
+	if err != nil {
+		return StatementImagesResult{}, err
+	}
+
+	yearOrder := make([]int, 0)
+	monthOrderByYear := make(map[int][]int)
+	timeline := make(map[int]map[int][]StatementImageItem)
+	seenImage := make(map[string]struct{})
+	avatars := make([]string, 0)
+
+	for _, row := range rows {
+		year := row.Year
+		month := row.Month
+		path := s.rowMapper.BuildPublicURL(row.AvatarPath)
+		imageItem := StatementImageItem{
+			StatementID: row.StatementID,
+			AvatarID:    row.AvatarID,
+			Path:        path,
+		}
+
+		if _, ok := timeline[year]; !ok {
+			timeline[year] = make(map[int][]StatementImageItem)
+			yearOrder = append(yearOrder, year)
+		}
+		if _, ok := timeline[year][month]; !ok {
+			timeline[year][month] = make([]StatementImageItem, 0)
+			monthOrderByYear[year] = append(monthOrderByYear[year], month)
+		}
+		timeline[year][month] = append(timeline[year][month], imageItem)
+
+		if _, ok := seenImage[path]; !ok && path != "" {
+			seenImage[path] = struct{}{}
+			avatars = append(avatars, path)
+		}
+	}
+
+	resultTimeline := make([]StatementImageYearGroup, 0, len(yearOrder))
+	for _, year := range yearOrder {
+		months := monthOrderByYear[year]
+		monthGroups := make([]StatementImageMonthGroup, 0, len(months))
+		for _, month := range months {
+			monthGroups = append(monthGroups, StatementImageMonthGroup{
+				Month: month,
+				Data:  dedupeImageItems(timeline[year][month]),
+			})
+		}
+		resultTimeline = append(resultTimeline, StatementImageYearGroup{
+			Year: year,
+			Data: monthGroups,
+		})
+	}
+
+	return StatementImagesResult{
+		AvatarTimeline: resultTimeline,
+		Avatars:        avatars,
+	}, nil
+}
+
+func (s StatementService) RemoveAvatar(ctx context.Context, accountBookID int64, statementID int64, avatarID int64) error {
+	if accountBookID <= 0 || statementID <= 0 || avatarID <= 0 {
+		return ErrStatementInvalidInput
+	}
+	return s.statementRepo.DeleteAvatarByID(ctx, accountBookID, statementID, avatarID)
+}
+
+func (s StatementService) ExportCheck(_ context.Context, userID int64) (StatementExportCheckResult, error) {
+	if userID <= 0 {
+		return StatementExportCheckResult{}, ErrStatementInvalidInput
+	}
+	count, err := s.getTodayExportCount(userID)
+	if err != nil {
+		return StatementExportCheckResult{}, err
+	}
+	if count >= 5 {
+		return StatementExportCheckResult{}, ErrStatementExportLimited
+	}
+	return StatementExportCheckResult{TodayCount: count}, nil
+}
+
+func (s StatementService) ExportRows(ctx context.Context, input StatementExportInput) (StatementExportResult, error) {
+	if input.AccountBookID <= 0 || input.UserID <= 0 {
+		return StatementExportResult{}, ErrStatementInvalidInput
+	}
+	count, err := s.getTodayExportCount(input.UserID)
+	if err != nil {
+		return StatementExportResult{}, err
+	}
+	if count >= 5 {
+		return StatementExportResult{}, ErrStatementExportLimited
+	}
+	if err := s.setTodayExportCount(input.UserID, count+1); err != nil {
+		return StatementExportResult{}, err
+	}
+
+	end := time.Now()
+	start := end.AddDate(0, -1, 0)
+	switch strings.TrimSpace(input.Range) {
+	case "3months":
+		start = end.AddDate(0, -3, 0)
+	case "all":
+		start = end.AddDate(-100, 0, 0)
+	case "1month", "":
+	default:
+		start = end.AddDate(0, -1, 0)
+	}
+
+	rows, err := s.queryRepo.ListExportRows(ctx, repository.StatementExportFilter{
+		AccountBookID: input.AccountBookID,
+		StartDate:     start,
+		EndDate:       end,
+		Limit:         3000,
+	})
+	if err != nil {
+		return StatementExportResult{}, err
+	}
+
+	items := make([]StatementExportRowItem, 0, len(rows))
+	for _, row := range rows {
+		items = append(items, StatementExportRowItem{
+			Category:       row.CategoryName,
+			ParentCategory: row.ParentCategoryName,
+			Type:           row.Type,
+			TypeName:       statementTypeCNForExport(row.Type),
+			Asset:          row.AssetName,
+			Description:    row.Description,
+			Amount:         row.Amount,
+			CreatedAt:      row.CreatedAt.Format("2006-01-02 15:04:05"),
+			UpdatedAt:      row.UpdatedAt.Format("2006-01-02 15:04:05"),
+		})
+	}
+	return StatementExportResult{Rows: items}, nil
+}
+
+func (s StatementService) ExportExcelFile(ctx context.Context, input StatementExportInput) ([]byte, error) {
+	result, err := s.ExportRows(ctx, input)
+	if err != nil {
+		return nil, err
+	}
+	return buildStatementsExcel(result.Rows)
+}
+
+func statementShareCacheKey(accountBookID int64, userID int64, startDate string, endDate string, categoryIDs string) string {
+	return fmt.Sprintf("share_key_%d_%d_%s_%s_%s", accountBookID, userID, strings.TrimSpace(startDate), strings.TrimSpace(endDate), strings.TrimSpace(categoryIDs))
+}
+
+func statementExportCacheKey(userID int64, now time.Time) string {
+	return fmt.Sprintf("export_excel_limit_%d_%s", userID, now.Format("20060102"))
+}
+
+func (s StatementService) getTodayExportCount(userID int64) (int, error) {
+	if s.cache == nil {
+		return 0, nil
+	}
+	key := statementExportCacheKey(userID, time.Now())
+	raw, ok := s.cache.Get(key)
+	if !ok || strings.TrimSpace(raw) == "" {
+		return 0, nil
+	}
+	count, err := parseCounterInt(strings.TrimSpace(raw))
+	if err != nil {
+		return 0, nil
+	}
+	return count, nil
+}
+
+func (s StatementService) setTodayExportCount(userID int64, count int) error {
+	if s.cache == nil {
+		return nil
+	}
+	if count < 0 {
+		count = 0
+	}
+	key := statementExportCacheKey(userID, time.Now())
+	ttl := 24 * time.Hour
+	s.cache.Set(key, fmt.Sprintf("%d", count), ttl)
+	return nil
+}
+
+func (s StatementService) encryptSharePayload(payload StatementShareTokenPayload) (string, error) {
+	if strings.TrimSpace(s.tokenSecret) == "" {
+		return "", ErrStatementInvalidInput
+	}
+	plain, err := json.Marshal(payload)
+	if err != nil {
+		return "", err
+	}
+
+	key := sha256.Sum256([]byte(s.tokenSecret))
+	block, err := aes.NewCipher(key[:])
+	if err != nil {
+		return "", err
+	}
+
+	plain = pkcs7PadStatement(plain, aes.BlockSize)
+	iv := make([]byte, aes.BlockSize)
+	if _, err := io.ReadFull(rand.Reader, iv); err != nil {
+		return "", err
+	}
+
+	ciphertext := make([]byte, len(plain))
+	mode := cipher.NewCBCEncrypter(block, iv)
+	mode.CryptBlocks(ciphertext, plain)
+
+	combined := append(iv, ciphertext...)
+	first := base64.StdEncoding.EncodeToString(combined)
+	second := base64.StdEncoding.EncodeToString([]byte(first))
+	return second, nil
+}
+
+func (s StatementService) decryptSharePayload(token string) (StatementShareTokenPayload, error) {
+	if strings.TrimSpace(s.tokenSecret) == "" {
+		return StatementShareTokenPayload{}, ErrStatementDecodeFailed
+	}
+	firstBytes, err := base64.StdEncoding.DecodeString(token)
+	if err != nil {
+		return StatementShareTokenPayload{}, err
+	}
+	combined, err := base64.StdEncoding.DecodeString(string(firstBytes))
+	if err != nil {
+		return StatementShareTokenPayload{}, err
+	}
+	if len(combined) < aes.BlockSize || len(combined)%aes.BlockSize != 0 {
+		return StatementShareTokenPayload{}, ErrStatementDecodeFailed
+	}
+
+	key := sha256.Sum256([]byte(s.tokenSecret))
+	block, err := aes.NewCipher(key[:])
+	if err != nil {
+		return StatementShareTokenPayload{}, err
+	}
+	iv := combined[:aes.BlockSize]
+	ciphertext := combined[aes.BlockSize:]
+	plain := make([]byte, len(ciphertext))
+
+	mode := cipher.NewCBCDecrypter(block, iv)
+	mode.CryptBlocks(plain, ciphertext)
+
+	plain, err = pkcs7UnpadStatement(plain, aes.BlockSize)
+	if err != nil {
+		return StatementShareTokenPayload{}, err
+	}
+
+	var payload StatementShareTokenPayload
+	if err := json.Unmarshal(plain, &payload); err != nil {
+		return StatementShareTokenPayload{}, err
+	}
+	if payload.AccountBookID <= 0 || payload.UserID <= 0 {
+		return StatementShareTokenPayload{}, ErrStatementDecodeFailed
+	}
+	return payload, nil
+}
+
+func pkcs7PadStatement(data []byte, blockSize int) []byte {
+	padding := blockSize - (len(data) % blockSize)
+	padtext := make([]byte, padding)
+	for i := 0; i < padding; i++ {
+		padtext[i] = byte(padding)
+	}
+	return append(data, padtext...)
+}
+
+func pkcs7UnpadStatement(data []byte, blockSize int) ([]byte, error) {
+	if len(data) == 0 || len(data)%blockSize != 0 {
+		return nil, ErrStatementDecodeFailed
+	}
+	padding := int(data[len(data)-1])
+	if padding == 0 || padding > blockSize || padding > len(data) {
+		return nil, ErrStatementDecodeFailed
+	}
+	for i := len(data) - padding; i < len(data); i++ {
+		if int(data[i]) != padding {
+			return nil, ErrStatementDecodeFailed
+		}
+	}
+	return data[:len(data)-padding], nil
+}
+
+func parseCSVInt64OrEmpty(v string) []int64 {
+	v = strings.TrimSpace(v)
+	if v == "" {
+		return nil
+	}
+	parts := strings.Split(v, ",")
+	out := make([]int64, 0, len(parts))
+	for _, part := range parts {
+		part = strings.TrimSpace(part)
+		if part == "" {
+			continue
+		}
+		num, err := parseInt64(part)
+		if err != nil || num <= 0 {
+			continue
+		}
+		out = append(out, num)
+	}
+	return out
+}
+
+func parseDateOnly(v string) (time.Time, bool) {
+	v = strings.TrimSpace(v)
+	if v == "" {
+		return time.Time{}, false
+	}
+	t, err := time.ParseInLocation("2006-01-02", v, time.Local)
+	if err != nil {
+		return time.Time{}, false
+	}
+	return t, true
+}
+
+func parseInt64(v string) (int64, error) {
+	var n int64
+	for _, ch := range v {
+		if ch < '0' || ch > '9' {
+			return 0, ErrStatementInvalidInput
+		}
+		n = n*10 + int64(ch-'0')
+	}
+	return n, nil
+}
+
+func parseCounterInt(v string) (int, error) {
+	n64, err := parseInt64(v)
+	if err != nil {
+		return 0, err
+	}
+	return int(n64), nil
+}
+
+func dedupeImageItems(items []StatementImageItem) []StatementImageItem {
+	seen := make(map[int64]struct{}, len(items))
+	out := make([]StatementImageItem, 0, len(items))
+	for _, item := range items {
+		if _, ok := seen[item.AvatarID]; ok {
+			continue
+		}
+		seen[item.AvatarID] = struct{}{}
+		out = append(out, item)
+	}
+	return out
+}
+
+func statementTypeCNForExport(statementType string) string {
+	switch strings.TrimSpace(statementType) {
+	case "income":
+		return "收入"
+	case "expend":
+		return "支出"
+	case "transfer":
+		return "转账"
+	case "repayment":
+		return "还款"
+	case "loan_in":
+		return "借入"
+	case "loan_out":
+		return "借出"
+	case "reimburse":
+		return "报销"
+	case "payment_proxy":
+		return "代付"
+	default:
+		return strings.TrimSpace(statementType)
+	}
+}
+
+func statementAvatarSecureURL(baseURL string, statementID int64, avatarID int64) string {
+	baseURL = strings.TrimSpace(baseURL)
+	if baseURL == "" {
+		return fmt.Sprintf("/api/statements/%d/avatars/%d", statementID, avatarID)
+	}
+	return fmt.Sprintf("%s/api/statements/%d/avatars/%d", strings.TrimRight(baseURL, "/"), statementID, avatarID)
+}
+
+// Keep import alive for now to preserve compile context with domain in service package.
+var _ = domain.User{}

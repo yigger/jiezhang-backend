@@ -145,7 +145,22 @@ func (h StatementsHandler) List(c *gin.Context) {
 }
 
 func (h StatementsHandler) ListByToken(c *gin.Context) {
-	notImplemented(c, "GET /api/statements/list_by_token")
+	res, err := h.service.ListByToken(c.Request.Context(), service.StatementListByTokenInput{
+		Token:   c.Query("token"),
+		OrderBy: c.Query("order_by"),
+	})
+	if err != nil {
+		switch {
+		case errors.Is(err, service.ErrStatementDecodeFailed):
+			c.JSON(http.StatusOK, gin.H{"status": 501, "msg": "解码失败"})
+		case errors.Is(err, service.ErrStatementInvalidToken):
+			c.JSON(http.StatusOK, gin.H{"status": 502, "msg": "token 无效"})
+		default:
+			c.JSON(http.StatusInternalServerError, gin.H{"status": 500, "msg": "failed to list by token"})
+		}
+		return
+	}
+	c.JSON(http.StatusOK, gin.H{"status": 200, "data": res})
 }
 
 func (h StatementsHandler) Create(c *gin.Context) {
@@ -267,15 +282,76 @@ func (h StatementsHandler) Delete(c *gin.Context) {
 }
 
 func (h StatementsHandler) Images(c *gin.Context) {
-	notImplemented(c, "GET /api/statements/images")
+	accountBook, ok := requireAccountBook(c)
+	if !ok {
+		return
+	}
+
+	res, err := h.service.GetImages(c.Request.Context(), accountBook.ID)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"status": 500, "msg": "failed to get statement images"})
+		return
+	}
+	c.JSON(http.StatusOK, gin.H{"status": 200, "data": res})
 }
 
 func (h StatementsHandler) GenerateShareKey(c *gin.Context) {
-	notImplemented(c, "POST /api/statements/generate_share_key")
+	currentUser, ok := requireCurrentUser(c)
+	if !ok {
+		return
+	}
+	accountBook, ok := requireAccountBook(c)
+	if !ok {
+		return
+	}
+
+	var req struct {
+		StartDate            string `json:"start_date"`
+		EndDate              string `json:"end_date"`
+		CategoryIDs          string `json:"category_ids"`
+		ExceptedStatementIDs string `json:"exceptedStatementIds"`
+		ExceptStatementIDs   string `json:"except_statement_ids"`
+	}
+	if err := c.ShouldBindJSON(&req); err != nil {
+		c.JSON(http.StatusOK, gin.H{"status": 400, "msg": "参数错误"})
+		return
+	}
+	exceptIDs := strings.TrimSpace(req.ExceptStatementIDs)
+	if exceptIDs == "" {
+		exceptIDs = strings.TrimSpace(req.ExceptedStatementIDs)
+	}
+
+	token, err := h.service.GenerateShareKey(c.Request.Context(), service.StatementGenerateShareKeyInput{
+		AccountBookID:      accountBook.ID,
+		UserID:             currentUser.ID,
+		StartDate:          strings.TrimSpace(req.StartDate),
+		EndDate:            strings.TrimSpace(req.EndDate),
+		CategoryIDs:        strings.TrimSpace(req.CategoryIDs),
+		ExceptStatementIDs: exceptIDs,
+	})
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"status": 500, "msg": "failed to generate share key"})
+		return
+	}
+	c.JSON(http.StatusOK, gin.H{"status": 200, "data": gin.H{"share_key": token}})
 }
 
 func (h StatementsHandler) ExportCheck(c *gin.Context) {
-	notImplemented(c, "POST /api/statements/export_check")
+	currentUser, ok := requireCurrentUser(c)
+	if !ok {
+		return
+	}
+
+	_, err := h.service.ExportCheck(c.Request.Context(), currentUser.ID)
+	if err != nil {
+		if errors.Is(err, service.ErrStatementExportLimited) {
+			c.JSON(http.StatusOK, gin.H{"status": 503, "msg": "今日导出次数已达上限，请明天再试"})
+			return
+		}
+		c.JSON(http.StatusInternalServerError, gin.H{"status": 500, "msg": "failed to check export limit"})
+		return
+	}
+	c.JSON(http.StatusOK, gin.H{"status": 200})
 }
 
 func (h StatementsHandler) TargetObjects(c *gin.Context) {
@@ -296,7 +372,48 @@ func (h StatementsHandler) TargetObjects(c *gin.Context) {
 }
 
 func (h StatementsHandler) RemoveAvatar(c *gin.Context) {
-	notImplemented(c, "DELETE /api/statements/:statementId/avatar")
+	accountBook, ok := requireAccountBook(c)
+	if !ok {
+		return
+	}
+	statementID, err := parseStatementID(c)
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"status": 400, "msg": "invalid statementId"})
+		return
+	}
+
+	var req struct {
+		AvatarID int64 `json:"avatar_id"`
+	}
+	if err := c.ShouldBindJSON(&req); err != nil || req.AvatarID <= 0 {
+		avatarIDRaw := strings.TrimSpace(c.Query("avatar_id"))
+		if avatarIDRaw == "" {
+			avatarIDRaw = strings.TrimSpace(c.PostForm("avatar_id"))
+		}
+		if avatarIDRaw != "" {
+			if v, parseErr := strconv.ParseInt(avatarIDRaw, 10, 64); parseErr == nil && v > 0 {
+				req.AvatarID = v
+			}
+		}
+		if req.AvatarID <= 0 {
+			c.JSON(http.StatusBadRequest, gin.H{"status": 400, "msg": "invalid avatar_id"})
+			return
+		}
+	}
+
+	err = h.service.RemoveAvatar(c.Request.Context(), accountBook.ID, statementID, req.AvatarID)
+	if err != nil {
+		switch {
+		case errors.Is(err, repository.ErrStatementNotFound):
+			c.JSON(http.StatusNotFound, gin.H{"status": 404, "msg": "账单不存在或已删除"})
+		case errors.Is(err, repository.ErrStatementAvatarNotFound):
+			c.JSON(http.StatusNotFound, gin.H{"status": 404, "msg": "图片不存在或已删除"})
+		default:
+			c.JSON(http.StatusInternalServerError, gin.H{"status": 500, "msg": "failed to remove avatar"})
+		}
+		return
+	}
+	c.JSON(http.StatusOK, gin.H{"status": 200})
 }
 
 func (h StatementsHandler) DefaultCategoryAsset(c *gin.Context) {
@@ -317,7 +434,33 @@ func (h StatementsHandler) DefaultCategoryAsset(c *gin.Context) {
 }
 
 func (h StatementsHandler) ExportExcel(c *gin.Context) {
-	notImplemented(c, "GET /api/statements/export_excel")
+	currentUser, ok := requireCurrentUser(c)
+	if !ok {
+		return
+	}
+	accountBook, ok := requireAccountBook(c)
+	if !ok {
+		return
+	}
+
+	content, err := h.service.ExportExcelFile(c.Request.Context(), service.StatementExportInput{
+		AccountBookID: accountBook.ID,
+		UserID:        currentUser.ID,
+		Range:         strings.TrimSpace(c.Query("range")),
+	})
+	if err != nil {
+		if errors.Is(err, service.ErrStatementExportLimited) {
+			c.JSON(http.StatusOK, gin.H{"status": 503, "msg": "今日导出次数已达上限，请明天再试"})
+			return
+		}
+		c.JSON(http.StatusInternalServerError, gin.H{"status": 500, "msg": "failed to export excel"})
+		return
+	}
+
+	filename := "statements_" + time.Now().Format("20060102_150405") + ".xlsx"
+	c.Header("Content-Type", "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet")
+	c.Header("Content-Disposition", "attachment; filename="+filename)
+	c.Data(http.StatusOK, "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet", content)
 }
 
 func buildStatementListInput(c *gin.Context, userID int64, accountBookID int64) (statementdto.ListInput, error) {

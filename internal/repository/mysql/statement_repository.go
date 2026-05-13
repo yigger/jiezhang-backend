@@ -77,6 +77,25 @@ type defaultCategoryAssetRow struct {
 	AssetName    string `gorm:"column:asset_name"`
 }
 
+type statementAvatarRow struct {
+	StatementID int64  `gorm:"column:statement_id"`
+	Year        int    `gorm:"column:year"`
+	Month       int    `gorm:"column:month"`
+	AvatarID    int64  `gorm:"column:avatar_id"`
+	AvatarPath  string `gorm:"column:avatar_path"`
+}
+
+type statementExportRow struct {
+	CategoryName       string    `gorm:"column:category_name"`
+	ParentCategoryName string    `gorm:"column:parent_category_name"`
+	Type               string    `gorm:"column:type"`
+	AssetName          string    `gorm:"column:asset_name"`
+	Description        string    `gorm:"column:description"`
+	Amount             float64   `gorm:"column:amount"`
+	CreatedAt          time.Time `gorm:"column:created_at"`
+	UpdatedAt          time.Time `gorm:"column:updated_at"`
+}
+
 type statementMutationModel struct {
 	ID            int64     `gorm:"column:id;primaryKey;autoIncrement"`
 	UserID        int64     `gorm:"column:user_id"`
@@ -260,6 +279,32 @@ func (r *StatementRepository) DeleteByID(ctx context.Context, statementID int64,
 		}
 		return nil
 	})
+}
+
+func (r *StatementRepository) DeleteAvatarByID(ctx context.Context, accountBookID int64, statementID int64, avatarID int64) error {
+	var count int64
+	if err := r.db.WithContext(ctx).
+		Table("statements").
+		Where("id = ? AND account_book_id = ?", statementID, accountBookID).
+		Count(&count).Error; err != nil {
+		return err
+	}
+	if count == 0 {
+		return repository.ErrStatementNotFound
+	}
+
+	res := r.db.WithContext(ctx).
+		Table("user_assets ua").
+		Joins("INNER JOIN statements s ON s.id = ua.imageable_id AND ua.imageable_type = 'Statement' AND ua.type = 'StatementAvatar'").
+		Where("ua.id = ? AND ua.imageable_id = ? AND s.account_book_id = ?", avatarID, statementID, accountBookID).
+		Delete(&struct{}{})
+	if res.Error != nil {
+		return res.Error
+	}
+	if res.RowsAffected == 0 {
+		return repository.ErrStatementAvatarNotFound
+	}
+	return nil
 }
 
 func (r *StatementRepository) getStatementForUpdate(tx *gorm.DB, statementID int64, accountBookID int64) (statementMutationModel, error) {
@@ -479,6 +524,83 @@ func (r *StatementRepository) ListDistinctTargetObjectsByType(ctx context.Contex
 		return nil, err
 	}
 	return rows, nil
+}
+
+func (r *StatementRepository) ListAvatarRows(ctx context.Context, accountBookID int64) ([]repository.StatementAvatarRowRecord, error) {
+	rows := make([]statementAvatarRow, 0)
+	err := r.db.WithContext(ctx).
+		Table("statements s").
+		Joins("INNER JOIN user_assets ua ON ua.imageable_type = 'Statement' AND ua.type = 'StatementAvatar' AND ua.imageable_id = s.id").
+		Where("s.account_book_id = ?", accountBookID).
+		Order("s.year DESC, s.month DESC, s.day DESC, s.created_at DESC, ua.id DESC").
+		Select(strings.Join([]string{
+			"s.id AS statement_id",
+			"s.year AS year",
+			"s.month AS month",
+			"ua.id AS avatar_id",
+			"ua.path AS avatar_path",
+		}, ", ")).
+		Scan(&rows).Error
+	if err != nil {
+		return nil, err
+	}
+
+	items := make([]repository.StatementAvatarRowRecord, 0, len(rows))
+	for _, row := range rows {
+		items = append(items, repository.StatementAvatarRowRecord{
+			StatementID: row.StatementID,
+			Year:        row.Year,
+			Month:       row.Month,
+			AvatarID:    row.AvatarID,
+			AvatarPath:  row.AvatarPath,
+		})
+	}
+	return items, nil
+}
+
+func (r *StatementRepository) ListExportRows(ctx context.Context, filter repository.StatementExportFilter) ([]repository.StatementExportRowRecord, error) {
+	if filter.Limit <= 0 || filter.Limit > 3000 {
+		filter.Limit = 3000
+	}
+
+	rows := make([]statementExportRow, 0)
+	err := r.db.WithContext(ctx).
+		Table("statements s").
+		Joins("LEFT JOIN categories c ON c.id = s.category_id").
+		Joins("LEFT JOIN categories cp ON cp.id = c.parent_id").
+		Joins("LEFT JOIN assets a ON a.id = s.asset_id").
+		Where("s.account_book_id = ? AND s.created_at BETWEEN ? AND ?", filter.AccountBookID, filter.StartDate, filter.EndDate).
+		Order("s.created_at ASC").
+		Limit(filter.Limit).
+		Select(strings.Join([]string{
+			"COALESCE(c.name, '') AS category_name",
+			"COALESCE(cp.name, '') AS parent_category_name",
+			"s.type AS type",
+			"COALESCE(a.name, '') AS asset_name",
+			"COALESCE(s.description, '') AS description",
+			"s.amount AS amount",
+			"s.created_at AS created_at",
+			"s.updated_at AS updated_at",
+		}, ", ")).
+		Scan(&rows).Error
+	if err != nil {
+		return nil, err
+	}
+
+	items := make([]repository.StatementExportRowRecord, 0, len(rows))
+	for _, row := range rows {
+		items = append(items, repository.StatementExportRowRecord{
+			CategoryName:       row.CategoryName,
+			ParentCategoryName: row.ParentCategoryName,
+			Type:               row.Type,
+			AssetName:          row.AssetName,
+			Description:        row.Description,
+			Amount:             row.Amount,
+			CreatedAt:          row.CreatedAt,
+			UpdatedAt:          row.UpdatedAt,
+		})
+	}
+	return items, nil
 }
 
 func (r *StatementRepository) baseStatementListQuery(ctx context.Context) *gorm.DB {

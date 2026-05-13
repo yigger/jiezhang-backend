@@ -52,7 +52,7 @@ func NewApp() *App {
 	if err != nil {
 		log.Fatalf("failed to build home module: %v", err)
 	}
-	statementsHandler, err := modules.BuildStatementModule(mysqlDB, cfg.PublicBaseURL)
+	statementsHandler, err := modules.BuildStatementModule(mysqlDB, cfg, sessionCache)
 	if err != nil {
 		log.Fatalf("failed to build statement module: %v", err)
 	}
