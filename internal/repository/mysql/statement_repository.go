@@ -261,26 +261,6 @@ func (r *StatementRepository) DeleteByID(ctx context.Context, statementID int64,
 	})
 }
 
-func (r *StatementRepository) StatisticGroupDate(ctx context.Context, date time.Time, accountBookID int64) ([]repository.CalendarDataItem, error) {
-	var rows []repository.CalendarDataItem
-	err := r.db.WithContext(ctx).
-		Table("statements").
-		Select("day, SUM(CASE WHEN type = 'income' THEN amount ELSE 0 END) as income, SUM(CASE WHEN type = 'expend' THEN amount ELSE 0 END) as expend").
-		Where("account_book_id = ? AND year = ? AND month = ?", accountBookID, date.Year(), int(date.Month())).
-		Group("day").
-		Order("day ASC").
-		Scan(&rows).Error
-
-	if err != nil {
-		if errors.Is(err, gorm.ErrRecordNotFound) {
-			return nil, nil
-		}
-		return nil, err
-	}
-
-	return rows, nil
-}
-
 func (r *StatementRepository) getStatementForUpdate(tx *gorm.DB, statementID int64, accountBookID int64) (statementMutationModel, error) {
 	var model statementMutationModel
 	err := tx.Clauses(clause.Locking{Strength: "UPDATE"}).

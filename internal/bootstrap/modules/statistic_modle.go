@@ -8,9 +8,9 @@ import (
 )
 
 func BuildStatisticModule(db *gorm.DB) (handler.StatisticsHandler, error) {
-	statementRepo, _ := mysqlrepo.NewStatementRepository(db)
+	statisticsRepo, _ := mysqlrepo.NewStatisticsRepository(db)
 
-	statisticService := service.NewStatisticsService(statementRepo)
+	statisticService := service.NewStatisticsService(statisticsRepo)
 	statisticHandler := handler.NewStatisticsHandler(statisticService)
 	return statisticHandler, nil
 }

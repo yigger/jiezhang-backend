@@ -14,7 +14,6 @@ type StatementRepository interface {
 	GetOwnerID(ctx context.Context, statementID int64, accountBookID int64) (int64, error)
 	UpdateByID(ctx context.Context, statementID int64, accountBookID int64, input StatementWriteRecord) error
 	DeleteByID(ctx context.Context, statementID int64, accountBookID int64) error
-	StatisticGroupDate(ctx context.Context, date time.Time, accountBookID int64) ([]CalendarDataItem, error)
 }
 
 // StatementQueryRepository is for read-side complex queries.
@@ -35,12 +34,6 @@ type StatementListFilter struct {
 	OrderBy           string
 	Limit             int
 	Offset            int
-}
-
-type CalendarDataItem struct {
-	Day    int     `json:"day"`
-	Income float64 `json:"income"`
-	Expend float64 `json:"expend"`
 }
 
 type StatementRowRecord struct {

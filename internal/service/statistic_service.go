@@ -8,17 +8,17 @@ import (
 )
 
 type StatisticsService struct {
-	statementRepo repository.StatementRepository
+	statisticsRepo repository.StatisticsRepository
 }
 
-func NewStatisticsService(statementRepo repository.StatementRepository) StatisticsService {
+func NewStatisticsService(statisticsRepo repository.StatisticsRepository) StatisticsService {
 	return StatisticsService{
-		statementRepo: statementRepo,
+		statisticsRepo: statisticsRepo,
 	}
 }
 
 func (s StatisticsService) GetCalendarData(context context.Context, date time.Time, accountBookID int64) ([]repository.CalendarDataItem, error) {
-	res, err := s.statementRepo.StatisticGroupDate(context, date, accountBookID)
+	res, err := s.statisticsRepo.StatisticGroupDate(context, date, accountBookID)
 
 	return res, err
 }
