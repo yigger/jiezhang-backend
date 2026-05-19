@@ -47,7 +47,10 @@ func NewApp() *App {
 		log.Fatalf("failed to build user module: %v", err)
 	}
 
-	authModule := modules.BuildAuthModule(cfg, userRepo, sessionCache)
+	authModule, err := modules.BuildAuthModule(cfg, mysqlDB, userRepo, sessionCache)
+	if err != nil {
+		log.Fatalf("failed to build auth module: %v", err)
+	}
 	homeHandler, err := modules.BuildHomeModule(mysqlDB, cfg.PublicBaseURL)
 	if err != nil {
 		log.Fatalf("failed to build home module: %v", err)
@@ -137,14 +140,17 @@ func validateRequiredConfig(cfg config.Config) {
 func registerStaticFiles(engine *gin.Engine) {
 	if wd, err := os.Getwd(); err == nil {
 		publicDir := filepath.Join(wd, "public")
-		if st, statErr := os.Stat(publicDir); statErr == nil && st.IsDir() {
-			// Keep existing API output contract: icon paths like /images/xxx.
-			imagesDir := filepath.Join(publicDir, "images")
-			if imagesSt, imagesErr := os.Stat(imagesDir); imagesErr == nil && imagesSt.IsDir() {
-				engine.Static("/images", imagesDir)
-			}
-			// Provide a generic static root for future assets.
-			engine.Static("/public", publicDir)
+		if err := os.MkdirAll(publicDir, 0o755); err != nil {
+			return
 		}
+		// Keep existing API output contract: icon paths like /images/xxx.
+		imagesDir := filepath.Join(publicDir, "images")
+		if imagesSt, imagesErr := os.Stat(imagesDir); imagesErr == nil && imagesSt.IsDir() {
+			engine.Static("/images", imagesDir)
+		}
+		// Rails-compatible uploaded private files path.
+		engine.Static("/private", filepath.Join(publicDir, "private"))
+		// Provide a generic static root for future assets.
+		engine.Static("/public", publicDir)
 	}
 }
