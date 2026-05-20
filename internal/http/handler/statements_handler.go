@@ -235,6 +235,10 @@ func (h StatementsHandler) Update(c *gin.Context) {
 }
 
 func (h StatementsHandler) Show(c *gin.Context) {
+	currentUser, ok := requireCurrentUser(c)
+	if !ok {
+		return
+	}
 	accountBook, _ := requireAccountBook(c)
 	statementID, err := parseStatementID(c)
 	if err != nil {
@@ -242,7 +246,7 @@ func (h StatementsHandler) Show(c *gin.Context) {
 		return
 	}
 
-	statement, err := h.service.GetStatementByID(c.Request.Context(), statementID, accountBook.ID)
+	statement, err := h.service.GetStatementByID(c.Request.Context(), statementID, accountBook.ID, currentUser.ID)
 	if err != nil {
 		c.JSON(http.StatusOK, gin.H{"status": 500})
 		return
@@ -574,7 +578,7 @@ func buildStatementWriteInput(c *gin.Context) (statementdto.WriteInput, error) {
 
 	p := req.Statement
 
-	amount, err := strconv.ParseFloat(p.Amount, 64)
+	amount, err := strconv.ParseFloat(string(p.Amount), 64)
 	if err != nil {
 		return statementdto.WriteInput{}, errInvalidParam("amount")
 	}
@@ -630,7 +634,7 @@ func buildStatementPatchInput(c *gin.Context) (statementdto.PatchInput, error) {
 	}
 
 	if p.Amount != nil {
-		amount, err := strconv.ParseFloat(strings.TrimSpace(*p.Amount), 64)
+		amount, err := strconv.ParseFloat(strings.TrimSpace(string(*p.Amount)), 64)
 		if err != nil {
 			return statementdto.PatchInput{}, errInvalidParam("amount")
 		}

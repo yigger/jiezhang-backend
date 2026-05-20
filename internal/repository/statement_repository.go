@@ -25,6 +25,7 @@ type StatementQueryRepository interface {
 	GetLatestCategoryAssetByType(ctx context.Context, accountBookID int64, statementType string) (*StatementDefaultCategoryAssetRecord, error)
 	ListDistinctTargetObjectsByType(ctx context.Context, accountBookID int64, statementType string) ([]string, error)
 	ListAvatarRows(ctx context.Context, accountBookID int64) ([]StatementAvatarRowRecord, error)
+	ListAvatarsByStatementID(ctx context.Context, statementID int64) ([]StatementAvatarRowRecord, error)
 	ListExportRows(ctx context.Context, filter StatementExportFilter) ([]StatementExportRowRecord, error)
 }
 
@@ -67,6 +68,7 @@ type StatementRowRecord struct {
 
 type StatementListRowRecord struct {
 	ID              int64
+	UserID          int64
 	Type            string
 	Amount          float64
 	Description     string
@@ -86,11 +88,14 @@ type StatementListRowRecord struct {
 	District        string
 	Street          string
 	HasPic          bool
+	Residue         float64
 	PayeeID         int64
 	PayeeName       string
 	TargetAssetID   int64
 	TargetAssetName string
 	TargetObject    string
+	CategoryParentName string
+	AssetParentName    string
 }
 
 type StatementWriteRecord struct {

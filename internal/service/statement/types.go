@@ -108,15 +108,30 @@ type ListItem struct {
 	UpdatedAt time.Time `json:"updated_at"`
 }
 
+type TargetAssetInfo struct {
+	ID   int64  `json:"id"`
+	Name string `json:"name"`
+}
+
+type UploadFileItem struct {
+	ID  int64  `json:"id"`
+	URL string `json:"url"`
+}
+
 type DetailItem struct {
 	BaseItem
-	Location    string        `json:"location"`
-	Province    string        `json:"province"`
-	City        string        `json:"city"`
-	Street      string        `json:"street"`
-	MonthDay    string        `json:"month_day"`
-	HasPic      bool          `json:"has_pic"`
-	CreatedAt   time.Time     `json:"created_at"`
-	UpdatedAt   time.Time     `json:"updated_at"`
-	UploadFiles []interface{} `json:"upload_files"`
+	AmountNumber float64         `json:"amount_number"`
+	Location     string          `json:"location"`
+	Province     string          `json:"province"`
+	City         string          `json:"city"`
+	Street       string          `json:"street"`
+	MonthDay     string          `json:"month_day"`
+	HasPic       bool            `json:"has_pic"`
+	CreatedAt    time.Time       `json:"created_at"`
+	UpdatedAt    time.Time       `json:"updated_at"`
+	UploadFiles  []UploadFileItem `json:"upload_files"`
+	TargetAssetID int64           `json:"target_asset_id"`
+	Residue      string           `json:"residue"`
+	TargetAsset  *TargetAssetInfo `json:"target_asset,omitempty"`
+	CanEdit      bool             `json:"can_edit"`
 }

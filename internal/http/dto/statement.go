@@ -2,7 +2,7 @@ package dto
 
 type StatementWritePayload struct {
 	Type         string `json:"type"`
-	Amount       string `json:"amount"`
+	Amount       FlexibleAmount `json:"amount"`
 	Description  string `json:"description"`
 	Mood         string `json:"mood"`
 	CategoryID   int64  `json:"category_id"`
@@ -23,7 +23,7 @@ type StatementWritePayload struct {
 
 type StatementPatchPayload struct {
 	Type         *string `json:"type"`
-	Amount       *string `json:"amount"`
+	Amount       *FlexibleAmount `json:"amount"`
 	Description  *string `json:"description"`
 	Mood         *string `json:"mood"`
 	CategoryID   *int64  `json:"category_id"`

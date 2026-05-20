@@ -741,13 +741,30 @@ func (s StatementService) AssetsGuess(ctx context.Context, input GetCategoriesIn
 	return items, nil
 }
 
-func (s StatementService) GetStatementByID(ctx context.Context, statementID int64, accountBookID int64) (statementdto.DetailItem, error) {
+func (s StatementService) GetStatementByID(ctx context.Context, statementID int64, accountBookID int64, currentUserID int64) (statementdto.DetailItem, error) {
 	row, err := s.queryRepo.GetRowByIDWithRelations(ctx, statementID, accountBookID)
 	if err != nil {
 		return statementdto.DetailItem{}, err
 	}
 
-	return s.rowMapper.ToDetailItem(row), nil
+	avatarRows, err := s.queryRepo.ListAvatarsByStatementID(ctx, statementID)
+	if err != nil {
+		return statementdto.DetailItem{}, err
+	}
+	uploadFiles := make([]statementdto.UploadFileItem, 0, len(avatarRows))
+	for _, a := range avatarRows {
+		uploadFiles = append(uploadFiles, statementdto.UploadFileItem{
+			ID:  a.AvatarID,
+			URL: s.rowMapper.BuildPublicURL(a.AvatarPath),
+		})
+	}
+
+	canAdmin, err := s.categoryRepo.CanAdmin(ctx, accountBookID, currentUserID)
+	if err != nil {
+		canAdmin = false
+	}
+
+	return s.rowMapper.ToDetailItem(row, currentUserID, canAdmin, uploadFiles), nil
 }
 
 func (s StatementService) GenerateShareKey(ctx context.Context, input StatementGenerateShareKeyInput) (string, error) {

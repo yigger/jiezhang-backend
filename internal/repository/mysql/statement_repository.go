@@ -43,31 +43,35 @@ type statementBase struct {
 }
 
 type statementListRow struct {
-	ID              int64     `gorm:"column:id"`
-	Type            string    `gorm:"column:type"`
-	Amount          float64   `gorm:"column:amount"`
-	CategoryID      int64     `gorm:"column:category_id"`
-	AssetID         int64     `gorm:"column:asset_id"`
-	TargetAssetID   int64     `gorm:"column:target_asset_id"`
-	TargetObject    string    `gorm:"column:target_object"`
-	Description     string    `gorm:"column:description"`
-	Remark          string    `gorm:"column:remark"`
-	Mood            string    `gorm:"column:mood"`
-	IconPath        string    `gorm:"column:icon_path"`
-	CreatedAt       time.Time `gorm:"column:created_at"`
-	UpdatedAt       time.Time `gorm:"column:updated_at"`
-	CategoryName    string    `gorm:"column:category_name"`
-	AssetName       string    `gorm:"column:asset_name"`
-	Location        string    `gorm:"column:location"`
-	Nation          string    `gorm:"column:nation"`
-	Province        string    `gorm:"column:province"`
-	City            string    `gorm:"column:city"`
-	District        string    `gorm:"column:district"`
-	Street          string    `gorm:"column:street"`
-	HasPic          bool      `gorm:"column:has_pic"`
-	PayeeID         int64     `gorm:"column:payee_id"`
-	PayeeName       string    `gorm:"column:payee_name"`
-	TargetAssetName string    `gorm:"column:target_asset_name"`
+	ID                 int64     `gorm:"column:id"`
+	UserID             int64     `gorm:"column:user_id"`
+	Type               string    `gorm:"column:type"`
+	Amount             float64   `gorm:"column:amount"`
+	CategoryID         int64     `gorm:"column:category_id"`
+	AssetID            int64     `gorm:"column:asset_id"`
+	TargetAssetID      int64     `gorm:"column:target_asset_id"`
+	TargetObject       string    `gorm:"column:target_object"`
+	Description        string    `gorm:"column:description"`
+	Remark             string    `gorm:"column:remark"`
+	Mood               string    `gorm:"column:mood"`
+	IconPath           string    `gorm:"column:icon_path"`
+	CreatedAt          time.Time `gorm:"column:created_at"`
+	UpdatedAt          time.Time `gorm:"column:updated_at"`
+	CategoryName       string    `gorm:"column:category_name"`
+	AssetName          string    `gorm:"column:asset_name"`
+	Location           string    `gorm:"column:location"`
+	Nation             string    `gorm:"column:nation"`
+	Province           string    `gorm:"column:province"`
+	City               string    `gorm:"column:city"`
+	District           string    `gorm:"column:district"`
+	Street             string    `gorm:"column:street"`
+	HasPic             bool      `gorm:"column:has_pic"`
+	Residue            float64   `gorm:"column:residue"`
+	PayeeID            int64     `gorm:"column:payee_id"`
+	PayeeName          string    `gorm:"column:payee_name"`
+	TargetAssetName    string    `gorm:"column:target_asset_name"`
+	CategoryParentName string    `gorm:"column:category_parent_name"`
+	AssetParentName    string    `gorm:"column:asset_parent_name"`
 }
 
 type defaultCategoryAssetRow struct {
@@ -558,6 +562,28 @@ func (r *StatementRepository) ListAvatarRows(ctx context.Context, accountBookID 
 	return items, nil
 }
 
+func (r *StatementRepository) ListAvatarsByStatementID(ctx context.Context, statementID int64) ([]repository.StatementAvatarRowRecord, error) {
+	rows := make([]statementAvatarRow, 0)
+	err := r.db.WithContext(ctx).
+		Table("user_assets ua").
+		Where("ua.imageable_type = 'Statement' AND ua.type = 'StatementAvatar' AND ua.imageable_id = ?", statementID).
+		Order("ua.id ASC").
+		Select("ua.id AS avatar_id, ua.path AS avatar_path").
+		Scan(&rows).Error
+	if err != nil {
+		return nil, err
+	}
+
+	items := make([]repository.StatementAvatarRowRecord, 0, len(rows))
+	for _, row := range rows {
+		items = append(items, repository.StatementAvatarRowRecord{
+			AvatarID:   row.AvatarID,
+			AvatarPath: row.AvatarPath,
+		})
+	}
+	return items, nil
+}
+
 func (r *StatementRepository) ListExportRows(ctx context.Context, filter repository.StatementExportFilter) ([]repository.StatementExportRowRecord, error) {
 	if filter.Limit <= 0 || filter.Limit > 3000 {
 		filter.Limit = 3000
@@ -607,7 +633,9 @@ func (r *StatementRepository) baseStatementListQuery(ctx context.Context) *gorm.
 	return r.db.WithContext(ctx).
 		Table("statements s").
 		Joins("INNER JOIN categories c ON c.id = s.category_id").
+		Joins("LEFT JOIN categories cp ON cp.id = c.parent_id").
 		Joins("LEFT JOIN assets a ON a.id = s.asset_id").
+		Joins("LEFT JOIN assets ap ON ap.id = a.parent_id").
 		Joins("LEFT JOIN payees p ON p.id = s.payee_id").
 		Joins("LEFT JOIN account_book_collaborators abc ON abc.account_book_id = s.account_book_id AND abc.user_id = s.user_id").
 		Joins("LEFT JOIN assets ta ON ta.id = s.target_asset_id")
@@ -617,6 +645,7 @@ func (r *StatementRepository) scanStatementRows(query *gorm.DB) ([]repository.St
 	var rows []statementListRow
 	err := query.Select(strings.Join([]string{
 		"s.id AS id",
+		"s.user_id AS user_id",
 		"s.type AS type",
 		"s.amount AS amount",
 		"s.mood AS mood",
@@ -635,10 +664,13 @@ func (r *StatementRepository) scanStatementRows(query *gorm.DB) ([]repository.St
 		"COALESCE(s.target_asset_id, 0) AS target_asset_id",
 		"COALESCE(s.target_object, '') AS target_object",
 		"EXISTS (SELECT 1 FROM user_assets ua WHERE ua.imageable_type = 'Statement' AND ua.type = 'StatementAvatar' AND ua.imageable_id = s.id) AS has_pic",
+		"COALESCE(s.residue, 0) AS residue",
 		"c.icon_path AS icon_path",
 		"ta.name AS target_asset_name",
 		"COALESCE(c.name, '') AS category_name",
 		"COALESCE(a.name, '') AS asset_name",
+		"COALESCE(cp.name, '') AS category_parent_name",
+		"COALESCE(ap.name, '') AS asset_parent_name",
 		"COALESCE(s.payee_id, 0) AS payee_id",
 		"COALESCE(p.name, '') AS payee_name",
 	}, ", ")).Scan(&rows).Error
@@ -649,31 +681,35 @@ func (r *StatementRepository) scanStatementRows(query *gorm.DB) ([]repository.St
 	items := make([]repository.StatementListRowRecord, 0, len(rows))
 	for _, row := range rows {
 		items = append(items, repository.StatementListRowRecord{
-			ID:              row.ID,
-			Type:            row.Type,
-			Amount:          row.Amount,
-			Description:     row.Description,
-			Remark:          row.Remark,
-			Mood:            row.Mood,
-			IconPath:        row.IconPath,
-			CreatedAt:       row.CreatedAt,
-			UpdatedAt:       row.UpdatedAt,
-			CategoryName:    row.CategoryName,
-			AssetName:       row.AssetName,
-			Location:        row.Location,
-			Nation:          row.Nation,
-			Province:        row.Province,
-			City:            row.City,
-			District:        row.District,
-			Street:          row.Street,
-			HasPic:          row.HasPic,
-			PayeeID:         row.PayeeID,
-			PayeeName:       row.PayeeName,
-			TargetAssetID:   row.TargetAssetID,
-			TargetAssetName: row.TargetAssetName,
-			TargetObject:    row.TargetObject,
-			CategoryID:      row.CategoryID,
-			AssetID:         row.AssetID,
+			ID:                 row.ID,
+			UserID:             row.UserID,
+			Type:               row.Type,
+			Amount:             row.Amount,
+			Description:        row.Description,
+			Remark:             row.Remark,
+			Mood:               row.Mood,
+			IconPath:           row.IconPath,
+			CreatedAt:          row.CreatedAt,
+			UpdatedAt:          row.UpdatedAt,
+			CategoryName:       row.CategoryName,
+			AssetName:          row.AssetName,
+			Location:           row.Location,
+			Nation:             row.Nation,
+			Province:           row.Province,
+			City:               row.City,
+			District:           row.District,
+			Street:             row.Street,
+			HasPic:             row.HasPic,
+			Residue:            row.Residue,
+			PayeeID:            row.PayeeID,
+			PayeeName:          row.PayeeName,
+			TargetAssetID:      row.TargetAssetID,
+			TargetAssetName:    row.TargetAssetName,
+			TargetObject:       row.TargetObject,
+			CategoryID:         row.CategoryID,
+			AssetID:            row.AssetID,
+			CategoryParentName: row.CategoryParentName,
+			AssetParentName:    row.AssetParentName,
 		})
 	}
 	return items, nil

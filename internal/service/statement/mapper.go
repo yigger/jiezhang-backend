@@ -64,19 +64,69 @@ func (m RowMapper) ToListItem(row repository.StatementListRowRecord) ListItem {
 	}
 }
 
-func (m RowMapper) ToDetailItem(row repository.StatementListRowRecord) DetailItem {
+func (m RowMapper) ToDetailItem(row repository.StatementListRowRecord, currentUserID int64, canAdmin bool, uploadFiles []UploadFileItem) DetailItem {
 	item := m.ToListItem(row)
+
+	categoryName := row.CategoryName
+	if row.CategoryParentName != "" {
+		categoryName = row.CategoryParentName + " -> " + row.CategoryName
+	}
+	assetName := row.AssetName
+	if row.AssetParentName != "" {
+		assetName = row.AssetParentName + " -> " + row.AssetName
+	}
+
+	residueStr := fmt.Sprintf("%.2f", row.Residue)
+
+	canEdit := row.UserID == currentUserID || canAdmin
+
+	var targetAsset *TargetAssetInfo
+	if row.Type == "transfer" && row.TargetAssetID > 0 {
+		targetAsset = &TargetAssetInfo{
+			ID:   row.TargetAssetID,
+			Name: row.TargetAssetName,
+		}
+	}
+
 	return DetailItem{
-		BaseItem:    item.BaseItem,
-		Location:    item.Location,
-		Province:    item.Province,
-		City:        item.City,
-		Street:      item.Street,
-		MonthDay:    item.MonthDay,
-		HasPic:      item.HasPic,
-		CreatedAt:   item.CreatedAt,
-		UpdatedAt:   item.UpdatedAt,
-		UploadFiles: []interface{}{},
+		BaseItem: BaseItem{
+			ID:           row.ID,
+			Type:         row.Type,
+			Amount:       row.Amount,
+			Description:  row.Description,
+			CategoryID:   row.CategoryID,
+			AssetID:      row.AssetID,
+			Title:        item.Title,
+			TargetObject: row.TargetObject,
+			Mood:         row.Mood,
+			Money:        fmt.Sprintf("%.2f", row.Amount),
+			Category:     categoryName,
+			IconPath:     m.BuildPublicURL(row.IconPath),
+			Asset:        assetName,
+			Date:         row.CreatedAt.Format("2006-01-02"),
+			Time:         row.CreatedAt.Format("15:04:05"),
+			TimeStr:      row.CreatedAt.Format("01-02 15:04"),
+			Week:         helper.WeekdayCN(row.CreatedAt.Weekday()),
+			Payee: Payee{
+				ID:   row.PayeeID,
+				Name: row.PayeeName,
+			},
+			Remark: row.Remark,
+		},
+		AmountNumber: row.Amount,
+		Location:     item.Location,
+		Province:     item.Province,
+		City:         item.City,
+		Street:       item.Street,
+		MonthDay:     item.MonthDay,
+		HasPic:       item.HasPic,
+		CreatedAt:    item.CreatedAt,
+		UpdatedAt:    item.UpdatedAt,
+		UploadFiles:  uploadFiles,
+		TargetAssetID: row.TargetAssetID,
+		Residue:      residueStr,
+		TargetAsset:  targetAsset,
+		CanEdit:      canEdit,
 	}
 }
 
