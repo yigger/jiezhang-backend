@@ -34,7 +34,7 @@ type User struct {
 }
 
 func (u User) RedisSessionKey() string {
-	return "@user_" + strconv.FormatInt(u.ID, 10) + "_session_key@"
+	return "@go:user_" + strconv.FormatInt(u.ID, 10) + "_session_key@"
 }
 
 type Theme struct {

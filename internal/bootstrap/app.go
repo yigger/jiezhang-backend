@@ -41,7 +41,7 @@ func NewApp() *App {
 		log.Fatalf("failed to connect mysql: %v", err)
 	}
 
-	sessionCache := sessioncache.NewMemoryCache()
+	sessionCache := newSessionCache(cfg.RedisURL)
 	userHandler, userRepo, err := modules.BuildUserModule(mysqlDB, sessionCache)
 	if err != nil {
 		log.Fatalf("failed to build user module: %v", err)
@@ -143,14 +143,21 @@ func registerStaticFiles(engine *gin.Engine) {
 		if err := os.MkdirAll(publicDir, 0o755); err != nil {
 			return
 		}
-		// Keep existing API output contract: icon paths like /images/xxx.
-		imagesDir := filepath.Join(publicDir, "images")
-		if imagesSt, imagesErr := os.Stat(imagesDir); imagesErr == nil && imagesSt.IsDir() {
-			engine.Static("/images", imagesDir)
-		}
-		// Rails-compatible uploaded private files path.
+		engine.Static("/images", filepath.Join(publicDir, "images"))
 		engine.Static("/private", filepath.Join(publicDir, "private"))
-		// Provide a generic static root for future assets.
 		engine.Static("/public", publicDir)
 	}
+}
+
+func newSessionCache(redisURL string) sessioncache.Cache {
+	if redisURL != "" {
+		rc, err := sessioncache.NewRedisCache(redisURL)
+		if err != nil {
+			log.Printf("redis connect failed, falling back to memory cache: %v", err)
+			return sessioncache.NewMemoryCache()
+		}
+		log.Println("using redis session cache")
+		return rc
+	}
+	return sessioncache.NewMemoryCache()
 }

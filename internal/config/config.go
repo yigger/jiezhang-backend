@@ -18,6 +18,7 @@ type Config struct {
 	GinMode            string
 	PublicBaseURL      string
 	MySQLDSN           string
+	RedisURL           string
 	MiniProgramAppID   string
 	MiniProgramSecret  string
 	SessionTokenSecret string
@@ -33,6 +34,7 @@ func Load() Config {
 		GinMode:            envOrDefault("GIN_MODE", gin.DebugMode),
 		PublicBaseURL:      strings.TrimSpace(envOrDefault("PUBLIC_BASE_URL", "")),
 		MySQLDSN:           strings.TrimSpace(envOrDefault("MYSQL_DSN", "")),
+		RedisURL:           strings.TrimSpace(envOrDefault("REDIS_URL", "")),
 		MiniProgramAppID:   strings.TrimSpace(envOrDefault("MINIPROGRAM_APPID", "")),
 		MiniProgramSecret:  strings.TrimSpace(envOrDefault("MINIPROGRAM_SECRET", "")),
 		SessionTokenSecret: strings.TrimSpace(envOrDefault("SESSION_TOKEN_SECRET", "")),
