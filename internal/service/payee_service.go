@@ -19,7 +19,7 @@ func NewPayeeService(repo repository.PayeeRepository) PayeeService {
 	return PayeeService{repo: repo}
 }
 
-func (s PayeeService) List(ctx context.Context, accountBookID int64) ([]domain.Payee, error) {
+func (s PayeeService) List(ctx context.Context, accountBookID int64) ([]repository.PayeeList, error) {
 	return s.repo.ListByAccountBookID(ctx, accountBookID)
 }
 

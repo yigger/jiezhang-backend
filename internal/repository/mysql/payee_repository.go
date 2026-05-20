@@ -32,7 +32,7 @@ func NewPayeeRepository(db *gorm.DB) (*PayeeRepository, error) {
 	return &PayeeRepository{db: db}, nil
 }
 
-func (r *PayeeRepository) ListByAccountBookID(ctx context.Context, accountBookID int64) ([]domain.Payee, error) {
+func (r *PayeeRepository) ListByAccountBookID(ctx context.Context, accountBookID int64) ([]repository.PayeeList, error) {
 	var models []payeeModel
 	if err := r.db.WithContext(ctx).
 		Where("account_book_id = ?", accountBookID).
@@ -41,9 +41,12 @@ func (r *PayeeRepository) ListByAccountBookID(ctx context.Context, accountBookID
 		return nil, err
 	}
 
-	items := make([]domain.Payee, 0, len(models))
+	items := make([]repository.PayeeList, 0, len(models))
 	for _, model := range models {
-		items = append(items, toPayeeDomain(model))
+		items = append(items, repository.PayeeList{
+			ID:   model.ID,
+			Name: model.Name,
+		})
 	}
 	return items, nil
 }
