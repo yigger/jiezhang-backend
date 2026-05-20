@@ -14,21 +14,21 @@ import (
 type userModel struct {
 	ID               int64     `gorm:"primaryKey;autoIncrement"`
 	UID              int64     `gorm:"column:uid;not null;default:0;uniqueIndex"`
-	Nickname         string    `gorm:"column:nickname;type:varchar(100);not null;default:''"`
-	Email            string    `gorm:"column:email;type:varchar(255);default:''"`
+	Nickname         *string   `gorm:"column:nickname;type:varchar(100)"`
+	Email            *string   `gorm:"column:email;type:varchar(255)"`
 	ThemeID          int64     `gorm:"column:theme_id;not null;default:0"`
 	OpenID           string    `gorm:"column:openid;type:varchar(255);not null;uniqueIndex"`
-	SessionKey       string    `gorm:"column:session_key;type:text;not null;default:''"`
-	ThirdSession     string    `gorm:"column:third_session;type:varchar(255);not null;default:'';index"`
+	SessionKey       *string   `gorm:"column:session_key;type:text"`
+	ThirdSession     *string   `gorm:"column:third_session;type:varchar(255);index"`
 	AccountBookID    int64     `gorm:"column:account_book_id;not null;default:0"`
-	AvatarURL        string    `gorm:"column:avatar_url;type:varchar(512);default:''"`
-	Country          string    `gorm:"column:country;type:varchar(255);default:''"`
-	City             string    `gorm:"column:city;type:varchar(255);default:''"`
+	AvatarURL        *string   `gorm:"column:avatar_url;type:varchar(512)"`
+	Country          *string   `gorm:"column:country;type:varchar(255)"`
+	City             *string   `gorm:"column:city;type:varchar(255)"`
 	Gender           int       `gorm:"column:gender;default:0"`
-	Language         string    `gorm:"column:language;type:varchar(255);default:''"`
-	Province         string    `gorm:"column:province;type:varchar(255);default:''"`
+	Language         *string   `gorm:"column:language;type:varchar(255)"`
+	Province         *string   `gorm:"column:province;type:varchar(255)"`
 	BGAvatarID       int64     `gorm:"column:bg_avatar_id;default:0"`
-	BGAvatarURL      string    `gorm:"column:bg_avatar_url;type:varchar(512);default:''"`
+	BGAvatarURL      *string   `gorm:"column:bg_avatar_url;type:varchar(512)"`
 	Remind           int       `gorm:"column:remind;default:0"`
 	HiddenAssetMoney bool      `gorm:"column:hidden_asset_money;default:false"`
 	AlreadyLogin     bool      `gorm:"column:already_login;default:false"`
@@ -233,27 +233,41 @@ func (r *UserRepository) MarkAlreadyLogin(ctx context.Context, id int64, already
 	return nil
 }
 
+func strPtr(s string) *string {
+	if s == "" {
+		return nil
+	}
+	return &s
+}
+
+func ptrStr(p *string) string {
+	if p == nil {
+		return ""
+	}
+	return *p
+}
+
 func toDomain(model userModel) domain.User {
 	return domain.User{
 		ID:               model.ID,
 		UID:              model.UID,
-		Nickname:         model.Nickname,
-		Email:            model.Email,
+		Nickname:         ptrStr(model.Nickname),
+		Email:            ptrStr(model.Email),
 		OpenID:           model.OpenID,
-		SessionKey:       model.SessionKey,
-		ThirdSession:     model.ThirdSession,
+		SessionKey:       ptrStr(model.SessionKey),
+		ThirdSession:     ptrStr(model.ThirdSession),
 		CreatedAt:        model.CreatedAt,
 		UpdatedAt:        model.UpdatedAt,
 		AccountBookId:    model.AccountBookID,
 		ThemeID:          model.ThemeID,
-		AvatarUrl:        model.AvatarURL,
-		Country:          model.Country,
-		City:             model.City,
+		AvatarUrl:        ptrStr(model.AvatarURL),
+		Country:          ptrStr(model.Country),
+		City:             ptrStr(model.City),
 		Gender:           model.Gender,
-		Language:         model.Language,
-		Province:         model.Province,
+		Language:         ptrStr(model.Language),
+		Province:         ptrStr(model.Province),
 		BGAvatarID:       model.BGAvatarID,
-		BGAvatarURL:      model.BGAvatarURL,
+		BGAvatarURL:      ptrStr(model.BGAvatarURL),
 		Remind:           model.Remind,
 		HiddenAssetMoney: model.HiddenAssetMoney,
 		AlreadyLogin:     model.AlreadyLogin,
@@ -263,23 +277,24 @@ func toDomain(model userModel) domain.User {
 func fromDomain(user domain.User) userModel {
 	return userModel{
 		ID:               user.ID,
-		Nickname:         user.Nickname,
-		Email:            user.Email,
+		UID:              user.UID,
+		Nickname:         strPtr(user.Nickname),
+		Email:            strPtr(user.Email),
 		OpenID:           user.OpenID,
-		SessionKey:       user.SessionKey,
-		ThirdSession:     user.ThirdSession,
+		SessionKey:       strPtr(user.SessionKey),
+		ThirdSession:     strPtr(user.ThirdSession),
 		CreatedAt:        user.CreatedAt,
 		UpdatedAt:        user.UpdatedAt,
 		AccountBookID:    user.AccountBookId,
 		ThemeID:          user.ThemeID,
-		AvatarURL:        user.AvatarUrl,
-		Country:          user.Country,
-		City:             user.City,
+		AvatarURL:        strPtr(user.AvatarUrl),
+		Country:          strPtr(user.Country),
+		City:             strPtr(user.City),
 		Gender:           user.Gender,
-		Language:         user.Language,
-		Province:         user.Province,
+		Language:         strPtr(user.Language),
+		Province:         strPtr(user.Province),
 		BGAvatarID:       user.BGAvatarID,
-		BGAvatarURL:      user.BGAvatarURL,
+		BGAvatarURL:      strPtr(user.BGAvatarURL),
 		Remind:           user.Remind,
 		HiddenAssetMoney: user.HiddenAssetMoney,
 		AlreadyLogin:     user.AlreadyLogin,
