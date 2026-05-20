@@ -21,7 +21,7 @@ func (r *StatisticsRepository) StatisticGroupDate(ctx context.Context, date time
 	var rows []repository.CalendarDataItem
 	err := r.db.WithContext(ctx).
 		Table("statements").
-		Select("day, SUM(CASE WHEN type = 'income' THEN amount ELSE 0 END) as income, SUM(CASE WHEN type = 'expend' THEN amount ELSE 0 END) as expend").
+		Select("day as date, SUM(CASE WHEN type = 'income' THEN amount ELSE 0 END) as income, SUM(CASE WHEN type = 'expend' THEN amount ELSE 0 END) as expend").
 		Where("account_book_id = ? AND year = ? AND month = ?", accountBookID, date.Year(), int(date.Month())).
 		Group("day").
 		Order("day ASC").

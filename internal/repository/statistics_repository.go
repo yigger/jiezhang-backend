@@ -11,7 +11,7 @@ type StatisticsRepository interface {
 }
 
 type CalendarDataItem struct {
-	Day    int     `json:"day"`
+	Date   int     `json:"date"`
 	Income float64 `json:"income"`
 	Expend float64 `json:"expend"`
 }

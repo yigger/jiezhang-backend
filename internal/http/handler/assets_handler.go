@@ -209,7 +209,7 @@ func (h AssetsHandler) UpdateSurplus(c *gin.Context) {
 		UserID:        currentUser.ID,
 		AccountBookID: accountBook.ID,
 		AssetID:       req.AssetID,
-		Amount:        req.Amount,
+		Amount:        string(req.Amount),
 	})
 	if err != nil {
 		switch {
