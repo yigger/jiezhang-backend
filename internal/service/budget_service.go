@@ -79,7 +79,7 @@ type BudgetCategoryDetail struct {
 type BudgetUpdateInput struct {
 	Type       string
 	Amount     string
-	CategoryID int64
+	CategoryID *int64
 }
 
 func (s BudgetService) Summary(ctx context.Context, accountBookID int64, year int, month int) (BudgetSummary, error) {
@@ -220,7 +220,11 @@ func (s BudgetService) UpdateAmount(ctx context.Context, accountBookID int64, in
 		return s.repo.UpdateAccountBookBudget(ctx, accountBookID, amount)
 	}
 
-	category, err := s.repo.FindCategoryByID(ctx, accountBookID, input.CategoryID)
+	categoryID := int64(0)
+	if input.CategoryID != nil {
+		categoryID = *input.CategoryID
+	}
+	category, err := s.repo.FindCategoryByID(ctx, accountBookID, categoryID)
 	if err != nil {
 		return err
 	}

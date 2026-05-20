@@ -86,7 +86,7 @@ func (h BudgetsHandler) UpdateAmount(c *gin.Context) {
 
 	err := h.service.UpdateAmount(c.Request.Context(), accountBook.ID, service.BudgetUpdateInput{
 		Type:       req.Type,
-		Amount:     req.Amount,
+		Amount:     string(req.Amount),
 		CategoryID: req.CategoryID,
 	})
 	if err != nil {
