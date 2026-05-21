@@ -33,6 +33,6 @@ func BuildHomeModule(db *gorm.DB, publicBaseURL string) (handler.HomeHandler, er
 	publicURLBuilder := urlbuilder.NewPublicURLBuilder(publicBaseURL)
 	rowMapper := statementdto.NewRowMapper(publicURLBuilder)
 	statementService := service.NewStatementService(statementRepo, statementRepo, categoryRepo, assetRepo, rowMapper)
-	homeService := service.NewHomeService(homeRepo, statementService)
+	homeService := service.NewHomeService(homeRepo, statementService, publicBaseURL)
 	return handler.NewHomeHandler(homeService), nil
 }

@@ -13,12 +13,13 @@ import (
 )
 
 type HomeService struct {
-	repo      repository.HomeRepository
-	statement StatementService
+	repo          repository.HomeRepository
+	statement     StatementService
+	publicBaseURL string
 }
 
-func NewHomeService(repo repository.HomeRepository, statement StatementService) HomeService {
-	return HomeService{repo: repo, statement: statement}
+func NewHomeService(repo repository.HomeRepository, statement StatementService, publicBaseURL string) HomeService {
+	return HomeService{repo: repo, statement: statement, publicBaseURL: publicBaseURL}
 }
 
 type HeaderResponse struct {
@@ -56,7 +57,7 @@ type SettingsResponse struct {
 type SettingsUser struct {
 	UID         int64               `json:"uid"`
 	Name        string              `json:"name"`
-	Avatar      string              `json:"avatar"`
+	AvatarUrl   string              `json:"avatar_url"`
 	Themes      []domain.Theme      `json:"themes"`
 	ThemeID     int64               `json:"theme_id"`
 	Theme       domain.Theme        `json:"theme"`
@@ -192,7 +193,7 @@ func (s HomeService) GetSettings(ctx context.Context, currentUser domain.User, a
 		User: SettingsUser{
 			UID:         currentUser.UID,
 			Name:        currentUser.Nickname,
-			Avatar:      currentUser.AvatarUrl,
+			AvatarUrl:   s.buildAvatarURL(currentUser.AvatarUrl),
 			Themes:      domain.DefaultThemes,
 			ThemeID:     currentUser.ThemeID,
 			Theme:       theme,
@@ -204,6 +205,20 @@ func (s HomeService) GetSettings(ctx context.Context, currentUser domain.User, a
 		},
 		Version: "1.0.0",
 	}, nil
+}
+
+func (s HomeService) buildAvatarURL(avatarURL string) string {
+	// 微信头像等已经是完整 URL 的，直接返回
+	if strings.HasPrefix(avatarURL, "http") {
+		return avatarURL
+	}
+	// 本地头像拼接 host
+	data := s.publicBaseURL + avatarURL
+	// avatarURL 为空时兜底为默认头像
+	if data == s.publicBaseURL {
+		return s.publicBaseURL + "/public/common-avatar.png"
+	}
+	return data
 }
 
 func findThemeByID(themeID int64) domain.Theme {
