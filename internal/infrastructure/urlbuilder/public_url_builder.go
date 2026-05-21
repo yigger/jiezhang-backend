@@ -3,14 +3,21 @@ package urlbuilder
 import (
 	"net/url"
 	"strings"
+
+	"github.com/yigger/jiezhang-backend/internal/infrastructure/signedurl"
 )
 
 type PublicURLBuilder struct {
 	baseURL string
+	signer  *signedurl.Signer
 }
 
 func NewPublicURLBuilder(baseURL string) PublicURLBuilder {
 	return PublicURLBuilder{baseURL: strings.TrimSpace(baseURL)}
+}
+
+func NewPublicURLBuilderWithSigner(baseURL string, signer *signedurl.Signer) PublicURLBuilder {
+	return PublicURLBuilder{baseURL: strings.TrimSpace(baseURL), signer: signer}
 }
 
 func (b PublicURLBuilder) BuildPublicURL(raw string) string {
@@ -36,5 +43,12 @@ func (b PublicURLBuilder) BuildPublicURL(raw string) string {
 	base.Path = strings.TrimRight(base.Path, "/") + path
 	base.RawQuery = ""
 	base.Fragment = ""
-	return base.String()
+
+	result := base.String()
+
+	if b.signer != nil && signedurl.IsPrivatePath(path) {
+		result = b.signer.SignIfPrivate(result)
+	}
+
+	return result
 }

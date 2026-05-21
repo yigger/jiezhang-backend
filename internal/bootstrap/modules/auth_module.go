@@ -6,6 +6,8 @@ import (
 	"github.com/yigger/jiezhang-backend/internal/config"
 	"github.com/yigger/jiezhang-backend/internal/http/handler"
 	"github.com/yigger/jiezhang-backend/internal/infrastructure/sessioncache"
+	"github.com/yigger/jiezhang-backend/internal/infrastructure/signedurl"
+	"github.com/yigger/jiezhang-backend/internal/infrastructure/urlbuilder"
 	"github.com/yigger/jiezhang-backend/internal/infrastructure/wechat"
 	"github.com/yigger/jiezhang-backend/internal/repository"
 	mysqlrepo "github.com/yigger/jiezhang-backend/internal/repository/mysql"
@@ -47,7 +49,9 @@ func BuildAuthModule(cfg config.Config, db *gorm.DB, users repository.UserReposi
 	if err != nil {
 		return AuthModule{}, fmt.Errorf("init statement repository: %w", err)
 	}
-	uploadService := service.NewUploadService(users, uploadRepo, statementRepo, cfg.PublicBaseURL)
+	signer := signedurl.NewSigner(cfg.SessionTokenSecret)
+	uploadURLBuilder := urlbuilder.NewPublicURLBuilderWithSigner(cfg.PublicBaseURL, signer)
+	uploadService := service.NewUploadService(users, uploadRepo, statementRepo, uploadURLBuilder)
 	authHandler := handler.NewAuthHandler(checkOpenIDService, uploadService)
 
 	return AuthModule{

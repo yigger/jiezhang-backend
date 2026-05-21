@@ -8,6 +8,7 @@ import (
 	"github.com/yigger/jiezhang-backend/internal/config"
 	"github.com/yigger/jiezhang-backend/internal/http/handler"
 	"github.com/yigger/jiezhang-backend/internal/infrastructure/sessioncache"
+	"github.com/yigger/jiezhang-backend/internal/infrastructure/signedurl"
 	"github.com/yigger/jiezhang-backend/internal/infrastructure/urlbuilder"
 	mysqlrepo "github.com/yigger/jiezhang-backend/internal/repository/mysql"
 	"github.com/yigger/jiezhang-backend/internal/service"
@@ -32,7 +33,8 @@ func BuildStatementModule(db *gorm.DB, cfg config.Config, cache sessioncache.Cac
 		return handler.StatementsHandler{}, fmt.Errorf("init user repository: %w", err)
 	}
 
-	publicURLBuilder := urlbuilder.NewPublicURLBuilder(cfg.PublicBaseURL)
+	signer := signedurl.NewSigner(cfg.SessionTokenSecret)
+	publicURLBuilder := urlbuilder.NewPublicURLBuilderWithSigner(cfg.PublicBaseURL, signer)
 	rowMapper := statementdto.NewRowMapper(publicURLBuilder)
 	statementService := service.NewStatementServiceWithSession(
 		statementRepo,

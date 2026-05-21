@@ -14,6 +14,7 @@ import (
 	"github.com/yigger/jiezhang-backend/internal/http/router"
 	"github.com/yigger/jiezhang-backend/internal/infrastructure/db"
 	"github.com/yigger/jiezhang-backend/internal/infrastructure/sessioncache"
+	"github.com/yigger/jiezhang-backend/internal/infrastructure/signedurl"
 )
 
 // App represents the HTTP API application.
@@ -32,9 +33,12 @@ func NewApp() *App {
 
 	engine.Use(gin.Recovery())
 	engine.Use(middleware.AccessLog())
-	registerStaticFiles(engine)
 
 	validateRequiredConfig(cfg)
+
+	signer := signedurl.NewSigner(cfg.SessionTokenSecret)
+	engine.Use(middleware.RequireSignedURL(signer))
+	registerStaticFiles(engine)
 
 	mysqlDB, err := db.NewMySQL(cfg.MySQLDSN)
 	if err != nil {

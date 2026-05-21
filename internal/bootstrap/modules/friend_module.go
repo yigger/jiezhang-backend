@@ -6,6 +6,7 @@ import (
 	"gorm.io/gorm"
 
 	"github.com/yigger/jiezhang-backend/internal/http/handler"
+	"github.com/yigger/jiezhang-backend/internal/infrastructure/signedurl"
 	"github.com/yigger/jiezhang-backend/internal/infrastructure/urlbuilder"
 	mysqlrepo "github.com/yigger/jiezhang-backend/internal/repository/mysql"
 	"github.com/yigger/jiezhang-backend/internal/service"
@@ -17,7 +18,8 @@ func BuildFriendModule(db *gorm.DB, publicBaseURL string, tokenSecret string) (h
 		return handler.FriendsHandler{}, fmt.Errorf("init friend repository: %w", err)
 	}
 
-	publicURLBuilder := urlbuilder.NewPublicURLBuilder(publicBaseURL)
+	signer := signedurl.NewSigner(tokenSecret)
+	publicURLBuilder := urlbuilder.NewPublicURLBuilderWithSigner(publicBaseURL, signer)
 	friendService := service.NewFriendService(friendRepo, publicURLBuilder, tokenSecret)
 	return handler.NewFriendsHandler(friendService), nil
 }

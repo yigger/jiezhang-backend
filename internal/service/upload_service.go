@@ -44,13 +44,13 @@ func NewUploadService(
 	users repository.UserRepository,
 	uploads repository.UploadRepository,
 	statements repository.StatementRepository,
-	publicBaseURL string,
+	urlBuilder urlbuilder.PublicURLBuilder,
 ) UploadService {
 	return UploadService{
 		users:      users,
 		uploads:    uploads,
 		statements: statements,
-		urlBuilder: urlbuilder.NewPublicURLBuilder(publicBaseURL),
+		urlBuilder: urlBuilder,
 	}
 }
 
