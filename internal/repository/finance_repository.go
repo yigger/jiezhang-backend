@@ -12,7 +12,7 @@ type FinanceRepository interface {
 	FindAssetByID(ctx context.Context, assetID int64, accountBookID int64) (FinanceAssetRecord, error)
 
 	SumStatementAmountByTypes(ctx context.Context, accountBookID int64, statementTypes []string) (float64, error)
-	ListSpecialCategoryByTypes(ctx context.Context, accountBookID int64, statementTypes []string) ([]FinanceSpecialCategoryRecord, error)
+	ListSpecialCategoryByTypes(ctx context.Context, statementTypes []string) ([]FinanceSpecialCategoryRecord, error)
 	ListStatementSumsByTypes(ctx context.Context, accountBookID int64, statementTypes []string) ([]FinanceStatementTypeSumRecord, error)
 
 	SumIncomeExpendByAsset(ctx context.Context, accountBookID int64, assetID int64) (FinanceIncomeExpendSumRecord, error)

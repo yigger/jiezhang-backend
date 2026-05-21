@@ -21,6 +21,7 @@ type CategoryRepository interface {
 	ListStatementsByCategory(ctx context.Context, accountBookID int64, categoryID int64) ([]CategoryStatementRecord, error)
 	SumStatements(ctx context.Context, accountBookID int64, statementType string, categoryIDs []int64, year int, month int) (float64, error)
 	CanAdmin(ctx context.Context, accountBookID int64, userID int64) (bool, error)
+	FindBySpecialType(ctx context.Context, specialType string) (int64, error)
 	Create(ctx context.Context, input CategoryWriteRecord) (int64, error)
 	UpdateByID(ctx context.Context, id int64, accountBookID int64, input CategoryWriteRecord) error
 	DeleteByID(ctx context.Context, id int64, accountBookID int64) error

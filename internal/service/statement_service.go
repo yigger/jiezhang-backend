@@ -206,7 +206,7 @@ func (s StatementService) SearchStatements(ctx context.Context, accountBookID in
 }
 
 func (s StatementService) CreateStatement(ctx context.Context, input statementdto.WriteInput) (statementdto.ListItem, error) {
-	record, err := normalizeStatementWriteInput(input)
+	record, err := s.normalizeStatementWriteInput(ctx, input)
 	if err != nil {
 		return statementdto.ListItem{}, err
 	}
@@ -238,7 +238,7 @@ func (s StatementService) UpdateStatement(ctx context.Context, input statementdt
 	}
 
 	merged := s.mergeStatementPatch(currentRow, input)
-	record, err := normalizeStatementWriteInput(merged)
+	record, err := s.normalizeStatementWriteInput(ctx, merged)
 	if err != nil {
 		return statementdto.ListItem{}, err
 	}
@@ -263,7 +263,7 @@ func (s StatementService) DeleteStatement(ctx context.Context, statementID int64
 	return s.statementRepo.DeleteByID(ctx, statementID, accountBookID)
 }
 
-func normalizeStatementWriteInput(input statementdto.WriteInput) (repository.StatementWriteRecord, error) {
+func (s StatementService) normalizeStatementWriteInput(ctx context.Context, input statementdto.WriteInput) (repository.StatementWriteRecord, error) {
 	statementType := strings.TrimSpace(input.Type)
 	if statementType == "" {
 		return repository.StatementWriteRecord{}, ValidateError{Message: "invalid statement type"}
@@ -287,21 +287,28 @@ func normalizeStatementWriteInput(input statementdto.WriteInput) (repository.Sta
 		targetAssetID = int64PtrOrNil(input.ToAssetID)
 	}
 
+	categoryID := input.CategoryID
+	specialTypes := map[string]bool{"transfer": true, "repayment": true, "loan_in": true, "loan_out": true, "reimburse": true, "payment_proxy": true}
+	if specialTypes[statementType] {
+		specialID, err := s.categoryRepo.FindBySpecialType(ctx, statementType)
+		if err != nil {
+			return repository.StatementWriteRecord{}, ValidateError{Message: "special category not found for type: " + statementType}
+		}
+		categoryID = specialID
+	}
+
 	switch statementType {
 	case "expend", "income":
-		// 只有收入和支出需要检验分类和资产ID
-		if assetID <= 0 || input.CategoryID <= 0 {
+		if assetID <= 0 || categoryID <= 0 {
 			return repository.StatementWriteRecord{}, ValidateError{Message: "invalid asset or category ID"}
 		}
 	case "transfer", "repayment":
-		// 转账和还款需要检验转入和转出资产的 ID
 		fromAssetID := input.FromAssetID
 		toAssetID := input.ToAssetID
 		if fromAssetID <= 0 || toAssetID <= 0 {
 			return repository.StatementWriteRecord{}, ValidateError{Message: "invalid from or to asset ID"}
 		}
 	case "loan_in", "loan_out", "reimburse", "payment_proxy":
-		// 借贷、报销、代付需要检验资产ID，分类ID可以为空
 		if assetID <= 0 {
 			return repository.StatementWriteRecord{}, ValidateError{Message: "invalid asset ID"}
 		}
@@ -316,7 +323,7 @@ func normalizeStatementWriteInput(input statementdto.WriteInput) (repository.Sta
 		Amount:        input.Amount,
 		Description:   input.Description,
 		Mood:          input.Mood,
-		CategoryID:    input.CategoryID,
+		CategoryID:    categoryID,
 		AssetID:       assetID,
 		TargetAssetID: targetAssetID,
 		PayeeID:       int64PtrOrNil(input.PayeeID),

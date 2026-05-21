@@ -242,6 +242,22 @@ func (r *CategoryRepository) FindByID(ctx context.Context, accountBookID int64, 
 	}, nil
 }
 
+func (r *CategoryRepository) FindBySpecialType(ctx context.Context, specialType string) (int64, error) {
+	var id int64
+	err := r.db.WithContext(ctx).
+		Table("categories").
+		Select("id").
+		Where("special_type = ?", specialType).
+		Take(&id).Error
+	if err != nil {
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			return 0, repository.ErrCategoryNotFound
+		}
+		return 0, err
+	}
+	return id, nil
+}
+
 func (r *CategoryRepository) ListStatementAmountByCategoryIDs(ctx context.Context, accountBookID int64, categoryIDs []int64) ([]repository.CategoryAmountRecord, error) {
 	if len(categoryIDs) == 0 {
 		return []repository.CategoryAmountRecord{}, nil

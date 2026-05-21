@@ -107,12 +107,12 @@ func (r *FinanceRepository) SumStatementAmountByTypes(ctx context.Context, accou
 	return row.Amount, err
 }
 
-func (r *FinanceRepository) ListSpecialCategoryByTypes(ctx context.Context, accountBookID int64, statementTypes []string) ([]repository.FinanceSpecialCategoryRecord, error) {
+func (r *FinanceRepository) ListSpecialCategoryByTypes(ctx context.Context, statementTypes []string) ([]repository.FinanceSpecialCategoryRecord, error) {
 	rows := make([]financeSpecialCategoryRow, 0)
 	err := r.db.WithContext(ctx).
 		Table("categories").
 		Select("special_type, id").
-		Where("account_book_id = ? AND special_type IN ?", accountBookID, statementTypes).
+		Where("special_type IN ?", statementTypes).
 		Scan(&rows).Error
 	if err != nil {
 		return nil, err

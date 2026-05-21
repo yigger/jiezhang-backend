@@ -20,7 +20,7 @@ func NewSuperStatementRepository(db *gorm.DB) (*SuperStatementRepository, error)
 
 func (r *SuperStatementRepository) ListRowsWithRelations(ctx context.Context, filter repository.SuperStatementFilter) ([]repository.StatementListRowRecord, error) {
 	query := r.baseListQuery(ctx, filter.AccountBookID)
-	query = applySuperStatementFilter(r.db, query, filter)
+	query = applySuperStatementFilter(ctx, r.db, query, filter)
 	query = query.Order(mapSuperOrderBy(filter.OrderBy))
 
 	rows := make([]statementListRow, 0)
@@ -90,7 +90,7 @@ func (r *SuperStatementRepository) ListRowsWithRelations(ctx context.Context, fi
 
 func (r *SuperStatementRepository) ListMonthSummaries(ctx context.Context, filter repository.SuperStatementFilter) ([]repository.SuperStatementMonthSummaryRecord, error) {
 	query := r.db.WithContext(ctx).Table("statements s").Where("s.account_book_id = ?", filter.AccountBookID)
-	query = applySuperStatementFilter(r.db, query, filter)
+	query = applySuperStatementFilter(ctx, r.db, query, filter)
 
 	rows := make([]repository.SuperStatementMonthSummaryRecord, 0)
 	err := query.
@@ -112,7 +112,7 @@ func (r *SuperStatementRepository) ListMonthSummaries(ctx context.Context, filte
 
 func (r *SuperStatementRepository) GetOverview(ctx context.Context, filter repository.SuperStatementFilter) (repository.SuperStatementOverviewRecord, error) {
 	query := r.db.WithContext(ctx).Table("statements s").Where("s.account_book_id = ?", filter.AccountBookID)
-	query = applySuperStatementFilter(r.db, query, filter)
+	query = applySuperStatementFilter(ctx, r.db, query, filter)
 
 	var row struct {
 		Expend float64 `gorm:"column:expend"`
@@ -275,7 +275,7 @@ func (r *SuperStatementRepository) baseListQuery(ctx context.Context, accountBoo
 		Where("s.account_book_id = ?", accountBookID)
 }
 
-func applySuperStatementFilter(db *gorm.DB, query *gorm.DB, filter repository.SuperStatementFilter) *gorm.DB {
+func applySuperStatementFilter(ctx context.Context, db *gorm.DB, query *gorm.DB, filter repository.SuperStatementFilter) *gorm.DB {
 	if filter.Year != nil && *filter.Year > 0 {
 		query = query.Where("s.year = ?", *filter.Year)
 	}
@@ -292,8 +292,13 @@ func applySuperStatementFilter(db *gorm.DB, query *gorm.DB, filter repository.Su
 		query = query.Where("s.asset_id = ?", *filter.AssetID)
 	}
 	if filter.CategoryID != nil && *filter.CategoryID > 0 {
-		sub := db.Table("categories").Select("id").Where("account_book_id = ? AND (id = ? OR parent_id = ?)", filter.AccountBookID, *filter.CategoryID, *filter.CategoryID)
-		query = query.Where("s.category_id IN (?)", sub)
+		var specialType string
+		if err := db.WithContext(ctx).Table("categories").Select("special_type").Where("id = ?", *filter.CategoryID).Take(&specialType).Error; err == nil && specialType != "" {
+			query = query.Where("s.category_id = ?", *filter.CategoryID)
+		} else {
+			sub := db.Table("categories").Select("id").Where("account_book_id = ? AND (id = ? OR parent_id = ?)", filter.AccountBookID, *filter.CategoryID, *filter.CategoryID)
+			query = query.Where("s.category_id IN (?)", sub)
+		}
 	}
 	return query
 }

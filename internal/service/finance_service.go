@@ -148,7 +148,7 @@ func (s FinanceService) GetWallet(ctx context.Context, accountBookID int64) (Wal
 		return WalletResponse{}, err
 	}
 
-	specialRows, err := s.financeRepo.ListSpecialCategoryByTypes(ctx, accountBookID, append(receivableTypes, payableTypes...))
+	specialRows, err := s.financeRepo.ListSpecialCategoryByTypes(ctx, append(receivableTypes, payableTypes...))
 	if err != nil {
 		return WalletResponse{}, err
 	}
