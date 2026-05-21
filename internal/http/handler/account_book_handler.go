@@ -2,6 +2,7 @@ package handler
 
 import (
 	"errors"
+	"log"
 	"net/http"
 	"strconv"
 	"strings"
@@ -9,6 +10,7 @@ import (
 	"github.com/gin-gonic/gin"
 
 	httpdto "github.com/yigger/jiezhang-backend/internal/http/dto"
+	"github.com/yigger/jiezhang-backend/internal/repository"
 	"github.com/yigger/jiezhang-backend/internal/service"
 )
 
@@ -85,10 +87,15 @@ func (h AccountBookHandler) Switch(c *gin.Context) {
 	}
 
 	if err := h.service.Switch(c.Request.Context(), currentUser.ID, id); err != nil {
-		if errors.Is(err, service.ErrAccountBookNotFound) {
+		if errors.Is(err, service.ErrAccountBookNotFound) || errors.Is(err, repository.ErrAccountBookNotFound) {
 			c.JSON(http.StatusNotFound, gin.H{"status": 404, "msg": "无效的账簿"})
 			return
 		}
+		if errors.Is(err, repository.ErrUserNotFound) {
+			c.JSON(http.StatusNotFound, gin.H{"status": 404, "msg": "用户不存在"})
+			return
+		}
+		log.Printf("[Switch] error switching account book %d for user %d: %v", id, currentUser.ID, err)
 		c.JSON(http.StatusInternalServerError, gin.H{"status": 500, "msg": "failed to switch account book"})
 		return
 	}
