@@ -20,26 +20,23 @@ import (
 var ErrLoginFailed = errors.New("login failed")
 
 type CheckOpenIDService struct {
-	users           repository.UserRepository
-	accountBookRepo repository.AccountBookRepository
-	wechat          wechat.Client
-	tokenSecret     string
-	cache           sessioncache.Cache
+	users       repository.UserRepository
+	wechat      wechat.Client
+	tokenSecret string
+	cache       sessioncache.Cache
 }
 
 func NewCheckOpenIDService(
 	users repository.UserRepository,
-	accountBookRepo repository.AccountBookRepository,
 	wechatClient wechat.Client,
 	tokenSecret string,
 	cache sessioncache.Cache,
 ) CheckOpenIDService {
 	return CheckOpenIDService{
-		users:           users,
-		accountBookRepo: accountBookRepo,
-		wechat:          wechatClient,
-		tokenSecret:     tokenSecret,
-		cache:           cache,
+		users:       users,
+		wechat:      wechatClient,
+		tokenSecret: tokenSecret,
+		cache:       cache,
 	}
 }
 
@@ -58,14 +55,12 @@ func (s CheckOpenIDService) Execute(ctx context.Context, code string) (string, e
 			OpenID:     session.OpenID,
 			SessionKey: session.SessionKey,
 		}
-		user, err = s.users.Create(ctx, user)
-		if err != nil {
-			return "", err
+		bookInput := repository.AccountBookCreateInput{
+			Name:       "生活账簿",
+			Categories: defaultCategories(),
+			Assets:     defaultAssets(),
 		}
-		if err := s.initializeNewUser(ctx, user); err != nil {
-			return "", err
-		}
-		user, err = s.users.FindByID(ctx, user.ID)
+		user, err = s.users.CreateWithInit(ctx, user, bookInput)
 		if err != nil {
 			return "", err
 		}
@@ -125,31 +120,6 @@ func (s CheckOpenIDService) generateSecureToken(userID int64, sessionKey string)
 
 	sum := sha256.Sum256([]byte(raw))
 	return hex.EncodeToString(sum[:]), nil
-}
-
-func (s CheckOpenIDService) initializeNewUser(ctx context.Context, user domain.User) error {
-	record, err := s.accountBookRepo.Create(ctx, repository.AccountBookCreateInput{
-		UserID:       user.ID,
-		UserNickname: user.Nickname,
-		Name:         "生活账簿",
-		AccountType:  0,
-		Categories:   defaultCategories(),
-		Assets:       defaultAssets(),
-	})
-	if err != nil {
-		return err
-	}
-
-	updated, err := s.users.FindByID(ctx, user.ID)
-	if err != nil {
-		return err
-	}
-	updated.UID = user.ID + 10000
-	updated.AccountBookId = record.ID
-	if _, err := s.users.Save(ctx, updated); err != nil {
-		return err
-	}
-	return nil
 }
 
 func defaultCategories() map[string][]repository.AccountBookCategoryTemplate {

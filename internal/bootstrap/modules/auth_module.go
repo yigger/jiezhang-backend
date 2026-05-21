@@ -28,14 +28,8 @@ func BuildAuthModule(cfg config.Config, db *gorm.DB, users repository.UserReposi
 	}
 	wechatClient := wechat.NewHTTPClient(cfg.MiniProgramAppID, cfg.MiniProgramSecret)
 
-	accountBookRepo, err := mysqlrepo.NewAccountBookRepository(db)
-	if err != nil {
-		return AuthModule{}, fmt.Errorf("init account book repository: %w", err)
-	}
-
 	checkOpenIDService := authservice.NewCheckOpenIDService(
 		users,
-		accountBookRepo,
 		wechatClient,
 		cfg.SessionTokenSecret,
 		sessionCache,

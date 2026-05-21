@@ -105,6 +105,33 @@ func (r *UserRepository) Create(ctx context.Context, user domain.User) (domain.U
 	return toDomain(model), nil
 }
 
+func (r *UserRepository) CreateWithInit(ctx context.Context, user domain.User, bookInput repository.AccountBookCreateInput) (domain.User, error) {
+	var result domain.User
+	err := r.db.WithContext(ctx).Transaction(func(tx *gorm.DB) error {
+		model := fromDomain(user)
+		if err := tx.Create(&model).Error; err != nil {
+			return err
+		}
+		bookInput.UserID = model.ID
+		bookInput.UserNickname = user.Nickname
+		created, err := createAccountBookInTx(tx, bookInput)
+		if err != nil {
+			return err
+		}
+		model.UID = model.ID + 10000
+		model.AccountBookID = created.ID
+		if err := tx.Save(&model).Error; err != nil {
+			return err
+		}
+		result = toDomain(model)
+		return nil
+	})
+	if err != nil {
+		return domain.User{}, err
+	}
+	return result, nil
+}
+
 func (r *UserRepository) Save(ctx context.Context, user domain.User) (domain.User, error) {
 	model := fromDomain(user)
 	if err := r.db.WithContext(ctx).Save(&model).Error; err != nil {

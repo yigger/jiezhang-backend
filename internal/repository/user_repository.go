@@ -15,6 +15,7 @@ type UserRepository interface {
 	FindByThirdSession(ctx context.Context, thirdSession string) (domain.User, error)
 	List(ctx context.Context) ([]domain.User, error)
 	Create(ctx context.Context, user domain.User) (domain.User, error)
+	CreateWithInit(ctx context.Context, user domain.User, bookInput AccountBookCreateInput) (domain.User, error)
 	Save(ctx context.Context, user domain.User) (domain.User, error)
 
 	GetProfile(ctx context.Context, id int64) (UserProfileRecord, error)
