@@ -8,7 +8,7 @@
 |------|------|
 | Web 框架 | [Gin](https://github.com/gin-gonic/gin) v1.12 |
 | ORM | [GORM](https://gorm.io) v1.31 + MySQL 驱动 |
-| 数据库 | MySQL 8.x（复用 Rails 项目的库） |
+| 数据库 | MySQL 8.x |
 | 缓存 | Redis（可选，未配置时用内存缓存） |
 | 微信登录 | `jscode2session` API |
 | Excel 导出 | [excelize](https://github.com/xuri/excelize) v2 |
@@ -19,7 +19,7 @@
 ### 环境要求
 
 - Go 1.26+
-- MySQL 8.x（已有 Rails 数据库可直接复用）
+- MySQL 8.x
 - Redis（可选，建议生产环境配置）
 
 ### 启动
@@ -157,13 +157,6 @@ go run .
 - **领域与持久化分离**：`domain/` 的实体没有 GORM 标签，`repository/mysql/` 有独立的 model 结构体
 - **DTO 层**：`http/dto/` 定义请求体结构，与领域实体彻底解耦
 - **模块化**：每个业务领域（auth、statement、category 等）有独立的 handler、service、repository 模块构造函数
-
-### 特殊实现
-
-- **用户创建回调**：对标 Rails `UserAble.after_create :initialize_user`，新用户自动创建默认账本、资产（4 父 + 子）、收支分类（11 父 + 子），设置 `uid = id + 10000`
-- **特殊账单类型**：transfer / repayment / loan_in / loan_out / reimburse / payment_proxy 自动查找对应的 `special_type` 分类
-- **签名 URL**：`/private/*/statements/*` 路径的附件链接附带 HMAC 签名 + 过期时间（默认 1 小时），中间件校验通过后才返回文件
-- **FlexibleAmount**：`amount` 字段同时接受 JSON 字符串和数字
 
 ## 如何加入开发
 
