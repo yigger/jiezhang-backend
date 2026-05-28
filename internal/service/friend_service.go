@@ -13,6 +13,8 @@ import (
 	"strings"
 	"time"
 
+	"github.com/yigger/jiezhang-backend/internal/config"
+	"github.com/yigger/jiezhang-backend/internal/infrastructure/urlbuilder"
 	"github.com/yigger/jiezhang-backend/internal/repository"
 )
 
@@ -35,19 +37,15 @@ var friendRoleNameMap = map[string]string{
 
 type FriendService struct {
 	repo       repository.FriendRepository
-	urlBuilder FriendURLBuilder
-	secret     string
+	urlBuilder urlbuilder.PublicURLBuilder
+	secret     config.TokenSecret
 }
 
-type FriendURLBuilder interface {
-	BuildPublicURL(raw string) string
-}
-
-func NewFriendService(repo repository.FriendRepository, urlBuilder FriendURLBuilder, secret string) FriendService {
+func NewFriendService(repo repository.FriendRepository, urlBuilder urlbuilder.PublicURLBuilder, secret config.TokenSecret) FriendService {
 	return FriendService{
 		repo:       repo,
 		urlBuilder: urlBuilder,
-		secret:     strings.TrimSpace(secret),
+		secret:     config.TokenSecret(strings.TrimSpace(string(secret))),
 	}
 }
 
@@ -355,7 +353,7 @@ func (s FriendService) decryptAndValidateInviteToken(ctx context.Context, token 
 }
 
 func (s FriendService) encryptInvitePayload(payload FriendInviteTokenPayload) (string, error) {
-	if strings.TrimSpace(s.secret) == "" {
+	if strings.TrimSpace(string(s.secret)) == "" {
 		return "", ErrFriendInvalidInput
 	}
 	plain, err := json.Marshal(payload)
@@ -386,7 +384,7 @@ func (s FriendService) encryptInvitePayload(payload FriendInviteTokenPayload) (s
 }
 
 func (s FriendService) decryptInvitePayload(token string) (FriendInviteTokenPayload, error) {
-	if strings.TrimSpace(s.secret) == "" {
+	if strings.TrimSpace(string(s.secret)) == "" {
 		return FriendInviteTokenPayload{}, ErrFriendInviteToken
 	}
 	firstBytes, err := base64.StdEncoding.DecodeString(token)
@@ -482,9 +480,6 @@ func (s FriendService) buildPublicURL(raw string) string {
 		return ""
 	}
 	if strings.HasPrefix(raw, "http://") || strings.HasPrefix(raw, "https://") {
-		return raw
-	}
-	if s.urlBuilder == nil {
 		return raw
 	}
 	return s.urlBuilder.BuildPublicURL(raw)

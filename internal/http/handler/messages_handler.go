@@ -8,17 +8,18 @@ import (
 
 	"github.com/gin-gonic/gin"
 
+	"github.com/yigger/jiezhang-backend/internal/config"
 	"github.com/yigger/jiezhang-backend/internal/repository"
 	"github.com/yigger/jiezhang-backend/internal/service"
 )
 
 type MessagesHandler struct {
 	service       service.MessageService
-	publicBaseURL string
+	publicBaseURL config.PublicBaseURL
 }
 
-func NewMessagesHandler(service service.MessageService, publicBaseURL string) MessagesHandler {
-	return MessagesHandler{service: service, publicBaseURL: strings.TrimSpace(publicBaseURL)}
+func NewMessagesHandler(service service.MessageService, publicBaseURL config.PublicBaseURL) MessagesHandler {
+	return MessagesHandler{service: service, publicBaseURL: config.PublicBaseURL(strings.TrimSpace(string(publicBaseURL)))}
 }
 
 func (h MessagesHandler) List(c *gin.Context) {
@@ -27,7 +28,7 @@ func (h MessagesHandler) List(c *gin.Context) {
 		return
 	}
 
-	items, err := h.service.List(c.Request.Context(), currentUser.ID, h.publicBaseURL)
+	items, err := h.service.List(c.Request.Context(), currentUser.ID, string(h.publicBaseURL))
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"status": 500, "msg": "failed to list messages"})
 		return

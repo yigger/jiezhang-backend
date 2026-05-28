@@ -9,6 +9,7 @@ import (
 	"strconv"
 	"strings"
 
+	"github.com/yigger/jiezhang-backend/internal/infrastructure/urlbuilder"
 	"github.com/yigger/jiezhang-backend/internal/repository"
 )
 
@@ -19,14 +20,10 @@ var (
 
 type AssetService struct {
 	repo       repository.AssetRepository
-	urlBuilder AssetURLBuilder
+	urlBuilder urlbuilder.PublicURLBuilder
 }
 
-type AssetURLBuilder interface {
-	BuildPublicURL(raw string) string
-}
-
-func NewAssetService(repo repository.AssetRepository, urlBuilder AssetURLBuilder) AssetService {
+func NewAssetService(repo repository.AssetRepository, urlBuilder urlbuilder.PublicURLBuilder) AssetService {
 	return AssetService{repo: repo, urlBuilder: urlBuilder}
 }
 
@@ -283,8 +280,5 @@ func (s AssetService) normalizeWriteInput(input AssetWriteInput) (repository.Ass
 }
 
 func (s AssetService) buildPublicURL(raw string) string {
-	if s.urlBuilder == nil {
-		return raw
-	}
 	return s.urlBuilder.BuildPublicURL(raw)
 }

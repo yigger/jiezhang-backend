@@ -10,6 +10,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/yigger/jiezhang-backend/internal/infrastructure/urlbuilder"
 	"github.com/yigger/jiezhang-backend/internal/repository"
 	"github.com/yigger/jiezhang-backend/internal/service/helper"
 )
@@ -21,14 +22,10 @@ var (
 
 type CategoryService struct {
 	repo       repository.CategoryRepository
-	urlBuilder CategoryURLBuilder
+	urlBuilder urlbuilder.PublicURLBuilder
 }
 
-type CategoryURLBuilder interface {
-	BuildPublicURL(raw string) string
-}
-
-func NewCategoryService(repo repository.CategoryRepository, urlBuilder CategoryURLBuilder) CategoryService {
+func NewCategoryService(repo repository.CategoryRepository, urlBuilder urlbuilder.PublicURLBuilder) CategoryService {
 	return CategoryService{repo: repo, urlBuilder: urlBuilder}
 }
 
@@ -398,9 +395,6 @@ func (s CategoryService) normalizeWriteInput(input CategoryWriteInput) (reposito
 }
 
 func (s CategoryService) buildPublicURL(raw string) string {
-	if s.urlBuilder == nil {
-		return raw
-	}
 	return s.urlBuilder.BuildPublicURL(raw)
 }
 

@@ -8,6 +8,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/yigger/jiezhang-backend/internal/infrastructure/urlbuilder"
 	"github.com/yigger/jiezhang-backend/internal/repository"
 )
 
@@ -17,14 +18,10 @@ var (
 
 type BudgetService struct {
 	repo       repository.BudgetRepository
-	urlBuilder BudgetURLBuilder
+	urlBuilder urlbuilder.PublicURLBuilder
 }
 
-type BudgetURLBuilder interface {
-	BuildPublicURL(raw string) string
-}
-
-func NewBudgetService(repo repository.BudgetRepository, urlBuilder BudgetURLBuilder) BudgetService {
+func NewBudgetService(repo repository.BudgetRepository, urlBuilder urlbuilder.PublicURLBuilder) BudgetService {
 	return BudgetService{repo: repo, urlBuilder: urlBuilder}
 }
 
@@ -315,8 +312,5 @@ func budgetMoneyFormatOrUnset(v float64) string {
 }
 
 func (s BudgetService) buildPublicURL(raw string) string {
-	if s.urlBuilder == nil {
-		return raw
-	}
 	return s.urlBuilder.BuildPublicURL(raw)
 }

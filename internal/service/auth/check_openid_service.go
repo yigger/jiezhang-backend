@@ -11,6 +11,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/yigger/jiezhang-backend/internal/config"
 	"github.com/yigger/jiezhang-backend/internal/domain"
 	"github.com/yigger/jiezhang-backend/internal/infrastructure/sessioncache"
 	"github.com/yigger/jiezhang-backend/internal/infrastructure/wechat"
@@ -22,14 +23,14 @@ var ErrLoginFailed = errors.New("login failed")
 type CheckOpenIDService struct {
 	users       repository.UserRepository
 	wechat      wechat.Client
-	tokenSecret string
+	tokenSecret config.TokenSecret
 	cache       sessioncache.Cache
 }
 
 func NewCheckOpenIDService(
 	users repository.UserRepository,
 	wechatClient wechat.Client,
-	tokenSecret string,
+	tokenSecret config.TokenSecret,
 	cache sessioncache.Cache,
 ) CheckOpenIDService {
 	return CheckOpenIDService{

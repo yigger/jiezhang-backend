@@ -8,10 +8,9 @@ import (
 	"github.com/gin-gonic/gin"
 	"gorm.io/gorm"
 
-	"github.com/yigger/jiezhang-backend/internal/bootstrap/modules"
 	"github.com/yigger/jiezhang-backend/internal/config"
+	"github.com/yigger/jiezhang-backend/internal/container"
 	"github.com/yigger/jiezhang-backend/internal/http/middleware"
-	"github.com/yigger/jiezhang-backend/internal/http/router"
 	"github.com/yigger/jiezhang-backend/internal/infrastructure/db"
 	"github.com/yigger/jiezhang-backend/internal/infrastructure/sessioncache"
 	"github.com/yigger/jiezhang-backend/internal/infrastructure/signedurl"
@@ -46,81 +45,15 @@ func NewApp() *App {
 	}
 
 	sessionCache := newSessionCache(cfg.RedisURL)
-	userHandler, userRepo, err := modules.BuildUserModule(mysqlDB, sessionCache)
+
+	c, err := container.BuildContainer(cfg, mysqlDB, sessionCache)
 	if err != nil {
-		log.Fatalf("failed to build user module: %v", err)
+		log.Fatalf("failed to build container: %v", err)
 	}
 
-	authModule, err := modules.BuildAuthModule(cfg, mysqlDB, userRepo, sessionCache)
-	if err != nil {
-		log.Fatalf("failed to build auth module: %v", err)
+	if err := c.Invoke(container.RegisterRoutes(engine, cfg)); err != nil {
+		log.Fatalf("failed to register routes: %v", err)
 	}
-	homeHandler, err := modules.BuildHomeModule(mysqlDB, cfg.PublicBaseURL)
-	if err != nil {
-		log.Fatalf("failed to build home module: %v", err)
-	}
-	statementsHandler, err := modules.BuildStatementModule(mysqlDB, cfg, sessionCache)
-	if err != nil {
-		log.Fatalf("failed to build statement module: %v", err)
-	}
-	financesHandler, err := modules.BuildFinanceModule(mysqlDB, cfg.PublicBaseURL)
-	if err != nil {
-		log.Fatalf("failed to build finance module: %v", err)
-	}
-	categoriesHandler, err := modules.BuildCategoryModule(mysqlDB, cfg.PublicBaseURL)
-	if err != nil {
-		log.Fatalf("failed to build category module: %v", err)
-	}
-	assetsHandler, err := modules.BuildAssetModule(mysqlDB, cfg.PublicBaseURL)
-	if err != nil {
-		log.Fatalf("failed to build asset module: %v", err)
-	}
-	payeesHandler, err := modules.BuildPayeeModule(mysqlDB)
-	if err != nil {
-		log.Fatalf("failed to build payee module: %v", err)
-	}
-	friendsHandler, err := modules.BuildFriendModule(mysqlDB, cfg.PublicBaseURL, cfg.SessionTokenSecret)
-	if err != nil {
-		log.Fatalf("failed to build friend module: %v", err)
-	}
-	budgetsHandler, err := modules.BuildBudgetModule(mysqlDB, cfg.PublicBaseURL)
-	if err != nil {
-		log.Fatalf("failed to build budget module: %v", err)
-	}
-	messagesHandler, err := modules.BuildMessageModule(mysqlDB, cfg.PublicBaseURL)
-	if err != nil {
-		log.Fatalf("failed to build message module: %v", err)
-	}
-	settingsHandler, err := modules.BuildSettingModule(mysqlDB)
-	if err != nil {
-		log.Fatalf("failed to build setting module: %v", err)
-	}
-	superStatementsHandler, err := modules.BuildSuperStatementModule(mysqlDB, cfg.PublicBaseURL)
-	if err != nil {
-		log.Fatalf("failed to build super statement module: %v", err)
-	}
-	superChartHandler, err := modules.BuildSuperChartModule(mysqlDB)
-	if err != nil {
-		log.Fatalf("failed to build super chart module: %v", err)
-	}
-
-	accountBookHandler, accountBookRepo, err := modules.BuildAccountBookModule(mysqlDB)
-	if err != nil {
-		log.Fatalf("failed to build account book module: %v", err)
-	}
-
-	statisticHandler, err := modules.BuildStatisticModule(mysqlDB, cfg.PublicBaseURL)
-	if err != nil {
-		log.Fatalf("failed to build statistic module: %v", err)
-	}
-
-	authMiddleware := middleware.AuthenticateAPIV1(cfg.Env, cfg.MiniProgramAppID, userRepo, accountBookRepo, authModule.SessionCache)
-	router.Register(engine, authModule.Handler,
-		userHandler, authMiddleware,
-		homeHandler, statementsHandler, financesHandler, categoriesHandler, assetsHandler,
-		accountBookHandler, budgetsHandler, messagesHandler, payeesHandler, friendsHandler, settingsHandler,
-		superStatementsHandler, superChartHandler,
-		statisticHandler)
 
 	return &App{cfg: cfg, engine: engine, db: mysqlDB}
 }

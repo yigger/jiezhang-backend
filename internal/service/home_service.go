@@ -7,6 +7,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/yigger/jiezhang-backend/internal/config"
 	"github.com/yigger/jiezhang-backend/internal/domain"
 	"github.com/yigger/jiezhang-backend/internal/repository"
 	statementdto "github.com/yigger/jiezhang-backend/internal/service/statement"
@@ -15,10 +16,10 @@ import (
 type HomeService struct {
 	repo          repository.HomeRepository
 	statement     StatementService
-	publicBaseURL string
+	publicBaseURL config.PublicBaseURL
 }
 
-func NewHomeService(repo repository.HomeRepository, statement StatementService, publicBaseURL string) HomeService {
+func NewHomeService(repo repository.HomeRepository, statement StatementService, publicBaseURL config.PublicBaseURL) HomeService {
 	return HomeService{repo: repo, statement: statement, publicBaseURL: publicBaseURL}
 }
 
@@ -213,10 +214,11 @@ func (s HomeService) buildAvatarURL(avatarURL string) string {
 		return avatarURL
 	}
 	// 本地头像拼接 host
-	data := s.publicBaseURL + avatarURL
+	baseURL := string(s.publicBaseURL)
+	data := baseURL + avatarURL
 	// avatarURL 为空时兜底为默认头像
-	if data == s.publicBaseURL {
-		return s.publicBaseURL + "/public/common-avatar.png"
+	if data == baseURL {
+		return baseURL + "/public/common-avatar.png"
 	}
 	return data
 }

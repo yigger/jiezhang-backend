@@ -14,6 +14,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/yigger/jiezhang-backend/internal/config"
 	"github.com/yigger/jiezhang-backend/internal/domain"
 	"github.com/yigger/jiezhang-backend/internal/infrastructure/sessioncache"
 	"github.com/yigger/jiezhang-backend/internal/repository"
@@ -56,13 +57,13 @@ func NewStatementServiceWithSession(
 	assetRepo repository.AssetRepository,
 	userRepo repository.UserRepository,
 	cache sessioncache.Cache,
-	tokenSecret string,
+	tokenSecret config.TokenSecret,
 	rowMapper statementdto.RowMapper,
 ) StatementService {
 	svc := NewStatementService(statementRepo, queryRepo, categoryRepo, assetRepo, rowMapper)
 	svc.userRepo = userRepo
 	svc.cache = cache
-	svc.tokenSecret = strings.TrimSpace(tokenSecret)
+	svc.tokenSecret = string(tokenSecret)
 	return svc
 }
 
