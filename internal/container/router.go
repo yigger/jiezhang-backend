@@ -1,8 +1,6 @@
 package container
 
 import (
-	"fmt"
-
 	"github.com/gin-gonic/gin"
 
 	"github.com/yigger/jiezhang-backend/internal/config"
@@ -18,22 +16,22 @@ import (
 type routerParams struct {
 	dig.In
 
-	AuthHandler             handler.AuthHandler
-	UserHandler             handler.UserHandler
-	HomeHandler             handler.HomeHandler
-	StatementsHandler       handler.StatementsHandler
-	FinancesHandler         handler.FinancesHandler
-	CategoriesHandler       handler.CategoriesHandler
-	AssetsHandler           handler.AssetsHandler
-	AccountBookHandler      handler.AccountBookHandler
-	BudgetsHandler          handler.BudgetsHandler
-	MessagesHandler         handler.MessagesHandler
-	PayeesHandler           handler.PayeesHandler
-	FriendsHandler          handler.FriendsHandler
-	SettingsHandler         handler.SettingsHandler
-	SuperStatementsHandler  handler.SuperStatementsHandler
-	SuperChartHandler       handler.SuperChartHandler
-	StatisticsHandler       handler.StatisticsHandler
+	AuthHandler            handler.AuthHandler
+	UserHandler            handler.UserHandler
+	HomeHandler            handler.HomeHandler
+	StatementsHandler      handler.StatementsHandler
+	FinancesHandler        handler.FinancesHandler
+	CategoriesHandler      handler.CategoriesHandler
+	AssetsHandler          handler.AssetsHandler
+	AccountBookHandler     handler.AccountBookHandler
+	BudgetsHandler         handler.BudgetsHandler
+	MessagesHandler        handler.MessagesHandler
+	PayeesHandler          handler.PayeesHandler
+	FriendsHandler         handler.FriendsHandler
+	SettingsHandler        handler.SettingsHandler
+	SuperStatementsHandler handler.SuperStatementsHandler
+	SuperChartHandler      handler.SuperChartHandler
+	StatisticsHandler      handler.StatisticsHandler
 
 	UserRepo        repository.UserRepository
 	AccountBookRepo repository.AccountBookRepository
@@ -59,11 +57,11 @@ func RegisterRoutes(engine *gin.Engine, cfg config.Config) interface{} {
 		)
 
 		// MCP endpoint (Streamable HTTP)
-		mcpGroup := engine.Group("/mcp")
-		if cfg.MCPAPIKey != "" {
-			mcpGroup.Use(mcpAPIKeyAuth(cfg.MCPAPIKey))
-		}
-		mcpGroup.Any("", gin.WrapH(p.MCPServer.Handler()))
+		// mcpGroup := engine.Group("/mcp")
+		// if cfg.MCPAPIKey != "" {
+		// 	mcpGroup.Use(mcpAPIKeyAuth(cfg.MCPAPIKey))
+		// }
+		// mcpGroup.Any("", gin.WrapH(p.MCPServer.Handler()))
 	}
 }
 
@@ -71,29 +69,29 @@ func RegisterRoutes(engine *gin.Engine, cfg config.Config) interface{} {
 //
 // Sets WWW-Authenticate: Bearer on 401 responses so MCP clients retry with the
 // configured token instead of falling back to OAuth discovery.
-func mcpAPIKeyAuth(expectedKey string) gin.HandlerFunc {
-	return func(c *gin.Context) {
-		auth := c.GetHeader("Authorization")
+// func mcpAPIKeyAuth(expectedKey string) gin.HandlerFunc {
+// 	return func(c *gin.Context) {
+// 		auth := c.GetHeader("Authorization")
 
-		// Debug: log what we actually received
-		fmt.Printf("[mcp-auth] method=%s path=%s Authorization=%q\n", c.Request.Method, c.Request.URL.Path, auth)
+// 		// Debug: log what we actually received
+// 		fmt.Printf("[mcp-auth] method=%s path=%s Authorization=%q\n", c.Request.Method, c.Request.URL.Path, auth)
 
-		if auth == "" {
-			c.Header("WWW-Authenticate", `Bearer`)
-			c.AbortWithStatusJSON(401, gin.H{"error": "missing Authorization header"})
-			return
-		}
-		const prefix = "Bearer "
-		if len(auth) < len(prefix) || auth[:len(prefix)] != prefix {
-			c.Header("WWW-Authenticate", `Bearer`)
-			c.AbortWithStatusJSON(401, gin.H{"error": "invalid Authorization format, expected: Bearer <key>"})
-			return
-		}
-		token := auth[len(prefix):]
-		if token != expectedKey {
-			c.AbortWithStatusJSON(403, gin.H{"error": "invalid API key", "hint": fmt.Sprintf("received=%q expected=%q", token, expectedKey)})
-			return
-		}
-		c.Next()
-	}
-}
+// 		if auth == "" {
+// 			c.Header("WWW-Authenticate", `Bearer`)
+// 			c.AbortWithStatusJSON(401, gin.H{"error": "missing Authorization header"})
+// 			return
+// 		}
+// 		const prefix = "Bearer "
+// 		if len(auth) < len(prefix) || auth[:len(prefix)] != prefix {
+// 			c.Header("WWW-Authenticate", `Bearer`)
+// 			c.AbortWithStatusJSON(401, gin.H{"error": "invalid Authorization format, expected: Bearer <key>"})
+// 			return
+// 		}
+// 		token := auth[len(prefix):]
+// 		if token != expectedKey {
+// 			c.AbortWithStatusJSON(403, gin.H{"error": "invalid API key", "hint": fmt.Sprintf("received=%q expected=%q", token, expectedKey)})
+// 			return
+// 		}
+// 		c.Next()
+// 	}
+// }
