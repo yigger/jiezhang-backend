@@ -2,7 +2,6 @@ package mysql
 
 import (
 	"context"
-	"errors"
 	"time"
 
 	"github.com/yigger/jiezhang-backend/internal/repository"
@@ -28,10 +27,10 @@ func (r *StatisticsRepository) StatisticGroupDate(ctx context.Context, date time
 		Scan(&rows).Error
 
 	if err != nil {
-		if errors.Is(err, gorm.ErrRecordNotFound) {
-			return nil, nil
-		}
 		return nil, err
+	}
+	if rows == nil {
+		return []repository.CalendarDataItem{}, nil
 	}
 
 	return rows, nil
