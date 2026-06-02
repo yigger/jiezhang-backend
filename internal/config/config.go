@@ -22,6 +22,7 @@ type Config struct {
 	MiniProgramAppID   string
 	MiniProgramSecret  string
 	SessionTokenSecret string
+	MCPAPIKey          string
 }
 
 func Load() Config {
@@ -38,6 +39,7 @@ func Load() Config {
 		MiniProgramAppID:   strings.TrimSpace(envOrDefault("MINIPROGRAM_APPID", "")),
 		MiniProgramSecret:  strings.TrimSpace(envOrDefault("MINIPROGRAM_SECRET", "")),
 		SessionTokenSecret: strings.TrimSpace(envOrDefault("SESSION_TOKEN_SECRET", "")),
+		MCPAPIKey:          strings.TrimSpace(envOrDefault("MCP_API_KEY", "")),
 	}
 
 	if cfg.Port == "" {

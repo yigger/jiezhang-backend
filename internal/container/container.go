@@ -11,6 +11,7 @@ import (
 	"github.com/yigger/jiezhang-backend/internal/infrastructure/signedurl"
 	"github.com/yigger/jiezhang-backend/internal/infrastructure/urlbuilder"
 	"github.com/yigger/jiezhang-backend/internal/infrastructure/wechat"
+	"github.com/yigger/jiezhang-backend/internal/mcp"
 	"github.com/yigger/jiezhang-backend/internal/repository"
 	mysqlrepo "github.com/yigger/jiezhang-backend/internal/repository/mysql"
 	"github.com/yigger/jiezhang-backend/internal/service"
@@ -135,6 +136,9 @@ func BuildContainer(cfg config.Config, db *gorm.DB, cache sessioncache.Cache) (*
 	provide(c, handler.NewSuperStatementsHandler)
 	provide(c, handler.NewSuperChartHandler)
 	provide(c, handler.NewStatisticsHandler)
+
+	// MCP
+	provide(c, mcp.NewServer)
 
 	return c, nil
 }
