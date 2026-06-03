@@ -128,6 +128,7 @@ type StatementDefaultCategoryAssetRecord struct {
 
 type StatementAvatarRowRecord struct {
 	StatementID int64
+	UserID      int64
 	Year        int
 	Month       int
 	AvatarID    int64

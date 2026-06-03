@@ -8,6 +8,7 @@ import (
 	"sort"
 	"strconv"
 	"strings"
+	"sync"
 
 	"github.com/yigger/jiezhang-backend/internal/infrastructure/urlbuilder"
 	"github.com/yigger/jiezhang-backend/internal/repository"
@@ -16,6 +17,11 @@ import (
 var (
 	ErrAssetPermissionDenied = errors.New("asset permission denied")
 	ErrAssetInvalidInput     = errors.New("asset invalid input")
+)
+
+var (
+	assetIconsOnce  sync.Once
+	assetIconsCache []map[string]string
 )
 
 type AssetService struct {
@@ -224,28 +230,37 @@ func (s AssetService) UpdateSurplus(ctx context.Context, input AssetSurplusInput
 }
 
 func (s AssetService) ListAssetIcons() ([]map[string]string, error) {
-	dir := filepath.Join("public", "images", "asset")
-	if st, err := os.Stat(dir); err != nil || !st.IsDir() {
-		return []map[string]string{}, nil
-	}
-	entries, err := filepath.Glob(filepath.Join(dir, "*"))
-	if err != nil {
-		return nil, err
-	}
-	sort.Strings(entries)
-	items := make([]map[string]string, 0, len(entries))
-	for _, path := range entries {
-		name := filepath.Base(path)
-		if strings.TrimSpace(name) == "" {
-			continue
+	var loadErr error
+	assetIconsOnce.Do(func() {
+		dir := filepath.Join("public", "images", "asset")
+		if st, err := os.Stat(dir); err != nil || !st.IsDir() {
+			assetIconsCache = []map[string]string{}
+			return
 		}
-		raw := "/images/asset/" + name
-		items = append(items, map[string]string{
-			"id":  raw,
-			"url": s.buildPublicURL(raw),
-		})
+		entries, err := filepath.Glob(filepath.Join(dir, "*"))
+		if err != nil {
+			loadErr = err
+			return
+		}
+		sort.Strings(entries)
+		items := make([]map[string]string, 0, len(entries))
+		for _, path := range entries {
+			name := filepath.Base(path)
+			if strings.TrimSpace(name) == "" {
+				continue
+			}
+			raw := "/images/asset/" + name
+			items = append(items, map[string]string{
+				"id":  raw,
+				"url": s.buildPublicURL(raw),
+			})
+		}
+		assetIconsCache = items
+	})
+	if loadErr != nil {
+		return nil, loadErr
 	}
-	return items, nil
+	return assetIconsCache, nil
 }
 
 func (s AssetService) normalizeWriteInput(input AssetWriteInput) (repository.AssetWriteRecord, error) {

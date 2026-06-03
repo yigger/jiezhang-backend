@@ -763,7 +763,7 @@ func (s StatementService) GetStatementByID(ctx context.Context, statementID int6
 	for _, a := range avatarRows {
 		uploadFiles = append(uploadFiles, statementdto.UploadFileItem{
 			ID:  a.AvatarID,
-			URL: s.rowMapper.BuildPublicURL(a.AvatarPath),
+			URL: s.buildAvatarURL(a.AvatarPath, a.UserID, a.StatementID),
 		})
 	}
 
@@ -863,6 +863,13 @@ func (s StatementService) ListByToken(ctx context.Context, input StatementListBy
 	}, nil
 }
 
+func (s StatementService) buildAvatarURL(avatarPath string, userID int64, statementID int64) string {
+	if strings.HasPrefix(avatarPath, "/private") {
+		return s.rowMapper.BuildPublicURL(avatarPath)
+	}
+	return s.rowMapper.BuildPublicURL(fmt.Sprintf("/private/%d/statements/%d/%s", userID, statementID, avatarPath))
+}
+
 func (s StatementService) GetImages(ctx context.Context, accountBookID int64) (StatementImagesResult, error) {
 	rows, err := s.queryRepo.ListAvatarRows(ctx, accountBookID)
 	if err != nil {
@@ -878,7 +885,7 @@ func (s StatementService) GetImages(ctx context.Context, accountBookID int64) (S
 	for _, row := range rows {
 		year := row.Year
 		month := row.Month
-		path := s.rowMapper.BuildPublicURL(row.AvatarPath)
+		path := s.buildAvatarURL(row.AvatarPath, row.UserID, row.StatementID)
 		imageItem := StatementImageItem{
 			StatementID: row.StatementID,
 			AvatarID:    row.AvatarID,

@@ -194,7 +194,7 @@ func (s HomeService) GetSettings(ctx context.Context, currentUser domain.User, a
 		User: SettingsUser{
 			UID:         currentUser.UID,
 			Name:        currentUser.Nickname,
-			AvatarUrl:   s.buildAvatarURL(currentUser.AvatarUrl),
+			AvatarUrl:   s.buildAvatarURL(currentUser.AvatarUrl, currentUser.ID),
 			Themes:      domain.DefaultThemes,
 			ThemeID:     currentUser.ThemeID,
 			Theme:       theme,
@@ -208,19 +208,18 @@ func (s HomeService) GetSettings(ctx context.Context, currentUser domain.User, a
 	}, nil
 }
 
-func (s HomeService) buildAvatarURL(avatarURL string) string {
+func (s HomeService) buildAvatarURL(avatarURL string, userID int64) string {
 	// 微信头像等已经是完整 URL 的，直接返回
 	if strings.HasPrefix(avatarURL, "http") {
 		return avatarURL
 	}
-	// 本地头像拼接 host
 	baseURL := string(s.publicBaseURL)
-	data := baseURL + avatarURL
 	// avatarURL 为空时兜底为默认头像
-	if data == baseURL {
+	if avatarURL == "" {
 		return baseURL + "/public/common-avatar.png"
 	}
-	return data
+	// 本地头像拼接完整路径: baseURL/private/{userID}/user/xxx.jpg
+	return fmt.Sprintf("%s/private/%d/user/%s", baseURL, userID, avatarURL)
 }
 
 func findThemeByID(themeID int64) domain.Theme {

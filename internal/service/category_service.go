@@ -8,6 +8,7 @@ import (
 	"path/filepath"
 	"sort"
 	"strings"
+	"sync"
 	"time"
 
 	"github.com/yigger/jiezhang-backend/internal/infrastructure/urlbuilder"
@@ -18,6 +19,11 @@ import (
 var (
 	ErrCategoryPermissionDenied = errors.New("category permission denied")
 	ErrCategoryInvalidInput     = errors.New("category invalid input")
+)
+
+var (
+	categoryIconsOnce  sync.Once
+	categoryIconsCache []map[string]string
 )
 
 type CategoryService struct {
@@ -301,28 +307,37 @@ func (s CategoryService) Delete(ctx context.Context, id int64, accountBookID int
 }
 
 func (s CategoryService) ListCategoryIcons() ([]map[string]string, error) {
-	dir := filepath.Join("public", "images", "category")
-	if st, err := os.Stat(dir); err != nil || !st.IsDir() {
-		return []map[string]string{}, nil
-	}
-	entries, err := filepath.Glob(filepath.Join(dir, "*"))
-	if err != nil {
-		return nil, err
-	}
-	sort.Strings(entries)
-	items := make([]map[string]string, 0, len(entries))
-	for _, path := range entries {
-		name := filepath.Base(path)
-		if strings.TrimSpace(name) == "" {
-			continue
+	var loadErr error
+	categoryIconsOnce.Do(func() {
+		dir := filepath.Join("public", "images", "category")
+		if st, err := os.Stat(dir); err != nil || !st.IsDir() {
+			categoryIconsCache = []map[string]string{}
+			return
 		}
-		raw := "/images/category/" + name
-		items = append(items, map[string]string{
-			"id":  raw,
-			"url": s.buildPublicURL(raw),
-		})
+		entries, err := filepath.Glob(filepath.Join(dir, "*"))
+		if err != nil {
+			loadErr = err
+			return
+		}
+		sort.Strings(entries)
+		items := make([]map[string]string, 0, len(entries))
+		for _, path := range entries {
+			name := filepath.Base(path)
+			if strings.TrimSpace(name) == "" {
+				continue
+			}
+			raw := "/images/category/" + name
+			items = append(items, map[string]string{
+				"id":  raw,
+				"url": s.buildPublicURL(raw),
+			})
+		}
+		categoryIconsCache = items
+	})
+	if loadErr != nil {
+		return nil, loadErr
 	}
-	return items, nil
+	return categoryIconsCache, nil
 }
 
 func (s CategoryService) ListStatementsByCategory(ctx context.Context, accountBookID int64, categoryID int64) ([]CategoryStatementsMonthItem, error) {

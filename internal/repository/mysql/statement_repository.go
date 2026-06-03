@@ -83,6 +83,7 @@ type defaultCategoryAssetRow struct {
 
 type statementAvatarRow struct {
 	StatementID int64  `gorm:"column:statement_id"`
+	UserID      int64  `gorm:"column:user_id"`
 	Year        int    `gorm:"column:year"`
 	Month       int    `gorm:"column:month"`
 	AvatarID    int64  `gorm:"column:avatar_id"`
@@ -539,6 +540,7 @@ func (r *StatementRepository) ListAvatarRows(ctx context.Context, accountBookID 
 		Order("s.year DESC, s.month DESC, s.day DESC, s.created_at DESC, ua.id DESC").
 		Select(strings.Join([]string{
 			"s.id AS statement_id",
+				"s.user_id AS user_id",
 			"s.year AS year",
 			"s.month AS month",
 			"ua.id AS avatar_id",
@@ -553,6 +555,7 @@ func (r *StatementRepository) ListAvatarRows(ctx context.Context, accountBookID 
 	for _, row := range rows {
 		items = append(items, repository.StatementAvatarRowRecord{
 			StatementID: row.StatementID,
+			UserID:      row.UserID,
 			Year:        row.Year,
 			Month:       row.Month,
 			AvatarID:    row.AvatarID,
@@ -566,9 +569,10 @@ func (r *StatementRepository) ListAvatarsByStatementID(ctx context.Context, stat
 	rows := make([]statementAvatarRow, 0)
 	err := r.db.WithContext(ctx).
 		Table("user_assets ua").
+		Joins("INNER JOIN statements s ON s.id = ua.imageable_id").
 		Where("ua.imageable_type = 'Statement' AND ua.type = 'StatementAvatar' AND ua.imageable_id = ?", statementID).
 		Order("ua.id ASC").
-		Select("ua.id AS avatar_id, ua.path AS avatar_path").
+		Select("ua.id AS avatar_id, ua.path AS avatar_path, s.user_id AS user_id, s.id AS statement_id").
 		Scan(&rows).Error
 	if err != nil {
 		return nil, err
@@ -577,8 +581,10 @@ func (r *StatementRepository) ListAvatarsByStatementID(ctx context.Context, stat
 	items := make([]repository.StatementAvatarRowRecord, 0, len(rows))
 	for _, row := range rows {
 		items = append(items, repository.StatementAvatarRowRecord{
-			AvatarID:   row.AvatarID,
-			AvatarPath: row.AvatarPath,
+			StatementID: row.StatementID,
+			UserID:      row.UserID,
+			AvatarID:    row.AvatarID,
+			AvatarPath:  row.AvatarPath,
 		})
 	}
 	return items, nil
