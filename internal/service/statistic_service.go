@@ -45,7 +45,7 @@ func (s StatisticsService) GetOverviewRate(context context.Context, statementTyp
 		Limit:         20,
 		Offset:        0,
 	}
-	rows, err := s.statementsRepo.ListRowsWithRelations(context, filter)
+	rows, err := statementdto.AssembleListRows(context, s.statementsRepo, filter)
 	if err != nil {
 		return nil, err
 	}
@@ -67,7 +67,7 @@ func (s StatisticsService) GetOverviewStatements(context context.Context, statem
 		EndDate:       &endDate,
 		OrderBy:       "created_at desc",
 	}
-	rows, err := s.statementsRepo.ListRowsWithRelations(context, filter)
+	rows, err := statementdto.AssembleListRows(context, s.statementsRepo, filter)
 	if err != nil {
 		return nil, err
 	}

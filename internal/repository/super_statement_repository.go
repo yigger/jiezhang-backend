@@ -33,6 +33,14 @@ type SuperStatementRepository interface {
 	ListRowsWithRelations(ctx context.Context, filter SuperStatementFilter) ([]StatementListRowRecord, error)
 	ListMonthSummaries(ctx context.Context, filter SuperStatementFilter) ([]SuperStatementMonthSummaryRecord, error)
 	GetOverview(ctx context.Context, filter SuperStatementFilter) (SuperStatementOverviewRecord, error)
+
+	// Lightweight single-table queries and batch lookups (used for split-query assembly).
+	ListSimpleRows(ctx context.Context, filter SuperStatementFilter) ([]StatementSimpleRowRecord, error)
+	BatchGetCategories(ctx context.Context, ids []int64) ([]CategoryBatchRecord, error)
+	BatchGetAssets(ctx context.Context, ids []int64) ([]AssetBatchRecord, error)
+	BatchGetPayees(ctx context.Context, ids []int64) ([]PayeeBatchRecord, error)
+	BatchGetCollaboratorRemarks(ctx context.Context, accountBookID int64, userIDs []int64) ([]CollaboratorRemarkRecord, error)
+	BatchCheckHasPic(ctx context.Context, statementIDs []int64) ([]StatementHasPicRecord, error)
 }
 
 type SuperChartMonthSummary struct {

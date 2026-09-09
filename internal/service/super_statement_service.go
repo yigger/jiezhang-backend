@@ -87,7 +87,7 @@ func (s SuperStatementService) Time(ctx context.Context, input SuperStatementFil
 
 func (s SuperStatementService) List(ctx context.Context, input SuperStatementFilterInput) ([]statementdto.ListItem, error) {
 	filter := toSuperStatementFilter(input)
-	rows, err := s.repo.ListRowsWithRelations(ctx, filter)
+	rows, err := statementdto.AssembleSuperListRows(ctx, s.repo, filter)
 	if err != nil {
 		return nil, err
 	}

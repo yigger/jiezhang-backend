@@ -174,7 +174,7 @@ func (s StatementService) GetStatements(ctx context.Context, input statementdto.
 		Limit:             input.Limit,
 		Offset:            input.Offset,
 	}
-	rows, err := s.queryRepo.ListRowsWithRelations(ctx, filter)
+	rows, err := statementdto.AssembleListRows(ctx, s.queryRepo, filter)
 	if err != nil {
 		return nil, err
 	}
@@ -193,7 +193,7 @@ func (s StatementService) SearchStatements(ctx context.Context, accountBookID in
 		Keyword:       keyword,
 		OrderBy:       "created_at desc",
 	}
-	rows, err := s.queryRepo.ListRowsWithRelations(ctx, filter)
+	rows, err := statementdto.AssembleListRows(ctx, s.queryRepo, filter)
 	if err != nil {
 		return nil, err
 	}
@@ -217,7 +217,7 @@ func (s StatementService) CreateStatement(ctx context.Context, input statementdt
 		return statementdto.ListItem{}, err
 	}
 
-	row, err := s.queryRepo.GetRowByIDWithRelations(ctx, statementID, input.AccountBookID)
+	row, err := statementdto.AssembleSingleRow(ctx, s.queryRepo, statementID, input.AccountBookID)
 	if err != nil {
 		return statementdto.ListItem{}, err
 	}
@@ -233,7 +233,7 @@ func (s StatementService) UpdateStatement(ctx context.Context, input statementdt
 		return statementdto.ListItem{}, ErrStatementPermissionDenied
 	}
 
-	currentRow, err := s.queryRepo.GetRowByIDWithRelations(ctx, input.StatementID, input.AccountBookID)
+	currentRow, err := statementdto.AssembleSingleRow(ctx, s.queryRepo, input.StatementID, input.AccountBookID)
 	if err != nil {
 		return statementdto.ListItem{}, err
 	}
@@ -246,7 +246,7 @@ func (s StatementService) UpdateStatement(ctx context.Context, input statementdt
 	if err := s.statementRepo.UpdateByID(ctx, input.StatementID, input.AccountBookID, record); err != nil {
 		return statementdto.ListItem{}, err
 	}
-	row, err := s.queryRepo.GetRowByIDWithRelations(ctx, input.StatementID, input.AccountBookID)
+	row, err := statementdto.AssembleSingleRow(ctx, s.queryRepo, input.StatementID, input.AccountBookID)
 	if err != nil {
 		return statementdto.ListItem{}, err
 	}
@@ -750,7 +750,7 @@ func (s StatementService) AssetsGuess(ctx context.Context, input GetCategoriesIn
 }
 
 func (s StatementService) GetStatementByID(ctx context.Context, statementID int64, accountBookID int64, currentUserID int64) (statementdto.DetailItem, error) {
-	row, err := s.queryRepo.GetRowByIDWithRelations(ctx, statementID, accountBookID)
+	row, err := statementdto.AssembleSingleRow(ctx, s.queryRepo, statementID, accountBookID)
 	if err != nil {
 		return statementdto.DetailItem{}, err
 	}

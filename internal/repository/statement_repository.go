@@ -27,6 +27,15 @@ type StatementQueryRepository interface {
 	ListAvatarRows(ctx context.Context, accountBookID int64) ([]StatementAvatarRowRecord, error)
 	ListAvatarsByStatementID(ctx context.Context, statementID int64) ([]StatementAvatarRowRecord, error)
 	ListExportRows(ctx context.Context, filter StatementExportFilter) ([]StatementExportRowRecord, error)
+
+	// Lightweight single-table queries and batch lookups (used for split-query assembly).
+	ListSimpleRows(ctx context.Context, filter StatementListFilter) ([]StatementSimpleRowRecord, error)
+	GetSimpleRowByID(ctx context.Context, statementID int64, accountBookID int64) (StatementSimpleRowRecord, error)
+	BatchGetCategories(ctx context.Context, ids []int64) ([]CategoryBatchRecord, error)
+	BatchGetAssets(ctx context.Context, ids []int64) ([]AssetBatchRecord, error)
+	BatchGetPayees(ctx context.Context, ids []int64) ([]PayeeBatchRecord, error)
+	BatchGetCollaboratorRemarks(ctx context.Context, accountBookID int64, userIDs []int64) ([]CollaboratorRemarkRecord, error)
+	BatchCheckHasPic(ctx context.Context, statementIDs []int64) ([]StatementHasPicRecord, error)
 }
 
 type StatementListFilter struct {
@@ -151,6 +160,66 @@ type StatementExportRowRecord struct {
 	Amount             float64
 	CreatedAt          time.Time
 	UpdatedAt          time.Time
+}
+
+// StatementSimpleRowRecord is a lightweight statement-only record (no JOINs).
+type StatementSimpleRowRecord struct {
+	ID            int64
+	UserID        int64
+	Type          string
+	Amount        float64
+	Description   string
+	CategoryID    int64
+	AssetID       int64
+	TargetAssetID int64
+	TargetObject  string
+	PayeeID       int64
+	Mood          string
+	Residue       float64
+	Location      string
+	Nation        string
+	Province      string
+	City          string
+	District      string
+	Street        string
+	CreatedAt     time.Time
+	UpdatedAt     time.Time
+}
+
+// CategoryBatchRecord holds category info for batch lookup.
+type CategoryBatchRecord struct {
+	ID         int64
+	Name       string
+	IconPath   string
+	ParentID   int64
+	ParentName string
+}
+
+// AssetBatchRecord holds asset info for batch lookup.
+type AssetBatchRecord struct {
+	ID         int64
+	Name       string
+	IconPath   string
+	ParentID   int64
+	ParentName string
+}
+
+// PayeeBatchRecord holds payee info for batch lookup.
+type PayeeBatchRecord struct {
+	ID   int64
+	Name string
+}
+
+// CollaboratorRemarkRecord holds collaborator remark for batch lookup.
+type CollaboratorRemarkRecord struct {
+	UserID int64
+	Remark string
+}
+
+// StatementHasPicRecord holds has_pic flag for batch lookup.
+type StatementHasPicRecord struct {
+	StatementID int64
+	HasPic      bool
 }
 
 // Keep domain import alive for future command-side repository evolution.

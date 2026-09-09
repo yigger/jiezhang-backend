@@ -721,6 +721,350 @@ func (r *StatementRepository) scanStatementRows(query *gorm.DB) ([]repository.St
 	return items, nil
 }
 
+// Simple single-table row struct for ListSimpleRows.
+type statementSimpleRow struct {
+	ID            int64     `gorm:"column:id"`
+	UserID        int64     `gorm:"column:user_id"`
+	Type          string    `gorm:"column:type"`
+	Amount        float64   `gorm:"column:amount"`
+	Description   string    `gorm:"column:description"`
+	CategoryID    int64     `gorm:"column:category_id"`
+	AssetID       int64     `gorm:"column:asset_id"`
+	TargetAssetID int64     `gorm:"column:target_asset_id"`
+	TargetObject  string    `gorm:"column:target_object"`
+	PayeeID       int64     `gorm:"column:payee_id"`
+	Mood          string    `gorm:"column:mood"`
+	Residue       float64   `gorm:"column:residue"`
+	Location      string    `gorm:"column:location"`
+	Nation        string    `gorm:"column:nation"`
+	Province      string    `gorm:"column:province"`
+	City          string    `gorm:"column:city"`
+	District      string    `gorm:"column:district"`
+	Street        string    `gorm:"column:street"`
+	CreatedAt     time.Time `gorm:"column:created_at"`
+	UpdatedAt     time.Time `gorm:"column:updated_at"`
+}
+
+// Batch lookup row structs.
+type categoryBatchRow struct {
+	ID         int64  `gorm:"column:id"`
+	Name       string `gorm:"column:name"`
+	IconPath   string `gorm:"column:icon_path"`
+	ParentID   int64  `gorm:"column:parent_id"`
+	ParentName string `gorm:"column:parent_name"`
+}
+
+type assetBatchRow struct {
+	ID         int64  `gorm:"column:id"`
+	Name       string `gorm:"column:name"`
+	IconPath   string `gorm:"column:icon_path"`
+	ParentID   int64  `gorm:"column:parent_id"`
+	ParentName string `gorm:"column:parent_name"`
+}
+
+type payeeBatchRow struct {
+	ID   int64  `gorm:"column:id"`
+	Name string `gorm:"column:name"`
+}
+
+type collaboratorRemarkRow struct {
+	UserID int64  `gorm:"column:user_id"`
+	Remark string `gorm:"column:remark"`
+}
+
+type hasPicRow struct {
+	StatementID int64 `gorm:"column:statement_id"`
+	HasPic      bool  `gorm:"column:has_pic"`
+}
+
+// ListSimpleRows returns statement rows from a single-table query (no JOINs).
+func (r *StatementRepository) ListSimpleRows(ctx context.Context, filter repository.StatementListFilter) ([]repository.StatementSimpleRowRecord, error) {
+	query := r.db.WithContext(ctx).Table("statements s")
+
+	if filter.AccountBookID > 0 {
+		query = query.Where("s.account_book_id = ?", filter.AccountBookID)
+	} else {
+		query = query.Where("s.user_id = ?", filter.UserID)
+	}
+
+	if filter.Type != "" {
+		query = query.Where("s.type = ?", filter.Type)
+	}
+	if filter.AssetID > 0 {
+		query = query.Where("s.asset_id = ?", filter.AssetID)
+	}
+
+	if filter.StartDate != nil && filter.EndDate != nil {
+		endOfDay := time.Date(
+			filter.EndDate.Year(),
+			filter.EndDate.Month(),
+			filter.EndDate.Day(),
+			23, 59, 59, int(time.Second-time.Nanosecond),
+			filter.EndDate.Location(),
+		)
+		query = query.Where("s.created_at BETWEEN ? AND ?", *filter.StartDate, endOfDay)
+	}
+
+	if filter.Keyword != "" {
+		amount, err := strconv.ParseFloat(filter.Keyword, 64)
+		if err == nil {
+			query = query.Where("s.amount = ?", amount)
+		} else {
+			likePattern := "%" + strings.TrimSpace(filter.Keyword) + "%"
+			query = query.Where("s.description LIKE ?", likePattern)
+		}
+	}
+
+	if len(filter.ParentCategoryIDs) > 0 {
+		query = query.Where("s.category_id IN (SELECT id FROM categories WHERE parent_id IN ?)", filter.ParentCategoryIDs)
+	}
+	if len(filter.ExceptIDs) > 0 {
+		query = query.Where("s.id NOT IN ?", filter.ExceptIDs)
+	}
+	query = query.Order(mapOrderBy(filter.OrderBy))
+
+	if filter.Limit <= 0 || filter.Limit > 200 {
+		filter.Limit = 1000
+	}
+	if filter.Offset < 0 {
+		filter.Offset = 0
+	}
+	query = query.Limit(filter.Limit).Offset(filter.Offset)
+
+	var rows []statementSimpleRow
+	err := query.Select(strings.Join([]string{
+		"s.id AS id",
+		"s.user_id AS user_id",
+		"s.type AS type",
+		"s.amount AS amount",
+		"COALESCE(s.description, '') AS description",
+		"s.category_id AS category_id",
+		"s.asset_id AS asset_id",
+		"COALESCE(s.target_asset_id, 0) AS target_asset_id",
+		"COALESCE(s.target_object, '') AS target_object",
+		"COALESCE(s.payee_id, 0) AS payee_id",
+		"COALESCE(s.mood, '') AS mood",
+		"COALESCE(s.residue, 0) AS residue",
+		"COALESCE(s.location, '') AS location",
+		"COALESCE(s.nation, '') AS nation",
+		"COALESCE(s.province, '') AS province",
+		"COALESCE(s.city, '') AS city",
+		"COALESCE(s.district, '') AS district",
+		"COALESCE(s.street, '') AS street",
+		"s.created_at AS created_at",
+		"s.updated_at AS updated_at",
+	}, ", ")).Scan(&rows).Error
+	if err != nil {
+		return nil, fmt.Errorf("list simple statement rows: %w", err)
+	}
+
+	items := make([]repository.StatementSimpleRowRecord, 0, len(rows))
+	for _, row := range rows {
+		items = append(items, repository.StatementSimpleRowRecord{
+			ID:            row.ID,
+			UserID:        row.UserID,
+			Type:          row.Type,
+			Amount:        row.Amount,
+			Description:   row.Description,
+			CategoryID:    row.CategoryID,
+			AssetID:       row.AssetID,
+			TargetAssetID: row.TargetAssetID,
+			TargetObject:  row.TargetObject,
+			PayeeID:       row.PayeeID,
+			Mood:          row.Mood,
+			Residue:       row.Residue,
+			Location:      row.Location,
+			Nation:        row.Nation,
+			Province:      row.Province,
+			City:          row.City,
+			District:      row.District,
+			Street:        row.Street,
+			CreatedAt:     row.CreatedAt,
+			UpdatedAt:     row.UpdatedAt,
+		})
+	}
+	return items, nil
+}
+
+// GetSimpleRowByID fetches a single statement row without JOINs.
+func (r *StatementRepository) GetSimpleRowByID(ctx context.Context, statementID int64, accountBookID int64) (repository.StatementSimpleRowRecord, error) {
+	var row statementSimpleRow
+	err := r.db.WithContext(ctx).
+		Table("statements").
+		Select(strings.Join([]string{
+			"id AS id",
+			"user_id AS user_id",
+			"type AS type",
+			"amount AS amount",
+			"COALESCE(description, '') AS description",
+			"category_id AS category_id",
+			"asset_id AS asset_id",
+			"COALESCE(target_asset_id, 0) AS target_asset_id",
+			"COALESCE(target_object, '') AS target_object",
+			"COALESCE(payee_id, 0) AS payee_id",
+			"COALESCE(mood, '') AS mood",
+			"COALESCE(residue, 0) AS residue",
+			"COALESCE(location, '') AS location",
+			"COALESCE(nation, '') AS nation",
+			"COALESCE(province, '') AS province",
+			"COALESCE(city, '') AS city",
+			"COALESCE(district, '') AS district",
+			"COALESCE(street, '') AS street",
+			"created_at AS created_at",
+			"updated_at AS updated_at",
+		}, ", ")).
+		Where("id = ? AND account_book_id = ?", statementID, accountBookID).
+		Take(&row).Error
+	if err != nil {
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			return repository.StatementSimpleRowRecord{}, repository.ErrStatementNotFound
+		}
+		return repository.StatementSimpleRowRecord{}, fmt.Errorf("get simple row by id: %w", err)
+	}
+	return repository.StatementSimpleRowRecord{
+		ID:            row.ID,
+		UserID:        row.UserID,
+		Type:          row.Type,
+		Amount:        row.Amount,
+		Description:   row.Description,
+		CategoryID:    row.CategoryID,
+		AssetID:       row.AssetID,
+		TargetAssetID: row.TargetAssetID,
+		TargetObject:  row.TargetObject,
+		PayeeID:       row.PayeeID,
+		Mood:          row.Mood,
+		Residue:       row.Residue,
+		Location:      row.Location,
+		Nation:        row.Nation,
+		Province:      row.Province,
+		City:          row.City,
+		District:      row.District,
+		Street:        row.Street,
+		CreatedAt:     row.CreatedAt,
+		UpdatedAt:     row.UpdatedAt,
+	}, nil
+}
+
+// BatchGetCategories fetches categories by primary keys, including parent info.
+func (r *StatementRepository) BatchGetCategories(ctx context.Context, ids []int64) ([]repository.CategoryBatchRecord, error) {
+	if len(ids) == 0 {
+		return nil, nil
+	}
+	var rows []categoryBatchRow
+	err := r.db.WithContext(ctx).
+		Table("categories c").
+		Joins("LEFT JOIN categories cp ON cp.id = c.parent_id").
+		Select("c.id AS id, c.name AS name, c.icon_path AS icon_path, COALESCE(c.parent_id, 0) AS parent_id, COALESCE(cp.name, '') AS parent_name").
+		Where("c.id IN ?", ids).
+		Scan(&rows).Error
+	if err != nil {
+		return nil, fmt.Errorf("batch get categories: %w", err)
+	}
+	items := make([]repository.CategoryBatchRecord, 0, len(rows))
+	for _, row := range rows {
+		items = append(items, repository.CategoryBatchRecord{
+			ID:         row.ID,
+			Name:       row.Name,
+			IconPath:   row.IconPath,
+			ParentID:   row.ParentID,
+			ParentName: row.ParentName,
+		})
+	}
+	return items, nil
+}
+
+// BatchGetAssets fetches assets by primary keys, including parent info.
+func (r *StatementRepository) BatchGetAssets(ctx context.Context, ids []int64) ([]repository.AssetBatchRecord, error) {
+	if len(ids) == 0 {
+		return nil, nil
+	}
+	var rows []assetBatchRow
+	err := r.db.WithContext(ctx).
+		Table("assets a").
+		Joins("LEFT JOIN assets ap ON ap.id = a.parent_id").
+		Select("a.id AS id, a.name AS name, a.icon_path AS icon_path, COALESCE(a.parent_id, 0) AS parent_id, COALESCE(ap.name, '') AS parent_name").
+		Where("a.id IN ?", ids).
+		Scan(&rows).Error
+	if err != nil {
+		return nil, fmt.Errorf("batch get assets: %w", err)
+	}
+	items := make([]repository.AssetBatchRecord, 0, len(rows))
+	for _, row := range rows {
+		items = append(items, repository.AssetBatchRecord{
+			ID:         row.ID,
+			Name:       row.Name,
+			IconPath:   row.IconPath,
+			ParentID:   row.ParentID,
+			ParentName: row.ParentName,
+		})
+	}
+	return items, nil
+}
+
+// BatchGetPayees fetches payees by primary keys.
+func (r *StatementRepository) BatchGetPayees(ctx context.Context, ids []int64) ([]repository.PayeeBatchRecord, error) {
+	if len(ids) == 0 {
+		return nil, nil
+	}
+	var rows []payeeBatchRow
+	err := r.db.WithContext(ctx).
+		Table("payees").
+		Select("id, name").
+		Where("id IN ?", ids).
+		Scan(&rows).Error
+	if err != nil {
+		return nil, fmt.Errorf("batch get payees: %w", err)
+	}
+	items := make([]repository.PayeeBatchRecord, 0, len(rows))
+	for _, row := range rows {
+		items = append(items, repository.PayeeBatchRecord{ID: row.ID, Name: row.Name})
+	}
+	return items, nil
+}
+
+// BatchGetCollaboratorRemarks fetches collaborator remarks for given users in an account book.
+func (r *StatementRepository) BatchGetCollaboratorRemarks(ctx context.Context, accountBookID int64, userIDs []int64) ([]repository.CollaboratorRemarkRecord, error) {
+	if len(userIDs) == 0 {
+		return nil, nil
+	}
+	var rows []collaboratorRemarkRow
+	err := r.db.WithContext(ctx).
+		Table("account_book_collaborators").
+		Select("user_id, COALESCE(remark, '') AS remark").
+		Where("account_book_id = ? AND user_id IN ?", accountBookID, userIDs).
+		Scan(&rows).Error
+	if err != nil {
+		return nil, fmt.Errorf("batch get collaborator remarks: %w", err)
+	}
+	items := make([]repository.CollaboratorRemarkRecord, 0, len(rows))
+	for _, row := range rows {
+		items = append(items, repository.CollaboratorRemarkRecord{UserID: row.UserID, Remark: row.Remark})
+	}
+	return items, nil
+}
+
+// BatchCheckHasPic checks which statement IDs have StatementAvatar records.
+func (r *StatementRepository) BatchCheckHasPic(ctx context.Context, statementIDs []int64) ([]repository.StatementHasPicRecord, error) {
+	if len(statementIDs) == 0 {
+		return nil, nil
+	}
+	var rows []hasPicRow
+	err := r.db.WithContext(ctx).
+		Table("user_assets").
+		Select("imageable_id AS statement_id, 1 AS has_pic").
+		Where("imageable_type = 'Statement' AND type = 'StatementAvatar' AND imageable_id IN ?", statementIDs).
+		Group("imageable_id").
+		Scan(&rows).Error
+	if err != nil {
+		return nil, fmt.Errorf("batch check has pic: %w", err)
+	}
+	items := make([]repository.StatementHasPicRecord, 0, len(rows))
+	for _, row := range rows {
+		items = append(items, repository.StatementHasPicRecord{StatementID: row.StatementID, HasPic: row.HasPic})
+	}
+	return items, nil
+}
+
 func mapOrderBy(orderBy string) string {
 	switch strings.TrimSpace(strings.ToLower(orderBy)) {
 	case "created_at":

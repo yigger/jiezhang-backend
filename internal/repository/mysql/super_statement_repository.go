@@ -2,6 +2,7 @@ package mysql
 
 import (
 	"context"
+	"fmt"
 	"strings"
 	"time"
 
@@ -84,6 +85,181 @@ func (r *SuperStatementRepository) ListRowsWithRelations(ctx context.Context, fi
 			PayeeName:       row.PayeeName,
 			TargetAssetName: row.TargetAssetName,
 		})
+	}
+	return items, nil
+}
+
+// ListSimpleRows returns statement rows from a single-table query (no JOINs).
+func (r *SuperStatementRepository) ListSimpleRows(ctx context.Context, filter repository.SuperStatementFilter) ([]repository.StatementSimpleRowRecord, error) {
+	query := r.db.WithContext(ctx).Table("statements s").Where("s.account_book_id = ?", filter.AccountBookID)
+	query = applySuperStatementFilter(ctx, r.db, query, filter)
+	query = query.Order(mapSuperOrderBy(filter.OrderBy))
+
+	var rows []statementSimpleRow
+	err := query.Select(strings.Join([]string{
+		"s.id AS id",
+		"s.user_id AS user_id",
+		"s.type AS type",
+		"s.amount AS amount",
+		"COALESCE(s.description, '') AS description",
+		"s.category_id AS category_id",
+		"s.asset_id AS asset_id",
+		"COALESCE(s.target_asset_id, 0) AS target_asset_id",
+		"COALESCE(s.target_object, '') AS target_object",
+		"COALESCE(s.payee_id, 0) AS payee_id",
+		"COALESCE(s.mood, '') AS mood",
+		"COALESCE(s.residue, 0) AS residue",
+		"COALESCE(s.location, '') AS location",
+		"COALESCE(s.nation, '') AS nation",
+		"COALESCE(s.province, '') AS province",
+		"COALESCE(s.city, '') AS city",
+		"COALESCE(s.district, '') AS district",
+		"COALESCE(s.street, '') AS street",
+		"s.created_at AS created_at",
+		"s.updated_at AS updated_at",
+	}, ", ")).Scan(&rows).Error
+	if err != nil {
+		return nil, fmt.Errorf("super list simple rows: %w", err)
+	}
+
+	items := make([]repository.StatementSimpleRowRecord, 0, len(rows))
+	for _, row := range rows {
+		items = append(items, repository.StatementSimpleRowRecord{
+			ID:            row.ID,
+			UserID:        row.UserID,
+			Type:          row.Type,
+			Amount:        row.Amount,
+			Description:   row.Description,
+			CategoryID:    row.CategoryID,
+			AssetID:       row.AssetID,
+			TargetAssetID: row.TargetAssetID,
+			TargetObject:  row.TargetObject,
+			PayeeID:       row.PayeeID,
+			Mood:          row.Mood,
+			Residue:       row.Residue,
+			Location:      row.Location,
+			Nation:        row.Nation,
+			Province:      row.Province,
+			City:          row.City,
+			District:      row.District,
+			Street:        row.Street,
+			CreatedAt:     row.CreatedAt,
+			UpdatedAt:     row.UpdatedAt,
+		})
+	}
+	return items, nil
+}
+
+// BatchGetCategories fetches categories by primary keys.
+func (r *SuperStatementRepository) BatchGetCategories(ctx context.Context, ids []int64) ([]repository.CategoryBatchRecord, error) {
+	if len(ids) == 0 {
+		return nil, nil
+	}
+	var rows []categoryBatchRow
+	err := r.db.WithContext(ctx).
+		Table("categories c").
+		Joins("LEFT JOIN categories cp ON cp.id = c.parent_id").
+		Select("c.id AS id, c.name AS name, c.icon_path AS icon_path, COALESCE(c.parent_id, 0) AS parent_id, COALESCE(cp.name, '') AS parent_name").
+		Where("c.id IN ?", ids).
+		Scan(&rows).Error
+	if err != nil {
+		return nil, fmt.Errorf("super batch get categories: %w", err)
+	}
+	items := make([]repository.CategoryBatchRecord, 0, len(rows))
+	for _, row := range rows {
+		items = append(items, repository.CategoryBatchRecord{
+			ID: row.ID, Name: row.Name, IconPath: row.IconPath,
+			ParentID: row.ParentID, ParentName: row.ParentName,
+		})
+	}
+	return items, nil
+}
+
+// BatchGetAssets fetches assets by primary keys.
+func (r *SuperStatementRepository) BatchGetAssets(ctx context.Context, ids []int64) ([]repository.AssetBatchRecord, error) {
+	if len(ids) == 0 {
+		return nil, nil
+	}
+	var rows []assetBatchRow
+	err := r.db.WithContext(ctx).
+		Table("assets a").
+		Joins("LEFT JOIN assets ap ON ap.id = a.parent_id").
+		Select("a.id AS id, a.name AS name, a.icon_path AS icon_path, COALESCE(a.parent_id, 0) AS parent_id, COALESCE(ap.name, '') AS parent_name").
+		Where("a.id IN ?", ids).
+		Scan(&rows).Error
+	if err != nil {
+		return nil, fmt.Errorf("super batch get assets: %w", err)
+	}
+	items := make([]repository.AssetBatchRecord, 0, len(rows))
+	for _, row := range rows {
+		items = append(items, repository.AssetBatchRecord{
+			ID: row.ID, Name: row.Name, IconPath: row.IconPath,
+			ParentID: row.ParentID, ParentName: row.ParentName,
+		})
+	}
+	return items, nil
+}
+
+// BatchGetPayees fetches payees by primary keys.
+func (r *SuperStatementRepository) BatchGetPayees(ctx context.Context, ids []int64) ([]repository.PayeeBatchRecord, error) {
+	if len(ids) == 0 {
+		return nil, nil
+	}
+	var rows []payeeBatchRow
+	err := r.db.WithContext(ctx).
+		Table("payees").
+		Select("id, name").
+		Where("id IN ?", ids).
+		Scan(&rows).Error
+	if err != nil {
+		return nil, fmt.Errorf("super batch get payees: %w", err)
+	}
+	items := make([]repository.PayeeBatchRecord, 0, len(rows))
+	for _, row := range rows {
+		items = append(items, repository.PayeeBatchRecord{ID: row.ID, Name: row.Name})
+	}
+	return items, nil
+}
+
+// BatchGetCollaboratorRemarks fetches collaborator remarks.
+func (r *SuperStatementRepository) BatchGetCollaboratorRemarks(ctx context.Context, accountBookID int64, userIDs []int64) ([]repository.CollaboratorRemarkRecord, error) {
+	if len(userIDs) == 0 {
+		return nil, nil
+	}
+	var rows []collaboratorRemarkRow
+	err := r.db.WithContext(ctx).
+		Table("account_book_collaborators").
+		Select("user_id, COALESCE(remark, '') AS remark").
+		Where("account_book_id = ? AND user_id IN ?", accountBookID, userIDs).
+		Scan(&rows).Error
+	if err != nil {
+		return nil, fmt.Errorf("super batch get remarks: %w", err)
+	}
+	items := make([]repository.CollaboratorRemarkRecord, 0, len(rows))
+	for _, row := range rows {
+		items = append(items, repository.CollaboratorRemarkRecord{UserID: row.UserID, Remark: row.Remark})
+	}
+	return items, nil
+}
+
+// BatchCheckHasPic checks which statement IDs have StatementAvatar records.
+func (r *SuperStatementRepository) BatchCheckHasPic(ctx context.Context, statementIDs []int64) ([]repository.StatementHasPicRecord, error) {
+	if len(statementIDs) == 0 {
+		return nil, nil
+	}
+	var rows []hasPicRow
+	err := r.db.WithContext(ctx).
+		Table("user_assets").
+		Select("imageable_id AS statement_id, 1 AS has_pic").
+		Where("imageable_type = 'Statement' AND type = 'StatementAvatar' AND imageable_id IN ?", statementIDs).
+		Group("imageable_id").
+		Scan(&rows).Error
+	if err != nil {
+		return nil, fmt.Errorf("super batch check has pic: %w", err)
+	}
+	items := make([]repository.StatementHasPicRecord, 0, len(rows))
+	for _, row := range rows {
+		items = append(items, repository.StatementHasPicRecord{StatementID: row.StatementID, HasPic: row.HasPic})
 	}
 	return items, nil
 }

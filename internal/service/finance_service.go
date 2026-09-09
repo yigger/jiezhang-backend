@@ -231,7 +231,7 @@ func (s FinanceService) GetWalletStatementList(ctx context.Context, accountBookI
 	startDate := time.Date(year, time.Month(month), 1, 0, 0, 0, 0, time.Local)
 	endDate := startDate.AddDate(0, 1, 0).Add(-time.Nanosecond)
 
-	rows, err := s.statementQuery.ListRowsWithRelations(ctx, repository.StatementListFilter{
+	rows, err := statementdto.AssembleListRows(ctx, s.statementQuery, repository.StatementListFilter{
 		AccountBookID: accountBookID,
 		AssetID:       assetID,
 		StartDate:     &startDate,
