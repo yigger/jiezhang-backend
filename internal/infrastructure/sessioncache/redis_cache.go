@@ -18,6 +18,7 @@ func NewRedisCache(redisURL string) (*RedisCache, error) {
 	}
 	client := redis.NewClient(opts)
 	if err := client.Ping(context.Background()).Err(); err != nil {
+		_ = client.Close()
 		return nil, err
 	}
 	return &RedisCache{client: client}, nil
@@ -34,3 +35,5 @@ func (c *RedisCache) Get(key string) (string, bool) {
 func (c *RedisCache) Set(key, value string, ttl time.Duration) {
 	c.client.Set(context.Background(), key, value, ttl)
 }
+
+func (c *RedisCache) Close() error { return c.client.Close() }

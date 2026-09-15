@@ -4,19 +4,19 @@ import (
 	"net/url"
 	"strings"
 
-	"github.com/yigger/jiezhang-backend/internal/infrastructure/signedurl"
+	jzinfrastructure_signedurl "github.com/yigger/jiezhang-backend/internal/infrastructure/signedurl"
 )
 
 type PublicURLBuilder struct {
 	baseURL string
-	signer  *signedurl.Signer
+	signer  *jzinfrastructure_signedurl.Signer
 }
 
 func NewPublicURLBuilder(baseURL string) PublicURLBuilder {
 	return PublicURLBuilder{baseURL: strings.TrimSpace(baseURL)}
 }
 
-func NewPublicURLBuilderWithSigner(baseURL string, signer *signedurl.Signer) PublicURLBuilder {
+func NewPublicURLBuilderWithSigner(baseURL string, signer *jzinfrastructure_signedurl.Signer) PublicURLBuilder {
 	return PublicURLBuilder{baseURL: strings.TrimSpace(baseURL), signer: signer}
 }
 
@@ -46,7 +46,7 @@ func (b PublicURLBuilder) BuildPublicURL(raw string) string {
 
 	result := base.String()
 
-	if b.signer != nil && signedurl.IsPrivatePath(path) {
+	if b.signer != nil && jzinfrastructure_signedurl.IsPrivatePath(path) {
 		result = b.signer.SignIfPrivate(result)
 	}
 

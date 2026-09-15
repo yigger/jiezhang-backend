@@ -1,0 +1,4447 @@
+basePath: /api
+definitions:
+  model.Payee:
+    properties:
+      accountBookID:
+        format: int64
+        type: integer
+      createdAt:
+        type: string
+      id:
+        format: int64
+        type: integer
+      name:
+        type: string
+      updatedAt:
+        type: string
+      userID:
+        format: int64
+        type: integer
+    type: object
+  types.APIResponse:
+    properties:
+      data: {}
+      error:
+        type: string
+      message:
+        type: string
+      msg:
+        type: string
+      session:
+        type: string
+      status:
+        type: integer
+    type: object
+  types.AccountBookAssetItem:
+    properties:
+      childs:
+        items:
+          $ref: '#/definitions/types.AccountBookChildItem'
+        type: array
+      icon_path:
+        type: string
+      name:
+        type: string
+      type:
+        type: string
+    type: object
+  types.AccountBookCategoryItem:
+    properties:
+      childs:
+        items:
+          $ref: '#/definitions/types.AccountBookChildItem'
+        type: array
+      icon_path:
+        type: string
+      name:
+        type: string
+    type: object
+  types.AccountBookChildItem:
+    properties:
+      icon_path:
+        type: string
+      name:
+        type: string
+    type: object
+  types.AccountBookCreateRequest:
+    properties:
+      account_type:
+        type: string
+      assets:
+        items:
+          $ref: '#/definitions/types.AccountBookAssetItem'
+        type: array
+      categories:
+        additionalProperties:
+          items:
+            $ref: '#/definitions/types.AccountBookCategoryItem'
+          type: array
+        type: object
+      description:
+        type: string
+      name:
+        type: string
+    type: object
+  types.AccountBookDetailItem:
+    properties:
+      account_type:
+        $ref: '#/definitions/types.AccountBookTypeInfo'
+      description:
+        type: string
+      id:
+        type: integer
+      name:
+        type: string
+    type: object
+  types.AccountBookListItem:
+    properties:
+      account_type:
+        type: integer
+      account_type_name:
+        type: string
+      budget:
+        type: number
+      created_at: {}
+      description:
+        type: string
+      id:
+        type: integer
+      name:
+        type: string
+      updated_at: {}
+      user_id:
+        type: integer
+    type: object
+  types.AccountBookPreset:
+    properties:
+      assets:
+        items:
+          $ref: '#/definitions/types.AccountBookPresetAsset'
+        type: array
+      categories:
+        additionalProperties:
+          items:
+            $ref: '#/definitions/types.AccountBookPresetCategory'
+          type: array
+        type: object
+      name:
+        type: string
+    type: object
+  types.AccountBookPresetAsset:
+    properties:
+      childs:
+        items:
+          $ref: '#/definitions/types.AccountBookPresetChild'
+        type: array
+      icon_path:
+        type: string
+      name:
+        type: string
+      type:
+        type: string
+    type: object
+  types.AccountBookPresetCategory:
+    properties:
+      childs:
+        items:
+          $ref: '#/definitions/types.AccountBookPresetChild'
+        type: array
+      icon_path:
+        type: string
+      name:
+        type: string
+    type: object
+  types.AccountBookPresetChild:
+    properties:
+      icon_path:
+        type: string
+      name:
+        type: string
+    type: object
+  types.AccountBookTypeInfo:
+    properties:
+      id:
+        type: string
+      name:
+        type: string
+    type: object
+  types.AccountBookUpdateRequest:
+    properties:
+      account_type:
+        properties:
+          id:
+            type: string
+        type: object
+      description:
+        type: string
+      name:
+        type: string
+    type: object
+  types.AssetItem:
+    properties:
+      amount:
+        type: number
+      childs:
+        items:
+          $ref: '#/definitions/types.AssetItem'
+        type: array
+      icon_path:
+        type: string
+      icon_url:
+        type: string
+      id:
+        type: integer
+      name:
+        type: string
+      order:
+        type: integer
+      parent_id:
+        type: integer
+      remark:
+        type: string
+      type:
+        type: string
+    type: object
+  types.AssetShowResponse:
+    properties:
+      amount:
+        type: number
+      icon_path:
+        type: string
+      icon_url:
+        type: string
+      id:
+        type: integer
+      name:
+        type: string
+      order:
+        type: integer
+      parent_id:
+        type: integer
+      remark:
+        type: string
+      type:
+        type: string
+    type: object
+  types.AssetSurplusRequest:
+    properties:
+      amount:
+        type: string
+      asset_id:
+        type: integer
+    type: object
+  types.AssetWriteRequest:
+    properties:
+      wallet:
+        properties:
+          amount:
+            type: string
+          icon_path:
+            type: string
+          name:
+            type: string
+          parent_id:
+            type: integer
+          remark:
+            type: string
+          type:
+            type: string
+        type: object
+    type: object
+  types.AvatarDeleteRequest:
+    properties:
+      avatar_id:
+        type: integer
+    type: object
+  types.BudgetCategoryDetail:
+    properties:
+      childs:
+        items:
+          $ref: '#/definitions/types.BudgetChildItem'
+        type: array
+      root:
+        $ref: '#/definitions/types.BudgetRoot'
+    type: object
+  types.BudgetChildItem:
+    properties:
+      amount:
+        type: string
+      icon_path:
+        type: string
+      id:
+        type: integer
+      name:
+        type: string
+      source_amount:
+        type: number
+      surplus:
+        type: string
+      surplus_percent:
+        type: integer
+      use_percent:
+        type: integer
+      used_amount:
+        type: number
+    type: object
+  types.BudgetParentItem:
+    properties:
+      amount:
+        type: string
+      icon_path:
+        type: string
+      id:
+        type: integer
+      name:
+        type: string
+      source_amount:
+        type: number
+      surplus:
+        type: string
+      surplus_percent:
+        type: integer
+      use_percent:
+        type: integer
+      used_amount:
+        type: number
+    type: object
+  types.BudgetRoot:
+    properties:
+      amount:
+        type: string
+      icon_path:
+        type: string
+      id:
+        type: integer
+      name:
+        type: string
+      source_amount:
+        type: number
+      surplus:
+        type: string
+      surplus_percent:
+        type: integer
+      use_percent:
+        type: integer
+      used_amount:
+        type: string
+    type: object
+  types.BudgetSummary:
+    properties:
+      amount:
+        type: string
+      source_amount:
+        type: number
+      surplus:
+        type: number
+      used:
+        type: number
+    type: object
+  types.BudgetUpdateRequest:
+    properties:
+      amount:
+        type: string
+      category_id:
+        type: integer
+      type:
+        type: string
+    type: object
+  types.CalendarDataItem:
+    properties:
+      date:
+        type: integer
+      expend:
+        type: number
+      income:
+        type: number
+    type: object
+  types.CategoryHeader:
+    properties:
+      all:
+        type: string
+      month:
+        type: string
+      parent_name:
+        type: string
+      year:
+        type: string
+    type: object
+  types.CategoryItem:
+    properties:
+      amount:
+        type: string
+      childs:
+        items:
+          $ref: '#/definitions/types.CategoryItem'
+        type: array
+      icon_path:
+        type: string
+      icon_url:
+        type: string
+      id:
+        type: integer
+      name:
+        type: string
+      order:
+        type: integer
+      parent_id:
+        type: integer
+      type:
+        type: string
+    type: object
+  types.CategoryListResponse:
+    properties:
+      categories:
+        items:
+          $ref: '#/definitions/types.CategoryItem'
+        type: array
+      header:
+        $ref: '#/definitions/types.CategoryHeader'
+    type: object
+  types.CategoryShowResponse:
+    properties:
+      icon_path:
+        type: string
+      icon_url:
+        type: string
+      id:
+        type: integer
+      name:
+        type: string
+      order:
+        type: integer
+      parent_id:
+        type: integer
+      parent_name:
+        type: string
+      type:
+        type: string
+    type: object
+  types.CategoryStatementChild:
+    properties:
+      asset:
+        type: string
+      category:
+        type: string
+      day:
+        type: integer
+      description:
+        type: string
+      icon_path:
+        type: string
+      id:
+        type: integer
+      money:
+        type: string
+      timeStr:
+        type: string
+      type:
+        type: string
+      week:
+        type: string
+    type: object
+  types.CategoryStatementsMonthItem:
+    properties:
+      childs:
+        items:
+          $ref: '#/definitions/types.CategoryStatementChild'
+        type: array
+      month:
+        type: integer
+      year:
+        type: integer
+    type: object
+  types.CategoryWriteRequest:
+    properties:
+      category:
+        properties:
+          icon_path:
+            type: string
+          name:
+            type: string
+          parent_id:
+            type: integer
+          type:
+            type: string
+        type: object
+    type: object
+  types.FeedbackRequest:
+    properties:
+      content:
+        type: string
+      type:
+        type: integer
+    type: object
+  types.FriendAcceptApplyRequest:
+    properties:
+      invite_token:
+        type: string
+      nickname:
+        type: string
+    type: object
+  types.FriendAuthority:
+    properties:
+      change_role:
+        type: boolean
+      remove:
+        type: boolean
+    type: object
+  types.FriendCollaboratorItem:
+    properties:
+      created_at:
+        type: string
+      id:
+        type: integer
+      remark:
+        type: string
+      role:
+        type: string
+      role_name:
+        type: string
+      updated_at:
+        type: string
+      user:
+        $ref: '#/definitions/types.FriendUserItem'
+    type: object
+  types.FriendInviteRequest:
+    properties:
+      account_book_id:
+        type: integer
+      role:
+        type: string
+    type: object
+  types.FriendListResponse:
+    properties:
+      authority:
+        $ref: '#/definitions/types.FriendAuthority'
+      collaborators:
+        items:
+          $ref: '#/definitions/types.FriendCollaboratorItem'
+        type: array
+      owner:
+        $ref: '#/definitions/types.FriendUserItem'
+    type: object
+  types.FriendRemoveRequest:
+    properties:
+      account_book_id:
+        type: integer
+    type: object
+  types.FriendUpdateRequest:
+    properties:
+      account_book_id:
+        type: integer
+      remark:
+        type: string
+      role:
+        type: string
+    type: object
+  types.FriendUserItem:
+    properties:
+      avatar_path:
+        type: string
+      id:
+        type: integer
+      nickname:
+        type: string
+    type: object
+  types.HomeHeaderMessage:
+    properties:
+      id:
+        type: integer
+      sub_title:
+        type: string
+      title:
+        type: string
+    type: object
+  types.HomeHeaderResponse:
+    properties:
+      message:
+        $ref: '#/definitions/types.HomeHeaderMessage'
+      month_budget:
+        type: string
+      month_expend:
+        type: string
+      today_expend:
+        type: string
+      trends:
+        $ref: '#/definitions/types.HomeHeaderTrends'
+      use_pencentage:
+        type: integer
+    type: object
+  types.HomeHeaderTrendItem:
+    properties:
+      amount:
+        type: string
+      ratio:
+        type: number
+      trend:
+        type: string
+    type: object
+  types.HomeHeaderTrends:
+    properties:
+      day:
+        $ref: '#/definitions/types.HomeHeaderTrendItem'
+      month:
+        $ref: '#/definitions/types.HomeHeaderTrendItem'
+      week:
+        $ref: '#/definitions/types.HomeHeaderTrendItem'
+    type: object
+  types.HomeSettingsAccountBook:
+    properties:
+      id:
+        type: integer
+      name:
+        type: string
+    type: object
+  types.HomeSettingsResponse:
+    properties:
+      user:
+        $ref: '#/definitions/types.HomeSettingsUser'
+      version:
+        type: string
+    type: object
+  types.HomeSettingsUser:
+    properties:
+      account_book:
+        $ref: '#/definitions/types.HomeSettingsAccountBook'
+      avatar_url:
+        type: string
+      created_at:
+        type: string
+      name:
+        type: string
+      persist:
+        type: integer
+      remind:
+        type: boolean
+      show_diamond:
+        type: boolean
+      theme:
+        $ref: '#/definitions/types.Theme'
+      theme_id:
+        type: integer
+      themes:
+        items:
+          $ref: '#/definitions/types.Theme'
+        type: array
+      uid:
+        type: integer
+    type: object
+  types.InviteInformationBook:
+    properties:
+      id:
+        type: integer
+      name:
+        type: string
+    type: object
+  types.InviteInformationItem:
+    properties:
+      account_book:
+        $ref: '#/definitions/types.InviteInformationBook'
+      invite_user:
+        $ref: '#/definitions/types.FriendUserItem'
+      role_name:
+        type: string
+    type: object
+  types.MessageDetailItem:
+    properties:
+      content:
+        type: string
+      content_type:
+        type: string
+      msg_type:
+        type: string
+      time:
+        type: string
+      title:
+        type: string
+    type: object
+  types.MessageListItem:
+    properties:
+      already_read:
+        type: integer
+      content:
+        type: string
+      content_type:
+        type: string
+      id:
+        type: integer
+      image_url:
+        type: string
+      msg_type:
+        type: string
+      page_url:
+        type: string
+      sub_title:
+        type: string
+      target_type:
+        type: integer
+      time:
+        type: string
+      title:
+        type: string
+    type: object
+  types.OverviewHeaderData:
+    properties:
+      expend:
+        type: number
+      income:
+        type: number
+      repay:
+        type: number
+      total:
+        type: number
+      transfer:
+        type: number
+    type: object
+  types.PayeeListItem:
+    properties:
+      id:
+        type: integer
+      name:
+        type: string
+    type: object
+  types.PayeeWriteRequest:
+    properties:
+      name:
+        type: string
+      payee:
+        properties:
+          name:
+            type: string
+        type: object
+    type: object
+  types.ShareKeyData:
+    properties:
+      share_key:
+        type: string
+    type: object
+  types.ShareKeyRequest:
+    properties:
+      category_ids:
+        type: string
+      end_date:
+        type: string
+      except_statement_ids:
+        type: string
+      exceptedStatementIds:
+        type: string
+      start_date:
+        type: string
+    type: object
+  types.StatementAssetChildItem:
+    properties:
+      icon_path:
+        type: string
+      id:
+        type: integer
+      name:
+        type: string
+    type: object
+  types.StatementAssetParentItem:
+    properties:
+      id:
+        type: integer
+      name:
+        type: string
+    type: object
+  types.StatementAssetTreeItem:
+    properties:
+      childs:
+        items:
+          $ref: '#/definitions/types.StatementAssetChildItem'
+        type: array
+      icon_path:
+        type: string
+      id:
+        type: integer
+      name:
+        type: string
+    type: object
+  types.StatementAssetsResult:
+    properties:
+      categories:
+        items:
+          $ref: '#/definitions/types.StatementAssetTreeItem'
+        type: array
+      frequent:
+        items:
+          $ref: '#/definitions/types.StatementFrequentAssetItem'
+        type: array
+    type: object
+  types.StatementCategoriesResult:
+    properties:
+      categories:
+        items:
+          $ref: '#/definitions/types.StatementCategoryTreeItem'
+        type: array
+      frequent:
+        items:
+          $ref: '#/definitions/types.StatementFrequentCategoryItem'
+        type: array
+    type: object
+  types.StatementCategoryChildItem:
+    properties:
+      icon_path:
+        type: string
+      id:
+        type: integer
+      name:
+        type: string
+    type: object
+  types.StatementCategoryParentItem:
+    properties:
+      id:
+        type: integer
+      name:
+        type: string
+    type: object
+  types.StatementCategoryTreeItem:
+    properties:
+      childs:
+        items:
+          $ref: '#/definitions/types.StatementCategoryChildItem'
+        type: array
+      icon_path:
+        type: string
+      id:
+        type: integer
+      name:
+        type: string
+    type: object
+  types.StatementDateRangeItem:
+    properties:
+      end_date:
+        type: string
+      start_date:
+        type: string
+    type: object
+  types.StatementDefaultCategoryAssetItem:
+    properties:
+      asset_id:
+        type: integer
+      asset_name:
+        type: string
+      category_id:
+        type: integer
+      category_name:
+        type: string
+    type: object
+  types.StatementDetailItem:
+    properties:
+      amount:
+        type: number
+      amount_number:
+        type: number
+      asset:
+        type: string
+      asset_id:
+        type: integer
+      can_edit:
+        type: boolean
+      category:
+        type: string
+      category_id:
+        type: integer
+      city:
+        type: string
+      created_at:
+        type: string
+      date:
+        type: string
+      description:
+        type: string
+      has_pic:
+        type: boolean
+      icon_path:
+        type: string
+      id:
+        type: integer
+      location:
+        type: string
+      money:
+        type: string
+      month_day:
+        type: string
+      mood:
+        type: string
+      payee:
+        $ref: '#/definitions/types.StatementPayee'
+      province:
+        type: string
+      remark:
+        type: string
+      residue:
+        type: string
+      street:
+        type: string
+      target_asset:
+        $ref: '#/definitions/types.StatementTargetAssetInfo'
+      target_asset_id:
+        type: integer
+      target_object:
+        type: string
+      time:
+        type: string
+      timeStr:
+        type: string
+      title:
+        type: string
+      type:
+        type: string
+      updated_at:
+        type: string
+      upload_files:
+        items:
+          $ref: '#/definitions/types.StatementUploadFileItem'
+        type: array
+      week:
+        type: string
+    type: object
+  types.StatementFrequentAssetItem:
+    properties:
+      icon_path:
+        type: string
+      id:
+        type: integer
+      name:
+        type: string
+      parent:
+        $ref: '#/definitions/types.StatementAssetParentItem'
+    type: object
+  types.StatementFrequentCategoryItem:
+    properties:
+      icon_path:
+        type: string
+      id:
+        type: integer
+      name:
+        type: string
+      parent:
+        $ref: '#/definitions/types.StatementCategoryParentItem'
+    type: object
+  types.StatementImageItem:
+    properties:
+      avatar_id:
+        type: integer
+      path:
+        type: string
+      statement_id:
+        type: integer
+    type: object
+  types.StatementImageMonthGroup:
+    properties:
+      data:
+        items:
+          $ref: '#/definitions/types.StatementImageItem'
+        type: array
+      month:
+        type: integer
+    type: object
+  types.StatementImageYearGroup:
+    properties:
+      data:
+        items:
+          $ref: '#/definitions/types.StatementImageMonthGroup'
+        type: array
+      year:
+        type: integer
+    type: object
+  types.StatementImagesResult:
+    properties:
+      avatar_timeline:
+        items:
+          $ref: '#/definitions/types.StatementImageYearGroup'
+        type: array
+      avatars:
+        items:
+          type: string
+        type: array
+    type: object
+  types.StatementListByTokenResult:
+    properties:
+      data:
+        items:
+          $ref: '#/definitions/types.StatementListItem'
+        type: array
+      date_range:
+        $ref: '#/definitions/types.StatementDateRangeItem'
+      shared_user:
+        $ref: '#/definitions/types.StatementSharedUserItem'
+    type: object
+  types.StatementListItem:
+    properties:
+      amount:
+        type: number
+      asset:
+        type: string
+      asset_id:
+        type: integer
+      category:
+        type: string
+      category_id:
+        type: integer
+      city:
+        type: string
+      created_at:
+        type: string
+      date:
+        type: string
+      description:
+        type: string
+      has_pic:
+        type: boolean
+      icon_path:
+        type: string
+      id:
+        type: integer
+      location:
+        type: string
+      money:
+        type: string
+      month_day:
+        type: string
+      mood:
+        type: string
+      payee:
+        $ref: '#/definitions/types.StatementPayee'
+      province:
+        type: string
+      remark:
+        type: string
+      street:
+        type: string
+      target_object:
+        type: string
+      time:
+        type: string
+      timeStr:
+        type: string
+      title:
+        type: string
+      type:
+        type: string
+      updated_at:
+        type: string
+      week:
+        type: string
+    type: object
+  types.StatementPatchPayload:
+    properties:
+      amount:
+        type: string
+      asset_id:
+        type: integer
+      category_id:
+        type: integer
+      city:
+        type: string
+      date:
+        type: string
+      description:
+        type: string
+      district:
+        type: string
+      from_asset_id:
+        type: integer
+      location:
+        type: string
+      mood:
+        type: string
+      nation:
+        type: string
+      payee_id:
+        type: integer
+      province:
+        type: string
+      street:
+        type: string
+      target_object:
+        type: string
+      time:
+        type: string
+      to_asset_id:
+        type: integer
+      type:
+        type: string
+    type: object
+  types.StatementPatchRequest:
+    properties:
+      statement:
+        $ref: '#/definitions/types.StatementPatchPayload'
+    type: object
+  types.StatementPayee:
+    properties:
+      id:
+        type: integer
+      name:
+        type: string
+    type: object
+  types.StatementSharedUserItem:
+    properties:
+      avatar_path:
+        type: string
+      nickname:
+        type: string
+    type: object
+  types.StatementTargetAssetInfo:
+    properties:
+      id:
+        type: integer
+      name:
+        type: string
+    type: object
+  types.StatementUploadFileItem:
+    properties:
+      id:
+        type: integer
+      url:
+        type: string
+    type: object
+  types.StatementWritePayload:
+    properties:
+      amount:
+        type: string
+      asset_id:
+        type: integer
+      category_id:
+        type: integer
+      city:
+        type: string
+      date:
+        type: string
+      description:
+        type: string
+      district:
+        type: string
+      from_asset_id:
+        type: integer
+      location:
+        type: string
+      mood:
+        type: string
+      nation:
+        type: string
+      payee_id:
+        type: integer
+      province:
+        type: string
+      street:
+        type: string
+      target_object:
+        type: string
+      time:
+        type: string
+      to_asset_id:
+        type: integer
+      type:
+        type: string
+    type: object
+  types.StatementWriteRequest:
+    properties:
+      statement:
+        $ref: '#/definitions/types.StatementWritePayload'
+    type: object
+  types.SuperCategoryTopItem:
+    properties:
+      category_id:
+        type: integer
+      data:
+        type: number
+      format_amount:
+        type: string
+      name:
+        type: string
+      percent:
+        type: string
+    type: object
+  types.SuperChartHeaderData:
+    properties:
+      expend_count:
+        type: number
+      expend_percent:
+        type: number
+      expend_rise:
+        type: string
+      income_count:
+        type: number
+      income_percent:
+        type: number
+      income_rise:
+        type: string
+      surplus:
+        type: number
+      surplus_percent:
+        type: number
+      surplus_rise:
+        type: string
+    type: object
+  types.SuperHeader:
+    properties:
+      expend:
+        type: string
+      income:
+        type: string
+      left:
+        type: string
+    type: object
+  types.SuperLineChartData:
+    properties:
+      expends:
+        items:
+          type: number
+        type: array
+      incomes:
+        items:
+          type: number
+        type: array
+      months:
+        items:
+          type: integer
+        type: array
+      surplus:
+        items:
+          type: number
+        type: array
+    type: object
+  types.SuperMonthItem:
+    properties:
+      expend_amount:
+        type: number
+      hidden:
+        type: integer
+      income_amount:
+        type: number
+      month:
+        type: integer
+      surplus:
+        type: number
+      year:
+        type: integer
+    type: object
+  types.SuperPieItem:
+    properties:
+      data:
+        type: integer
+      name:
+        type: string
+    type: object
+  types.SuperTableSummaryItem:
+    properties:
+      date:
+        type: string
+      expend:
+        type: string
+      income:
+        type: string
+      total_expend:
+        type: string
+      total_income:
+        type: string
+      total_surplus:
+        type: string
+    type: object
+  types.SuperTimeResponse:
+    properties:
+      header:
+        $ref: '#/definitions/types.SuperHeader'
+      statements:
+        items:
+          $ref: '#/definitions/types.SuperMonthItem'
+        type: array
+    type: object
+  types.SuperWeekData:
+    properties:
+      data:
+        items:
+          type: number
+        type: array
+      weeks:
+        items:
+          type: string
+        type: array
+    type: object
+  types.Theme:
+    properties:
+      class_name:
+        type: string
+      id:
+        type: integer
+      name:
+        type: string
+    type: object
+  types.UploadResult:
+    properties:
+      avatar_path:
+        type: string
+      status:
+        type: integer
+    type: object
+  types.UserProfile:
+    properties:
+      avatar_url:
+        type: string
+      email:
+        type: string
+      hidden_asset_money:
+        type: boolean
+      id:
+        type: integer
+      nickname:
+        type: string
+      persist:
+        type: integer
+      remind:
+        type: boolean
+      sts_count:
+        type: integer
+      theme_id:
+        type: integer
+    type: object
+  types.UserScanLoginRequest:
+    properties:
+      qr_code:
+        type: string
+    type: object
+  types.UserUpdatePayload:
+    properties:
+      avatar_url:
+        type: string
+      bg_avatar:
+        type: string
+      bg_avatar_id:
+        type: integer
+      city:
+        type: string
+      country:
+        type: string
+      gender:
+        type: integer
+      hidden_asset_money:
+        type: boolean
+      language:
+        type: string
+      nickname:
+        type: string
+      province:
+        type: string
+      theme_id:
+        type: integer
+    type: object
+  types.UserUpdateRequest:
+    properties:
+      user:
+        $ref: '#/definitions/types.UserUpdatePayload'
+    type: object
+  types.WalletChildAsset:
+    properties:
+      amount:
+        type: string
+      icon_path:
+        type: string
+      id:
+        type: integer
+      name:
+        type: string
+    type: object
+  types.WalletHeader:
+    properties:
+      net_worth:
+        type: string
+      total_asset:
+        type: string
+      total_liability:
+        type: string
+    type: object
+  types.WalletInformation:
+    properties:
+      expend:
+        type: string
+      income:
+        type: string
+      name:
+        type: string
+      source_surplus:
+        type: number
+      surplus:
+        type: string
+    type: object
+  types.WalletParent:
+    properties:
+      amount:
+        type: string
+      childs:
+        items:
+          $ref: '#/definitions/types.WalletChildAsset'
+        type: array
+      name:
+        type: string
+    type: object
+  types.WalletResponse:
+    properties:
+      amount_visible:
+        type: boolean
+      header:
+        $ref: '#/definitions/types.WalletHeader'
+      list:
+        items:
+          $ref: '#/definitions/types.WalletParent'
+        type: array
+      payables:
+        $ref: '#/definitions/types.WalletTypeSummary'
+      receivables:
+        $ref: '#/definitions/types.WalletTypeSummary'
+    type: object
+  types.WalletTimelineItem:
+    properties:
+      expend_amount:
+        type: number
+      hidden:
+        type: integer
+      income_amount:
+        type: number
+      month:
+        type: integer
+      surplus:
+        type: number
+      year:
+        type: integer
+    type: object
+  types.WalletTimelineResponse:
+    properties:
+      data:
+        items:
+          $ref: '#/definitions/types.WalletTimelineItem'
+        type: array
+      status:
+        type: integer
+    type: object
+  types.WalletTypeAmountItem:
+    properties:
+      amount:
+        type: string
+      category_id:
+        type: integer
+      name:
+        type: string
+    type: object
+  types.WalletTypeSummary:
+    properties:
+      amount:
+        type: string
+      childs:
+        items:
+          $ref: '#/definitions/types.WalletTypeAmountItem'
+        type: array
+      name:
+        type: string
+    type: object
+info:
+  contact: {}
+  description: 记账 API。部分业务错误使用 HTTP 200，通过 status/msg 判断结果。
+  title: Jiezhang API
+  version: "1.0"
+paths:
+  /account_books:
+    get:
+      operationId: AccountBookHandler_List
+      parameters:
+      - description: 账本 ID；未提供时使用用户默认账本
+        in: query
+        name: account_book_id
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: 成功；兼容接口也可能在 HTTP 200 的 status/msg 中返回业务错误
+          schema:
+            items:
+              $ref: '#/definitions/types.AccountBookListItem'
+            type: array
+        "500":
+          description: 服务错误
+          schema:
+            $ref: '#/definitions/types.APIResponse'
+      security:
+      - AppID: []
+        SessionKey: []
+      summary: 用户可访问的账本列表
+      tags:
+      - AccountBook
+    post:
+      consumes:
+      - application/json
+      operationId: AccountBookHandler_Create
+      parameters:
+      - description: 账本 ID；未提供时使用用户默认账本
+        in: query
+        name: account_book_id
+        type: integer
+      - description: 请求体
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/types.AccountBookCreateRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: 成功；兼容接口也可能在 HTTP 200 的 status/msg 中返回业务错误
+          schema:
+            allOf:
+            - $ref: '#/definitions/types.APIResponse'
+            - properties:
+                data:
+                  $ref: '#/definitions/types.AccountBookListItem'
+              type: object
+        "400":
+          description: 请求失败
+          schema:
+            $ref: '#/definitions/types.APIResponse'
+        "500":
+          description: 服务错误
+          schema:
+            $ref: '#/definitions/types.APIResponse'
+      security:
+      - AppID: []
+        SessionKey: []
+      summary: '创建账本，Body: `{name, description, account_type, categories, assets}`'
+      tags:
+      - AccountBook
+  /account_books/{id}:
+    delete:
+      operationId: AccountBookHandler_Delete
+      parameters:
+      - description: 账本 ID；未提供时使用用户默认账本
+        in: query
+        name: account_book_id
+        type: integer
+      - description: id
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: 成功；兼容接口也可能在 HTTP 200 的 status/msg 中返回业务错误
+          schema:
+            $ref: '#/definitions/types.APIResponse'
+        "400":
+          description: 请求失败
+          schema:
+            $ref: '#/definitions/types.APIResponse'
+        "404":
+          description: 请求失败
+          schema:
+            $ref: '#/definitions/types.APIResponse'
+        "500":
+          description: 服务错误
+          schema:
+            $ref: '#/definitions/types.APIResponse'
+      security:
+      - AppID: []
+        SessionKey: []
+      summary: 删除账本
+      tags:
+      - AccountBook
+    get:
+      operationId: AccountBookHandler_Show
+      parameters:
+      - description: 账本 ID；未提供时使用用户默认账本
+        in: query
+        name: account_book_id
+        type: integer
+      - description: id
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: 成功；兼容接口也可能在 HTTP 200 的 status/msg 中返回业务错误
+          schema:
+            allOf:
+            - $ref: '#/definitions/types.APIResponse'
+            - properties:
+                data:
+                  $ref: '#/definitions/types.AccountBookDetailItem'
+              type: object
+        "400":
+          description: 请求失败
+          schema:
+            $ref: '#/definitions/types.APIResponse'
+        "404":
+          description: 请求失败
+          schema:
+            $ref: '#/definitions/types.APIResponse'
+        "500":
+          description: 服务错误
+          schema:
+            $ref: '#/definitions/types.APIResponse'
+      security:
+      - AppID: []
+        SessionKey: []
+      summary: 账本详情
+      tags:
+      - AccountBook
+    put:
+      consumes:
+      - application/json
+      operationId: AccountBookHandler_Update
+      parameters:
+      - description: 账本 ID；未提供时使用用户默认账本
+        in: query
+        name: account_book_id
+        type: integer
+      - description: id
+        in: path
+        name: id
+        required: true
+        type: integer
+      - description: 请求体
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/types.AccountBookUpdateRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: 成功；兼容接口也可能在 HTTP 200 的 status/msg 中返回业务错误
+          schema:
+            allOf:
+            - $ref: '#/definitions/types.APIResponse'
+            - properties:
+                data:
+                  $ref: '#/definitions/types.AccountBookListItem'
+              type: object
+        "400":
+          description: 请求失败
+          schema:
+            $ref: '#/definitions/types.APIResponse'
+        "404":
+          description: 请求失败
+          schema:
+            $ref: '#/definitions/types.APIResponse'
+        "500":
+          description: 服务错误
+          schema:
+            $ref: '#/definitions/types.APIResponse'
+      security:
+      - AppID: []
+        SessionKey: []
+      summary: '更新账本，Body: `{name, description, account_type}`'
+      tags:
+      - AccountBook
+  /account_books/{id}/switch:
+    put:
+      operationId: AccountBookHandler_Switch
+      parameters:
+      - description: 账本 ID；未提供时使用用户默认账本
+        in: query
+        name: account_book_id
+        type: integer
+      - description: id
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: 成功；兼容接口也可能在 HTTP 200 的 status/msg 中返回业务错误
+          schema:
+            $ref: '#/definitions/types.APIResponse'
+        "400":
+          description: 请求失败
+          schema:
+            $ref: '#/definitions/types.APIResponse'
+        "404":
+          description: 请求失败
+          schema:
+            $ref: '#/definitions/types.APIResponse'
+        "500":
+          description: 服务错误
+          schema:
+            $ref: '#/definitions/types.APIResponse'
+      security:
+      - AppID: []
+        SessionKey: []
+      summary: 切换默认账本
+      tags:
+      - AccountBook
+  /account_books/preset_categories:
+    get:
+      operationId: AccountBookHandler_PresetCategories
+      parameters:
+      - description: 账本 ID；未提供时使用用户默认账本
+        in: query
+        name: account_book_id
+        type: integer
+      - description: account_type
+        in: query
+        name: account_type
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: 成功；兼容接口也可能在 HTTP 200 的 status/msg 中返回业务错误
+          schema:
+            allOf:
+            - $ref: '#/definitions/types.APIResponse'
+            - properties:
+                data:
+                  $ref: '#/definitions/types.AccountBookPreset'
+              type: object
+        "400":
+          description: 请求失败
+          schema:
+            $ref: '#/definitions/types.APIResponse'
+        "500":
+          description: 服务错误
+          schema:
+            $ref: '#/definitions/types.APIResponse'
+      security:
+      - AppID: []
+        SessionKey: []
+      summary: '预设分类和资产模板，Query: `account_type`'
+      tags:
+      - AccountBook
+  /account_books/types:
+    get:
+      operationId: AccountBookHandler_Types
+      parameters:
+      - description: 账本 ID；未提供时使用用户默认账本
+        in: query
+        name: account_book_id
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: 成功；兼容接口也可能在 HTTP 200 的 status/msg 中返回业务错误
+          schema:
+            allOf:
+            - $ref: '#/definitions/types.APIResponse'
+            - properties:
+                data:
+                  $ref: '#/definitions/types.APIResponse'
+              type: object
+        "500":
+          description: 服务错误
+          schema:
+            $ref: '#/definitions/types.APIResponse'
+      security:
+      - AppID: []
+        SessionKey: []
+      summary: 账本类型列表
+      tags:
+      - AccountBook
+  /assets:
+    get:
+      operationId: AssetsHandler_List
+      parameters:
+      - description: 账本 ID；未提供时使用用户默认账本
+        in: query
+        name: account_book_id
+        type: integer
+      - description: parent_id
+        in: query
+        name: parent_id
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: 成功；兼容接口也可能在 HTTP 200 的 status/msg 中返回业务错误
+          schema:
+            items:
+              $ref: '#/definitions/types.AssetItem'
+            type: array
+        "400":
+          description: 请求失败
+          schema:
+            $ref: '#/definitions/types.APIResponse'
+        "500":
+          description: 服务错误
+          schema:
+            $ref: '#/definitions/types.APIResponse'
+      security:
+      - AppID: []
+        SessionKey: []
+      summary: '资产列表/树，Query: `parent_id`(选填)'
+      tags:
+      - Assets
+    post:
+      consumes:
+      - application/json
+      operationId: AssetsHandler_Create
+      parameters:
+      - description: 账本 ID；未提供时使用用户默认账本
+        in: query
+        name: account_book_id
+        type: integer
+      - description: 请求体
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/types.AssetWriteRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: 成功；兼容接口也可能在 HTTP 200 的 status/msg 中返回业务错误
+          schema:
+            $ref: '#/definitions/types.APIResponse'
+        "400":
+          description: 请求失败
+          schema:
+            $ref: '#/definitions/types.APIResponse'
+        "500":
+          description: 服务错误
+          schema:
+            $ref: '#/definitions/types.APIResponse'
+      security:
+      - AppID: []
+        SessionKey: []
+      summary: '创建资产，Body: `{wallet: {name, amount, parent_id, icon_path, remark,
+        type}}`'
+      tags:
+      - Assets
+  /assets/{id}:
+    delete:
+      operationId: AssetsHandler_Delete
+      parameters:
+      - description: 账本 ID；未提供时使用用户默认账本
+        in: query
+        name: account_book_id
+        type: integer
+      - description: id
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: 成功；兼容接口也可能在 HTTP 200 的 status/msg 中返回业务错误
+          schema:
+            $ref: '#/definitions/types.APIResponse'
+        "400":
+          description: 请求失败
+          schema:
+            $ref: '#/definitions/types.APIResponse'
+        "404":
+          description: 请求失败
+          schema:
+            $ref: '#/definitions/types.APIResponse'
+        "500":
+          description: 服务错误
+          schema:
+            $ref: '#/definitions/types.APIResponse'
+      security:
+      - AppID: []
+        SessionKey: []
+      summary: 删除资产（含子资产和关联账单）
+      tags:
+      - Assets
+    get:
+      operationId: AssetsHandler_Show
+      parameters:
+      - description: 账本 ID；未提供时使用用户默认账本
+        in: query
+        name: account_book_id
+        type: integer
+      - description: id
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: 成功；兼容接口也可能在 HTTP 200 的 status/msg 中返回业务错误
+          schema:
+            $ref: '#/definitions/types.AssetShowResponse'
+        "400":
+          description: 请求失败
+          schema:
+            $ref: '#/definitions/types.APIResponse'
+        "404":
+          description: 请求失败
+          schema:
+            $ref: '#/definitions/types.APIResponse'
+        "500":
+          description: 服务错误
+          schema:
+            $ref: '#/definitions/types.APIResponse'
+      security:
+      - AppID: []
+        SessionKey: []
+      summary: 资产详情
+      tags:
+      - Assets
+    put:
+      consumes:
+      - application/json
+      operationId: AssetsHandler_Update
+      parameters:
+      - description: 账本 ID；未提供时使用用户默认账本
+        in: query
+        name: account_book_id
+        type: integer
+      - description: id
+        in: path
+        name: id
+        required: true
+        type: integer
+      - description: 请求体
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/types.AssetWriteRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: 成功；兼容接口也可能在 HTTP 200 的 status/msg 中返回业务错误
+          schema:
+            $ref: '#/definitions/types.APIResponse'
+        "400":
+          description: 请求失败
+          schema:
+            $ref: '#/definitions/types.APIResponse'
+        "404":
+          description: 请求失败
+          schema:
+            $ref: '#/definitions/types.APIResponse'
+        "500":
+          description: 服务错误
+          schema:
+            $ref: '#/definitions/types.APIResponse'
+      security:
+      - AppID: []
+        SessionKey: []
+      summary: 更新资产，Body 同上
+      tags:
+      - Assets
+  /budgets:
+    get:
+      operationId: BudgetsHandler_Summary
+      parameters:
+      - description: 账本 ID；未提供时使用用户默认账本
+        in: query
+        name: account_book_id
+        type: integer
+      - description: month
+        in: query
+        name: month
+        type: string
+      - description: year
+        in: query
+        name: year
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: 成功；兼容接口也可能在 HTTP 200 的 status/msg 中返回业务错误
+          schema:
+            $ref: '#/definitions/types.BudgetSummary'
+        "500":
+          description: 服务错误
+          schema:
+            $ref: '#/definitions/types.APIResponse'
+      security:
+      - AppID: []
+        SessionKey: []
+      summary: '预算总览，Query: `year`, `month`'
+      tags:
+      - Budgets
+  /budgets/{categoryId}:
+    get:
+      operationId: BudgetsHandler_CategoryBudget
+      parameters:
+      - description: 账本 ID；未提供时使用用户默认账本
+        in: query
+        name: account_book_id
+        type: integer
+      - description: categoryId
+        in: path
+        name: categoryId
+        required: true
+        type: integer
+      - description: month
+        in: query
+        name: month
+        type: string
+      - description: year
+        in: query
+        name: year
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: 成功；兼容接口也可能在 HTTP 200 的 status/msg 中返回业务错误
+          schema:
+            $ref: '#/definitions/types.BudgetCategoryDetail'
+        "400":
+          description: 请求失败
+          schema:
+            $ref: '#/definitions/types.APIResponse'
+        "404":
+          description: 请求失败
+          schema:
+            $ref: '#/definitions/types.APIResponse'
+        "500":
+          description: 服务错误
+          schema:
+            $ref: '#/definitions/types.APIResponse'
+      security:
+      - AppID: []
+        SessionKey: []
+      summary: '分类预算详情，Query: `year`, `month`'
+      tags:
+      - Budgets
+  /budgets/0:
+    put:
+      consumes:
+      - application/json
+      operationId: BudgetsHandler_UpdateAmount
+      parameters:
+      - description: 账本 ID；未提供时使用用户默认账本
+        in: query
+        name: account_book_id
+        type: integer
+      - description: 请求体
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/types.BudgetUpdateRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: 成功；兼容接口也可能在 HTTP 200 的 status/msg 中返回业务错误
+          schema:
+            $ref: '#/definitions/types.APIResponse'
+        "400":
+          description: 请求失败
+          schema:
+            $ref: '#/definitions/types.APIResponse'
+        "404":
+          description: 请求失败
+          schema:
+            $ref: '#/definitions/types.APIResponse'
+        "500":
+          description: 服务错误
+          schema:
+            $ref: '#/definitions/types.APIResponse'
+      security:
+      - AppID: []
+        SessionKey: []
+      summary: '更新预算，Body: `{type, amount, category_id}`，type=''user'' 为总预算，''category''
+        为分类预算，amount 支持数字或字符串，category_id 可选'
+      tags:
+      - Budgets
+  /budgets/parent:
+    get:
+      operationId: BudgetsHandler_ParentList
+      parameters:
+      - description: 账本 ID；未提供时使用用户默认账本
+        in: query
+        name: account_book_id
+        type: integer
+      - description: month
+        in: query
+        name: month
+        type: string
+      - description: year
+        in: query
+        name: year
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: 成功；兼容接口也可能在 HTTP 200 的 status/msg 中返回业务错误
+          schema:
+            items:
+              $ref: '#/definitions/types.BudgetParentItem'
+            type: array
+        "500":
+          description: 服务错误
+          schema:
+            $ref: '#/definitions/types.APIResponse'
+      security:
+      - AppID: []
+        SessionKey: []
+      summary: '父级分类预算列表，Query: `year`, `month`'
+      tags:
+      - Budgets
+  /categories:
+    post:
+      consumes:
+      - application/json
+      operationId: CategoriesHandler_Create
+      parameters:
+      - description: 账本 ID；未提供时使用用户默认账本
+        in: query
+        name: account_book_id
+        type: integer
+      - description: 请求体
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/types.CategoryWriteRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: 成功；兼容接口也可能在 HTTP 200 的 status/msg 中返回业务错误
+          schema:
+            $ref: '#/definitions/types.APIResponse'
+        "400":
+          description: 请求失败
+          schema:
+            $ref: '#/definitions/types.APIResponse'
+        "500":
+          description: 服务错误
+          schema:
+            $ref: '#/definitions/types.APIResponse'
+      security:
+      - AppID: []
+        SessionKey: []
+      summary: '创建分类，Body: `{category: {name, parent_id, icon_path, type}}`'
+      tags:
+      - Categories
+  /categories/{id}:
+    delete:
+      operationId: CategoriesHandler_Delete
+      parameters:
+      - description: 账本 ID；未提供时使用用户默认账本
+        in: query
+        name: account_book_id
+        type: integer
+      - description: id
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: 成功；兼容接口也可能在 HTTP 200 的 status/msg 中返回业务错误
+          schema:
+            $ref: '#/definitions/types.APIResponse'
+        "400":
+          description: 请求失败
+          schema:
+            $ref: '#/definitions/types.APIResponse'
+        "404":
+          description: 请求失败
+          schema:
+            $ref: '#/definitions/types.APIResponse'
+        "500":
+          description: 服务错误
+          schema:
+            $ref: '#/definitions/types.APIResponse'
+      security:
+      - AppID: []
+        SessionKey: []
+      summary: 删除分类（含子分类和关联账单）
+      tags:
+      - Categories
+    get:
+      operationId: CategoriesHandler_Show
+      parameters:
+      - description: 账本 ID；未提供时使用用户默认账本
+        in: query
+        name: account_book_id
+        type: integer
+      - description: id
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: 成功；兼容接口也可能在 HTTP 200 的 status/msg 中返回业务错误
+          schema:
+            $ref: '#/definitions/types.CategoryShowResponse'
+        "400":
+          description: 请求失败
+          schema:
+            $ref: '#/definitions/types.APIResponse'
+        "404":
+          description: 请求失败
+          schema:
+            $ref: '#/definitions/types.APIResponse'
+        "500":
+          description: 服务错误
+          schema:
+            $ref: '#/definitions/types.APIResponse'
+      security:
+      - AppID: []
+        SessionKey: []
+      summary: 分类详情
+      tags:
+      - Categories
+    put:
+      consumes:
+      - application/json
+      operationId: CategoriesHandler_Update
+      parameters:
+      - description: 账本 ID；未提供时使用用户默认账本
+        in: query
+        name: account_book_id
+        type: integer
+      - description: id
+        in: path
+        name: id
+        required: true
+        type: integer
+      - description: 请求体
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/types.CategoryWriteRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: 成功；兼容接口也可能在 HTTP 200 的 status/msg 中返回业务错误
+          schema:
+            $ref: '#/definitions/types.APIResponse'
+        "400":
+          description: 请求失败
+          schema:
+            $ref: '#/definitions/types.APIResponse'
+        "404":
+          description: 请求失败
+          schema:
+            $ref: '#/definitions/types.APIResponse'
+        "500":
+          description: 服务错误
+          schema:
+            $ref: '#/definitions/types.APIResponse'
+      security:
+      - AppID: []
+        SessionKey: []
+      summary: 更新分类，Body 同上
+      tags:
+      - Categories
+  /categories/category_childs:
+    get:
+      operationId: CategoriesHandler_CategoryChilds
+      parameters:
+      - description: 账本 ID；未提供时使用用户默认账本
+        in: query
+        name: account_book_id
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: 成功；兼容接口也可能在 HTTP 200 的 status/msg 中返回业务错误
+          schema:
+            $ref: '#/definitions/types.CategoryListResponse'
+        "400":
+          description: 请求失败
+          schema:
+            $ref: '#/definitions/types.APIResponse'
+        "500":
+          description: 服务错误
+          schema:
+            $ref: '#/definitions/types.APIResponse'
+      security:
+      - AppID: []
+        SessionKey: []
+      summary: '子分类列表，Query: `parent_id`(必填)'
+      tags:
+      - Categories
+  /categories/category_list:
+    get:
+      operationId: CategoriesHandler_List
+      parameters:
+      - description: 账本 ID；未提供时使用用户默认账本
+        in: query
+        name: account_book_id
+        type: integer
+      - description: parent_id
+        in: query
+        name: parent_id
+        type: string
+      - description: type
+        in: query
+        name: type
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: 成功；兼容接口也可能在 HTTP 200 的 status/msg 中返回业务错误
+          schema:
+            $ref: '#/definitions/types.CategoryListResponse'
+        "400":
+          description: 请求失败
+          schema:
+            $ref: '#/definitions/types.APIResponse'
+        "500":
+          description: 服务错误
+          schema:
+            $ref: '#/definitions/types.APIResponse'
+      security:
+      - AppID: []
+        SessionKey: []
+      summary: '分类列表（按 parent_id 展开），Query: `type`(默认 expend)、`parent_id`(默认 0)'
+      tags:
+      - Categories
+  /categories/category_statements:
+    get:
+      operationId: CategoriesHandler_CategoryStatements
+      parameters:
+      - description: 账本 ID；未提供时使用用户默认账本
+        in: query
+        name: account_book_id
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: 成功；兼容接口也可能在 HTTP 200 的 status/msg 中返回业务错误
+          schema:
+            items:
+              $ref: '#/definitions/types.CategoryStatementsMonthItem'
+            type: array
+        "400":
+          description: 请求失败
+          schema:
+            $ref: '#/definitions/types.APIResponse'
+        "500":
+          description: 服务错误
+          schema:
+            $ref: '#/definitions/types.APIResponse'
+      security:
+      - AppID: []
+        SessionKey: []
+      summary: '分类下的账单列表，Query: `category_id`(必填)'
+      tags:
+      - Categories
+  /categories/parent:
+    get:
+      operationId: CategoriesHandler_Parent
+      parameters:
+      - description: 账本 ID；未提供时使用用户默认账本
+        in: query
+        name: account_book_id
+        type: integer
+      - description: type
+        in: query
+        name: type
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: 成功；兼容接口也可能在 HTTP 200 的 status/msg 中返回业务错误
+          schema:
+            items:
+              $ref: '#/definitions/types.CategoryItem'
+            type: array
+        "500":
+          description: 服务错误
+          schema:
+            $ref: '#/definitions/types.APIResponse'
+      security:
+      - AppID: []
+        SessionKey: []
+      summary: '父级分类树，Query: `type`(默认 expend)'
+      tags:
+      - Categories
+  /chart/calendar_data:
+    get:
+      operationId: StatisticsHandler_CalendarData
+      parameters:
+      - description: 账本 ID；未提供时使用用户默认账本
+        in: query
+        name: account_book_id
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: 成功；兼容接口也可能在 HTTP 200 的 status/msg 中返回业务错误
+          schema:
+            allOf:
+            - $ref: '#/definitions/types.APIResponse'
+            - properties:
+                data:
+                  items:
+                    $ref: '#/definitions/types.CalendarDataItem'
+                  type: array
+              type: object
+        "500":
+          description: 服务错误
+          schema:
+            $ref: '#/definitions/types.APIResponse'
+      security:
+      - AppID: []
+        SessionKey: []
+      summary: '日历热力图，Query: `date`(YYYY-MM)'
+      tags:
+      - Statistics
+  /chart/overview_header:
+    get:
+      operationId: StatisticsHandler_OverviewHeader
+      parameters:
+      - description: 账本 ID；未提供时使用用户默认账本
+        in: query
+        name: account_book_id
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: 成功；兼容接口也可能在 HTTP 200 的 status/msg 中返回业务错误
+          schema:
+            $ref: '#/definitions/types.OverviewHeaderData'
+        "500":
+          description: 服务错误
+          schema:
+            $ref: '#/definitions/types.APIResponse'
+      security:
+      - AppID: []
+        SessionKey: []
+      summary: '概览头部数据，Query: `date`(YYYY-MM)'
+      tags:
+      - Statistics
+  /chart/overview_statements:
+    get:
+      operationId: StatisticsHandler_OverviewStatements
+      parameters:
+      - description: 账本 ID；未提供时使用用户默认账本
+        in: query
+        name: account_book_id
+        type: integer
+      - description: type
+        in: query
+        name: type
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: 成功；兼容接口也可能在 HTTP 200 的 status/msg 中返回业务错误
+          schema:
+            items:
+              $ref: '#/definitions/types.StatementListItem'
+            type: array
+        "500":
+          description: 服务错误
+          schema:
+            $ref: '#/definitions/types.APIResponse'
+      security:
+      - AppID: []
+        SessionKey: []
+      summary: '概览账单列表，Query: `date`, `type`'
+      tags:
+      - Statistics
+  /chart/rate:
+    get:
+      operationId: StatisticsHandler_Rate
+      parameters:
+      - description: 账本 ID；未提供时使用用户默认账本
+        in: query
+        name: account_book_id
+        type: integer
+      - description: type
+        in: query
+        name: type
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: 成功；兼容接口也可能在 HTTP 200 的 status/msg 中返回业务错误
+          schema:
+            items:
+              $ref: '#/definitions/types.StatementListItem'
+            type: array
+        "500":
+          description: 服务错误
+          schema:
+            $ref: '#/definitions/types.APIResponse'
+      security:
+      - AppID: []
+        SessionKey: []
+      summary: '收支占比，Query: `date`, `type`'
+      tags:
+      - Statistics
+  /check_openid:
+    post:
+      operationId: AuthHandler_CheckOpenID
+      parameters:
+      - description: 微信登录 code
+        in: header
+        name: X-WX-Code
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: 成功；兼容接口也可能在 HTTP 200 的 status/msg 中返回业务错误
+          schema:
+            $ref: '#/definitions/types.APIResponse'
+        "500":
+          description: 服务错误
+          schema:
+            $ref: '#/definitions/types.APIResponse'
+      summary: '微信登录，Header: `X-WX-Code`，返回 `{''status'': 200, ''session'': ''...''}`'
+      tags:
+      - Auth
+  /friends:
+    get:
+      operationId: FriendsHandler_List
+      parameters:
+      - description: 账本 ID；未提供时使用用户默认账本
+        in: query
+        name: account_book_id
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: 成功；兼容接口也可能在 HTTP 200 的 status/msg 中返回业务错误
+          schema:
+            allOf:
+            - $ref: '#/definitions/types.APIResponse'
+            - properties:
+                data:
+                  $ref: '#/definitions/types.FriendListResponse'
+              type: object
+        "500":
+          description: 服务错误
+          schema:
+            $ref: '#/definitions/types.APIResponse'
+      security:
+      - AppID: []
+        SessionKey: []
+      summary: 协作者列表
+      tags:
+      - Friends
+  /friends/{collaboratorId}:
+    delete:
+      consumes:
+      - application/json
+      operationId: FriendsHandler_Remove
+      parameters:
+      - description: 账本 ID；未提供时使用用户默认账本
+        in: query
+        name: account_book_id
+        type: integer
+      - description: collaboratorId
+        in: path
+        name: collaboratorId
+        required: true
+        type: integer
+      - description: 请求体
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/types.FriendRemoveRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: 成功；兼容接口也可能在 HTTP 200 的 status/msg 中返回业务错误
+          schema:
+            $ref: '#/definitions/types.APIResponse'
+        "500":
+          description: 服务错误
+          schema:
+            $ref: '#/definitions/types.APIResponse'
+      security:
+      - AppID: []
+        SessionKey: []
+      summary: 移除协作者
+      tags:
+      - Friends
+    put:
+      consumes:
+      - application/json
+      operationId: FriendsHandler_Update
+      parameters:
+      - description: 账本 ID；未提供时使用用户默认账本
+        in: query
+        name: account_book_id
+        type: integer
+      - description: collaboratorId
+        in: path
+        name: collaboratorId
+        required: true
+        type: integer
+      - description: 请求体
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/types.FriendUpdateRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: 成功；兼容接口也可能在 HTTP 200 的 status/msg 中返回业务错误
+          schema:
+            $ref: '#/definitions/types.APIResponse'
+        "500":
+          description: 服务错误
+          schema:
+            $ref: '#/definitions/types.APIResponse'
+      security:
+      - AppID: []
+        SessionKey: []
+      summary: '更新协作者，Body: `{account_book_id, role?, remark?}`'
+      tags:
+      - Friends
+  /friends/accept_apply:
+    post:
+      consumes:
+      - application/json
+      operationId: FriendsHandler_AcceptApply
+      parameters:
+      - description: 账本 ID；未提供时使用用户默认账本
+        in: query
+        name: account_book_id
+        type: integer
+      - description: 请求体
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/types.FriendAcceptApplyRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: 成功；兼容接口也可能在 HTTP 200 的 status/msg 中返回业务错误
+          schema:
+            $ref: '#/definitions/types.APIResponse'
+        "500":
+          description: 服务错误
+          schema:
+            $ref: '#/definitions/types.APIResponse'
+      security:
+      - AppID: []
+        SessionKey: []
+      summary: '接受邀请，Body: `{invite_token, nickname}`'
+      tags:
+      - Friends
+  /friends/invite:
+    post:
+      consumes:
+      - application/json
+      operationId: FriendsHandler_Invite
+      parameters:
+      - description: 账本 ID；未提供时使用用户默认账本
+        in: query
+        name: account_book_id
+        type: integer
+      - description: 请求体
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/types.FriendInviteRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: 成功；兼容接口也可能在 HTTP 200 的 status/msg 中返回业务错误
+          schema:
+            allOf:
+            - $ref: '#/definitions/types.APIResponse'
+            - properties:
+                data:
+                  type: string
+              type: object
+        "500":
+          description: 服务错误
+          schema:
+            $ref: '#/definitions/types.APIResponse'
+      security:
+      - AppID: []
+        SessionKey: []
+      summary: '邀请，Body: `{account_book_id, role}`'
+      tags:
+      - Friends
+  /friends/invite_information:
+    get:
+      operationId: FriendsHandler_InviteInformation
+      parameters:
+      - description: 账本 ID；未提供时使用用户默认账本
+        in: query
+        name: account_book_id
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: 成功；兼容接口也可能在 HTTP 200 的 status/msg 中返回业务错误
+          schema:
+            allOf:
+            - $ref: '#/definitions/types.APIResponse'
+            - properties:
+                data:
+                  $ref: '#/definitions/types.InviteInformationItem'
+              type: object
+        "500":
+          description: 服务错误
+          schema:
+            $ref: '#/definitions/types.APIResponse'
+      security:
+      - AppID: []
+        SessionKey: []
+      summary: '查看邀请信息，Query: `invite_token`'
+      tags:
+      - Friends
+  /header:
+    get:
+      operationId: HomeHandler_Header
+      parameters:
+      - description: 账本 ID；未提供时使用用户默认账本
+        in: query
+        name: account_book_id
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: 成功；兼容接口也可能在 HTTP 200 的 status/msg 中返回业务错误
+          schema:
+            $ref: '#/definitions/types.HomeHeaderResponse'
+        "500":
+          description: 服务错误
+          schema:
+            $ref: '#/definitions/types.APIResponse'
+      security:
+      - AppID: []
+        SessionKey: []
+      summary: 首页头部数据（收支趋势、预算等）
+      tags:
+      - Home
+  /icons/assets_with_url:
+    get:
+      operationId: AssetsHandler_Icons
+      parameters:
+      - description: 账本 ID；未提供时使用用户默认账本
+        in: query
+        name: account_book_id
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: 成功；兼容接口也可能在 HTTP 200 的 status/msg 中返回业务错误
+          schema:
+            items:
+              additionalProperties:
+                type: string
+              type: object
+            type: array
+        "500":
+          description: 服务错误
+          schema:
+            $ref: '#/definitions/types.APIResponse'
+      security:
+      - AppID: []
+        SessionKey: []
+      summary: 获取资产图标列表
+      tags:
+      - Assets
+  /icons/categories_with_url:
+    get:
+      operationId: CategoriesHandler_Icons
+      parameters:
+      - description: 账本 ID；未提供时使用用户默认账本
+        in: query
+        name: account_book_id
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: 成功；兼容接口也可能在 HTTP 200 的 status/msg 中返回业务错误
+          schema:
+            items:
+              additionalProperties:
+                type: string
+              type: object
+            type: array
+        "500":
+          description: 服务错误
+          schema:
+            $ref: '#/definitions/types.APIResponse'
+      security:
+      - AppID: []
+        SessionKey: []
+      summary: 获取分类图标列表
+      tags:
+      - Categories
+  /index:
+    get:
+      operationId: HomeHandler_Index
+      parameters:
+      - description: 账本 ID；未提供时使用用户默认账本
+        in: query
+        name: account_book_id
+        type: integer
+      - description: range
+        in: query
+        name: range
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: 成功；兼容接口也可能在 HTTP 200 的 status/msg 中返回业务错误
+          schema:
+            items:
+              $ref: '#/definitions/types.StatementListItem'
+            type: array
+        "500":
+          description: 服务错误
+          schema:
+            $ref: '#/definitions/types.APIResponse'
+      security:
+      - AppID: []
+        SessionKey: []
+      summary: '首页账单列表，Query: `range`（today/yesterday/week/month/year）'
+      tags:
+      - Home
+  /message:
+    get:
+      operationId: MessagesHandler_List
+      parameters:
+      - description: 账本 ID；未提供时使用用户默认账本
+        in: query
+        name: account_book_id
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: 成功；兼容接口也可能在 HTTP 200 的 status/msg 中返回业务错误
+          schema:
+            items:
+              $ref: '#/definitions/types.MessageListItem'
+            type: array
+        "500":
+          description: 服务错误
+          schema:
+            $ref: '#/definitions/types.APIResponse'
+      security:
+      - AppID: []
+        SessionKey: []
+      summary: 消息列表
+      tags:
+      - Messages
+  /message/{id}:
+    get:
+      operationId: MessagesHandler_Show
+      parameters:
+      - description: 账本 ID；未提供时使用用户默认账本
+        in: query
+        name: account_book_id
+        type: integer
+      - description: id
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: 成功；兼容接口也可能在 HTTP 200 的 status/msg 中返回业务错误
+          schema:
+            $ref: '#/definitions/types.MessageDetailItem'
+        "400":
+          description: 请求失败
+          schema:
+            $ref: '#/definitions/types.APIResponse'
+        "500":
+          description: 服务错误
+          schema:
+            $ref: '#/definitions/types.APIResponse'
+      security:
+      - AppID: []
+        SessionKey: []
+      summary: 消息详情
+      tags:
+      - Messages
+  /payees:
+    get:
+      operationId: PayeesHandler_List
+      parameters:
+      - description: 账本 ID；未提供时使用用户默认账本
+        in: query
+        name: account_book_id
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: 成功；兼容接口也可能在 HTTP 200 的 status/msg 中返回业务错误
+          schema:
+            items:
+              $ref: '#/definitions/types.PayeeListItem'
+            type: array
+        "500":
+          description: 服务错误
+          schema:
+            $ref: '#/definitions/types.APIResponse'
+      security:
+      - AppID: []
+        SessionKey: []
+      summary: 收款方列表
+      tags:
+      - Payees
+    post:
+      consumes:
+      - application/json
+      operationId: PayeesHandler_Create
+      parameters:
+      - description: 名称，可使用 name 或 payee.name
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/types.PayeeWriteRequest'
+      - description: 账本 ID；未提供时使用用户默认账本
+        in: query
+        name: account_book_id
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: 成功；兼容接口也可能在 HTTP 200 的 status/msg 中返回业务错误
+          schema:
+            $ref: '#/definitions/model.Payee'
+        "400":
+          description: 请求失败
+          schema:
+            $ref: '#/definitions/types.APIResponse'
+        "500":
+          description: 服务错误
+          schema:
+            $ref: '#/definitions/types.APIResponse'
+      security:
+      - AppID: []
+        SessionKey: []
+      summary: '创建收款方，Body: `{name}` 或 `{payee: {name}}`'
+      tags:
+      - Payees
+  /payees/{id}:
+    delete:
+      operationId: PayeesHandler_Delete
+      parameters:
+      - description: 账本 ID；未提供时使用用户默认账本
+        in: query
+        name: account_book_id
+        type: integer
+      - description: id
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: 成功；兼容接口也可能在 HTTP 200 的 status/msg 中返回业务错误
+          schema:
+            $ref: '#/definitions/types.APIResponse'
+        "400":
+          description: 请求失败
+          schema:
+            $ref: '#/definitions/types.APIResponse'
+        "404":
+          description: 请求失败
+          schema:
+            $ref: '#/definitions/types.APIResponse'
+        "500":
+          description: 服务错误
+          schema:
+            $ref: '#/definitions/types.APIResponse'
+      security:
+      - AppID: []
+        SessionKey: []
+      summary: 删除收款方
+      tags:
+      - Payees
+    put:
+      consumes:
+      - application/json
+      operationId: PayeesHandler_Update
+      parameters:
+      - description: 名称，可使用 name 或 payee.name
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/types.PayeeWriteRequest'
+      - description: 账本 ID；未提供时使用用户默认账本
+        in: query
+        name: account_book_id
+        type: integer
+      - description: id
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: 成功；兼容接口也可能在 HTTP 200 的 status/msg 中返回业务错误
+          schema:
+            $ref: '#/definitions/model.Payee'
+        "400":
+          description: 请求失败
+          schema:
+            $ref: '#/definitions/types.APIResponse'
+        "404":
+          description: 请求失败
+          schema:
+            $ref: '#/definitions/types.APIResponse'
+        "500":
+          description: 服务错误
+          schema:
+            $ref: '#/definitions/types.APIResponse'
+      security:
+      - AppID: []
+        SessionKey: []
+      summary: 更新收款方
+      tags:
+      - Payees
+  /search:
+    get:
+      operationId: StatementsHandler_Search
+      parameters:
+      - description: 账本 ID；未提供时使用用户默认账本
+        in: query
+        name: account_book_id
+        type: integer
+      - description: keyword
+        in: query
+        name: keyword
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: 成功；兼容接口也可能在 HTTP 200 的 status/msg 中返回业务错误
+          schema:
+            items:
+              $ref: '#/definitions/types.StatementListItem'
+            type: array
+        "500":
+          description: 服务错误
+          schema:
+            $ref: '#/definitions/types.APIResponse'
+      security:
+      - AppID: []
+        SessionKey: []
+      summary: '搜索账单，Query: `keyword`'
+      tags:
+      - Statements
+  /settings:
+    get:
+      operationId: HomeHandler_GetSettings
+      parameters:
+      - description: 账本 ID；未提供时使用用户默认账本
+        in: query
+        name: account_book_id
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: 成功；兼容接口也可能在 HTTP 200 的 status/msg 中返回业务错误
+          schema:
+            $ref: '#/definitions/types.HomeSettingsResponse'
+        "500":
+          description: 服务错误
+          schema:
+            $ref: '#/definitions/types.APIResponse'
+      security:
+      - AppID: []
+        SessionKey: []
+      summary: 用户设置，返回 `{user, version}`，`user.avatar_url` 已按 Rails avatar_path 逻辑处理
+      tags:
+      - Home
+  /settings/feedback:
+    post:
+      consumes:
+      - application/json
+      operationId: SettingsHandler_Feedback
+      parameters:
+      - description: 账本 ID；未提供时使用用户默认账本
+        in: query
+        name: account_book_id
+        type: integer
+      - description: 请求体
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/types.FeedbackRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: 成功；兼容接口也可能在 HTTP 200 的 status/msg 中返回业务错误
+          schema:
+            $ref: '#/definitions/types.APIResponse'
+        "500":
+          description: 服务错误
+          schema:
+            $ref: '#/definitions/types.APIResponse'
+      security:
+      - AppID: []
+        SessionKey: []
+      summary: '提交反馈，Body: `{content, type}`'
+      tags:
+      - Settings
+  /statements:
+    get:
+      operationId: StatementsHandler_List
+      parameters:
+      - description: 账本 ID；未提供时使用用户默认账本
+        in: query
+        name: account_book_id
+        type: integer
+      - description: category_ids
+        in: query
+        name: category_ids
+        type: string
+      - description: end_date
+        in: query
+        name: end_date
+        type: string
+      - description: except_ids
+        in: query
+        name: except_ids
+        type: string
+      - description: limit
+        in: query
+        name: limit
+        type: string
+      - description: offset
+        in: query
+        name: offset
+        type: string
+      - description: order_by
+        in: query
+        name: order_by
+        type: string
+      - description: start_date
+        in: query
+        name: start_date
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: 成功；兼容接口也可能在 HTTP 200 的 status/msg 中返回业务错误
+          schema:
+            items:
+              $ref: '#/definitions/types.StatementListItem'
+            type: array
+        "400":
+          description: 请求失败
+          schema:
+            $ref: '#/definitions/types.APIResponse'
+        "500":
+          description: 服务错误
+          schema:
+            $ref: '#/definitions/types.APIResponse'
+      security:
+      - AppID: []
+        SessionKey: []
+      summary: '账单列表，Query: `start_date`, `end_date`, `limit`, `offset`, `category_ids`,
+        `except_ids`, `order_by`'
+      tags:
+      - Statements
+    post:
+      consumes:
+      - application/json
+      operationId: StatementsHandler_Create
+      parameters:
+      - description: 账本 ID；未提供时使用用户默认账本
+        in: query
+        name: account_book_id
+        type: integer
+      - description: 请求体
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/types.StatementWriteRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: 成功；兼容接口也可能在 HTTP 200 的 status/msg 中返回业务错误
+          schema:
+            allOf:
+            - $ref: '#/definitions/types.APIResponse'
+            - properties:
+                data:
+                  $ref: '#/definitions/types.StatementListItem'
+              type: object
+        "400":
+          description: 请求失败
+          schema:
+            $ref: '#/definitions/types.APIResponse'
+        "500":
+          description: 服务错误
+          schema:
+            $ref: '#/definitions/types.APIResponse'
+      security:
+      - AppID: []
+        SessionKey: []
+      summary: '创建账单，Body: `{statement: {type, amount, description, mood, category_id,
+        asset_id, from_asset_id, to_asset_id, payee_id, target_object, location, nation,
+        province, city, district, street, date, time}}`，amount 支持数字或字符串'
+      tags:
+      - Statements
+  /statements/{statementId}:
+    delete:
+      operationId: StatementsHandler_Delete
+      parameters:
+      - description: 账本 ID；未提供时使用用户默认账本
+        in: query
+        name: account_book_id
+        type: integer
+      - description: statementId
+        in: path
+        name: statementId
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: 成功；兼容接口也可能在 HTTP 200 的 status/msg 中返回业务错误
+          schema:
+            $ref: '#/definitions/types.APIResponse'
+        "400":
+          description: 请求失败
+          schema:
+            $ref: '#/definitions/types.APIResponse'
+        "404":
+          description: 请求失败
+          schema:
+            $ref: '#/definitions/types.APIResponse'
+        "500":
+          description: 服务错误
+          schema:
+            $ref: '#/definitions/types.APIResponse'
+      security:
+      - AppID: []
+        SessionKey: []
+      summary: 删除账单
+      tags:
+      - Statements
+    get:
+      operationId: StatementsHandler_Show
+      parameters:
+      - description: 账本 ID；未提供时使用用户默认账本
+        in: query
+        name: account_book_id
+        type: integer
+      - description: statementId
+        in: path
+        name: statementId
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: 成功；兼容接口也可能在 HTTP 200 的 status/msg 中返回业务错误
+          schema:
+            $ref: '#/definitions/types.StatementDetailItem'
+        "400":
+          description: 请求失败
+          schema:
+            $ref: '#/definitions/types.APIResponse'
+        "500":
+          description: 服务错误
+          schema:
+            $ref: '#/definitions/types.APIResponse'
+      security:
+      - AppID: []
+        SessionKey: []
+      summary: 账单详情（含 upload_files、target_asset、can_edit 等）
+      tags:
+      - Statements
+    put:
+      consumes:
+      - application/json
+      operationId: StatementsHandler_Update
+      parameters:
+      - description: 账本 ID；未提供时使用用户默认账本
+        in: query
+        name: account_book_id
+        type: integer
+      - description: statementId
+        in: path
+        name: statementId
+        required: true
+        type: integer
+      - description: 请求体
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/types.StatementPatchRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: 成功；兼容接口也可能在 HTTP 200 的 status/msg 中返回业务错误
+          schema:
+            allOf:
+            - $ref: '#/definitions/types.APIResponse'
+            - properties:
+                data:
+                  $ref: '#/definitions/types.StatementListItem'
+              type: object
+        "400":
+          description: 请求失败
+          schema:
+            $ref: '#/definitions/types.APIResponse'
+        "404":
+          description: 请求失败
+          schema:
+            $ref: '#/definitions/types.APIResponse'
+        "500":
+          description: 服务错误
+          schema:
+            $ref: '#/definitions/types.APIResponse'
+      security:
+      - AppID: []
+        SessionKey: []
+      summary: 更新账单，Body 同上但所有字段可选（指针）
+      tags:
+      - Statements
+  /statements/{statementId}/avatar:
+    delete:
+      consumes:
+      - application/json
+      operationId: StatementsHandler_RemoveAvatar
+      parameters:
+      - description: 请求体
+        in: body
+        name: body
+        schema:
+          $ref: '#/definitions/types.AvatarDeleteRequest'
+      - description: 账本 ID；未提供时使用用户默认账本
+        in: query
+        name: account_book_id
+        type: integer
+      - description: statementId
+        in: path
+        name: statementId
+        required: true
+        type: integer
+      - description: avatar_id
+        in: query
+        name: avatar_id
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: 成功；兼容接口也可能在 HTTP 200 的 status/msg 中返回业务错误
+          schema:
+            $ref: '#/definitions/types.APIResponse'
+        "400":
+          description: 请求失败
+          schema:
+            $ref: '#/definitions/types.APIResponse'
+        "404":
+          description: 请求失败
+          schema:
+            $ref: '#/definitions/types.APIResponse'
+        "500":
+          description: 服务错误
+          schema:
+            $ref: '#/definitions/types.APIResponse'
+      security:
+      - AppID: []
+        SessionKey: []
+      summary: '删除账单附件图片，Body: `{avatar_id}`'
+      tags:
+      - Statements
+  /statements/asset_frequent:
+    get:
+      operationId: StatementsHandler_AssetFrequent
+      parameters:
+      - description: 账本 ID；未提供时使用用户默认账本
+        in: query
+        name: account_book_id
+        type: integer
+      - description: type
+        in: query
+        name: type
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: 成功；兼容接口也可能在 HTTP 200 的 status/msg 中返回业务错误
+          schema:
+            items:
+              $ref: '#/definitions/types.StatementFrequentAssetItem'
+            type: array
+        "500":
+          description: 服务错误
+          schema:
+            $ref: '#/definitions/types.APIResponse'
+      security:
+      - AppID: []
+        SessionKey: []
+      summary: '常用资产，Query: `type`'
+      tags:
+      - Statements
+  /statements/assets:
+    get:
+      operationId: StatementsHandler_Assets
+      parameters:
+      - description: 账本 ID；未提供时使用用户默认账本
+        in: query
+        name: account_book_id
+        type: integer
+      - description: type
+        in: query
+        name: type
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: 成功；兼容接口也可能在 HTTP 200 的 status/msg 中返回业务错误
+          schema:
+            $ref: '#/definitions/types.StatementAssetsResult'
+        "500":
+          description: 服务错误
+          schema:
+            $ref: '#/definitions/types.APIResponse'
+      security:
+      - AppID: []
+        SessionKey: []
+      summary: '获取资产列表，Query: `type`'
+      tags:
+      - Statements
+  /statements/categories:
+    get:
+      operationId: StatementsHandler_Categories
+      parameters:
+      - description: 账本 ID；未提供时使用用户默认账本
+        in: query
+        name: account_book_id
+        type: integer
+      - description: type
+        in: query
+        name: type
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: 成功；兼容接口也可能在 HTTP 200 的 status/msg 中返回业务错误
+          schema:
+            $ref: '#/definitions/types.StatementCategoriesResult'
+        "500":
+          description: 服务错误
+          schema:
+            $ref: '#/definitions/types.APIResponse'
+      security:
+      - AppID: []
+        SessionKey: []
+      summary: '获取分类列表，Query: `type`（默认 expend）'
+      tags:
+      - Statements
+  /statements/category_frequent:
+    get:
+      operationId: StatementsHandler_CategoryFrequent
+      parameters:
+      - description: 账本 ID；未提供时使用用户默认账本
+        in: query
+        name: account_book_id
+        type: integer
+      - description: type
+        in: query
+        name: type
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: 成功；兼容接口也可能在 HTTP 200 的 status/msg 中返回业务错误
+          schema:
+            items:
+              $ref: '#/definitions/types.StatementFrequentCategoryItem'
+            type: array
+        "500":
+          description: 服务错误
+          schema:
+            $ref: '#/definitions/types.APIResponse'
+      security:
+      - AppID: []
+        SessionKey: []
+      summary: '常用分类，Query: `type`'
+      tags:
+      - Statements
+  /statements/default_category_asset:
+    get:
+      operationId: StatementsHandler_DefaultCategoryAsset
+      parameters:
+      - description: 账本 ID；未提供时使用用户默认账本
+        in: query
+        name: account_book_id
+        type: integer
+      - description: type
+        in: query
+        name: type
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: 成功；兼容接口也可能在 HTTP 200 的 status/msg 中返回业务错误
+          schema:
+            allOf:
+            - $ref: '#/definitions/types.APIResponse'
+            - properties:
+                data:
+                  $ref: '#/definitions/types.StatementDefaultCategoryAssetItem'
+              type: object
+        "500":
+          description: 服务错误
+          schema:
+            $ref: '#/definitions/types.APIResponse'
+      security:
+      - AppID: []
+        SessionKey: []
+      summary: '上次使用的分类和资产，Query: `type`'
+      tags:
+      - Statements
+  /statements/export_check:
+    post:
+      operationId: StatementsHandler_ExportCheck
+      parameters:
+      - description: 账本 ID；未提供时使用用户默认账本
+        in: query
+        name: account_book_id
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: 成功；兼容接口也可能在 HTTP 200 的 status/msg 中返回业务错误
+          schema:
+            $ref: '#/definitions/types.APIResponse'
+        "500":
+          description: 服务错误
+          schema:
+            $ref: '#/definitions/types.APIResponse'
+      security:
+      - AppID: []
+        SessionKey: []
+      summary: 导出次数检查
+      tags:
+      - Statements
+  /statements/export_excel:
+    get:
+      operationId: StatementsHandler_ExportExcel
+      parameters:
+      - description: 账本 ID；未提供时使用用户默认账本
+        in: query
+        name: account_book_id
+        type: integer
+      - description: range
+        in: query
+        name: range
+        type: string
+      produces:
+      - application/vnd.openxmlformats-officedocument.spreadsheetml.sheet
+      responses:
+        "200":
+          description: Excel 文件
+          schema:
+            type: file
+        "500":
+          description: 服务错误
+          schema:
+            $ref: '#/definitions/types.APIResponse'
+      security:
+      - AppID: []
+        SessionKey: []
+      summary: '导出 Excel，Query: `range`，返回 .xlsx 文件'
+      tags:
+      - Statements
+  /statements/generate_share_key:
+    post:
+      consumes:
+      - application/json
+      operationId: StatementsHandler_GenerateShareKey
+      parameters:
+      - description: 请求体
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/types.ShareKeyRequest'
+      - description: 账本 ID；未提供时使用用户默认账本
+        in: query
+        name: account_book_id
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: 成功；兼容接口也可能在 HTTP 200 的 status/msg 中返回业务错误
+          schema:
+            allOf:
+            - $ref: '#/definitions/types.APIResponse'
+            - properties:
+                data:
+                  $ref: '#/definitions/types.ShareKeyData'
+              type: object
+        "500":
+          description: 服务错误
+          schema:
+            $ref: '#/definitions/types.APIResponse'
+      security:
+      - AppID: []
+        SessionKey: []
+      summary: '生成分享链接，Body: `{start_date, end_date, category_ids, except_statement_ids}`'
+      tags:
+      - Statements
+  /statements/images:
+    get:
+      operationId: StatementsHandler_Images
+      parameters:
+      - description: 账本 ID；未提供时使用用户默认账本
+        in: query
+        name: account_book_id
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: 成功；兼容接口也可能在 HTTP 200 的 status/msg 中返回业务错误
+          schema:
+            allOf:
+            - $ref: '#/definitions/types.APIResponse'
+            - properties:
+                data:
+                  $ref: '#/definitions/types.StatementImagesResult'
+              type: object
+        "500":
+          description: 服务错误
+          schema:
+            $ref: '#/definitions/types.APIResponse'
+      security:
+      - AppID: []
+        SessionKey: []
+      summary: 账单图片时间轴
+      tags:
+      - Statements
+  /statements/list_by_token:
+    get:
+      operationId: StatementsHandler_ListByToken
+      parameters:
+      - description: 账本 ID；未提供时使用用户默认账本
+        in: query
+        name: account_book_id
+        type: integer
+      - description: order_by
+        in: query
+        name: order_by
+        type: string
+      - description: token
+        in: query
+        name: token
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: 成功；兼容接口也可能在 HTTP 200 的 status/msg 中返回业务错误
+          schema:
+            allOf:
+            - $ref: '#/definitions/types.APIResponse'
+            - properties:
+                data:
+                  $ref: '#/definitions/types.StatementListByTokenResult'
+              type: object
+        "500":
+          description: 服务错误
+          schema:
+            $ref: '#/definitions/types.APIResponse'
+      security:
+      - AppID: []
+        SessionKey: []
+      summary: '通过分享 token 查看账单，Query: `token`, `order_by`'
+      tags:
+      - Statements
+  /statements/target_objects:
+    get:
+      operationId: StatementsHandler_TargetObjects
+      parameters:
+      - description: 账本 ID；未提供时使用用户默认账本
+        in: query
+        name: account_book_id
+        type: integer
+      - description: type
+        in: query
+        name: type
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: 成功；兼容接口也可能在 HTTP 200 的 status/msg 中返回业务错误
+          schema:
+            allOf:
+            - $ref: '#/definitions/types.APIResponse'
+            - properties:
+                data:
+                  items:
+                    type: string
+                  type: array
+              type: object
+        "500":
+          description: 服务错误
+          schema:
+            $ref: '#/definitions/types.APIResponse'
+      security:
+      - AppID: []
+        SessionKey: []
+      summary: '获取目标对象列表，Query: `type`'
+      tags:
+      - Statements
+  /super_chart/categories_list:
+    get:
+      operationId: SuperChartHandler_CategoriesList
+      parameters:
+      - description: 账本 ID；未提供时使用用户默认账本
+        in: query
+        name: account_book_id
+        type: integer
+      - description: month
+        in: query
+        name: month
+        type: string
+      - description: year
+        in: query
+        name: year
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: 成功；兼容接口也可能在 HTTP 200 的 status/msg 中返回业务错误
+          schema:
+            allOf:
+            - $ref: '#/definitions/types.APIResponse'
+            - properties:
+                data:
+                  items:
+                    $ref: '#/definitions/types.SuperCategoryTopItem'
+                  type: array
+              type: object
+        "400":
+          description: 请求失败
+          schema:
+            $ref: '#/definitions/types.APIResponse'
+        "500":
+          description: 服务错误
+          schema:
+            $ref: '#/definitions/types.APIResponse'
+      security:
+      - AppID: []
+        SessionKey: []
+      summary: '分类 Top 排行，Query: `year`, `month`'
+      tags:
+      - SuperChart
+  /super_chart/get_pie_data:
+    get:
+      operationId: SuperChartHandler_PieData
+      parameters:
+      - description: 账本 ID；未提供时使用用户默认账本
+        in: query
+        name: account_book_id
+        type: integer
+      - description: month
+        in: query
+        name: month
+        type: string
+      - description: statement_type
+        in: query
+        name: statement_type
+        type: string
+      - description: year
+        in: query
+        name: year
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: 成功；兼容接口也可能在 HTTP 200 的 status/msg 中返回业务错误
+          schema:
+            allOf:
+            - $ref: '#/definitions/types.APIResponse'
+            - properties:
+                data:
+                  items:
+                    $ref: '#/definitions/types.SuperPieItem'
+                  type: array
+              type: object
+        "400":
+          description: 请求失败
+          schema:
+            $ref: '#/definitions/types.APIResponse'
+        "500":
+          description: 服务错误
+          schema:
+            $ref: '#/definitions/types.APIResponse'
+      security:
+      - AppID: []
+        SessionKey: []
+      summary: '饼图数据，Query: `year`, `month`, `statement_type`'
+      tags:
+      - SuperChart
+  /super_chart/header:
+    get:
+      operationId: SuperChartHandler_Header
+      parameters:
+      - description: 账本 ID；未提供时使用用户默认账本
+        in: query
+        name: account_book_id
+        type: integer
+      - description: month
+        in: query
+        name: month
+        type: string
+      - description: year
+        in: query
+        name: year
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: 成功；兼容接口也可能在 HTTP 200 的 status/msg 中返回业务错误
+          schema:
+            allOf:
+            - $ref: '#/definitions/types.APIResponse'
+            - properties:
+                data:
+                  $ref: '#/definitions/types.SuperChartHeaderData'
+              type: object
+        "400":
+          description: 请求失败
+          schema:
+            $ref: '#/definitions/types.APIResponse'
+        "500":
+          description: 服务错误
+          schema:
+            $ref: '#/definitions/types.APIResponse'
+      security:
+      - AppID: []
+        SessionKey: []
+      summary: '图表头部数据，Query: `year`, `month`'
+      tags:
+      - SuperChart
+  /super_chart/line_chart:
+    get:
+      operationId: SuperChartHandler_LineChart
+      parameters:
+      - description: 账本 ID；未提供时使用用户默认账本
+        in: query
+        name: account_book_id
+        type: integer
+      - description: month
+        in: query
+        name: month
+        type: string
+      - description: year
+        in: query
+        name: year
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: 成功；兼容接口也可能在 HTTP 200 的 status/msg 中返回业务错误
+          schema:
+            $ref: '#/definitions/types.SuperLineChartData'
+        "400":
+          description: 请求失败
+          schema:
+            $ref: '#/definitions/types.APIResponse'
+        "500":
+          description: 服务错误
+          schema:
+            $ref: '#/definitions/types.APIResponse'
+      security:
+      - AppID: []
+        SessionKey: []
+      summary: '折线图数据，Query: `year`, `month`'
+      tags:
+      - SuperChart
+  /super_chart/table_sumary:
+    get:
+      operationId: SuperChartHandler_TableSummary
+      parameters:
+      - description: 账本 ID；未提供时使用用户默认账本
+        in: query
+        name: account_book_id
+        type: integer
+      - description: month
+        in: query
+        name: month
+        type: string
+      - description: year
+        in: query
+        name: year
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: 成功；兼容接口也可能在 HTTP 200 的 status/msg 中返回业务错误
+          schema:
+            allOf:
+            - $ref: '#/definitions/types.APIResponse'
+            - properties:
+                data:
+                  items:
+                    $ref: '#/definitions/types.SuperTableSummaryItem'
+                  type: array
+              type: object
+        "400":
+          description: 请求失败
+          schema:
+            $ref: '#/definitions/types.APIResponse'
+        "500":
+          description: 服务错误
+          schema:
+            $ref: '#/definitions/types.APIResponse'
+      security:
+      - AppID: []
+        SessionKey: []
+      summary: '日汇总表，Query: `year`, `month`'
+      tags:
+      - SuperChart
+  /super_chart/week_data:
+    get:
+      operationId: SuperChartHandler_WeekData
+      parameters:
+      - description: 账本 ID；未提供时使用用户默认账本
+        in: query
+        name: account_book_id
+        type: integer
+      - description: month
+        in: query
+        name: month
+        type: string
+      - description: year
+        in: query
+        name: year
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: 成功；兼容接口也可能在 HTTP 200 的 status/msg 中返回业务错误
+          schema:
+            $ref: '#/definitions/types.SuperWeekData'
+        "400":
+          description: 请求失败
+          schema:
+            $ref: '#/definitions/types.APIResponse'
+        "500":
+          description: 服务错误
+          schema:
+            $ref: '#/definitions/types.APIResponse'
+      security:
+      - AppID: []
+        SessionKey: []
+      summary: '周数据，Query: `year`, `month`'
+      tags:
+      - SuperChart
+  /super_statements/list:
+    get:
+      operationId: SuperStatementsHandler_List
+      parameters:
+      - description: 账本 ID；未提供时使用用户默认账本
+        in: query
+        name: account_book_id
+        type: integer
+      - description: asset
+        in: query
+        name: asset
+        type: string
+      - description: asset_id
+        in: query
+        name: asset_id
+        type: string
+      - description: category_id
+        in: query
+        name: category_id
+        type: string
+      - description: month
+        in: query
+        name: month
+        type: string
+      - description: order_by
+        in: query
+        name: order_by
+        type: string
+      - description: year
+        in: query
+        name: year
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: 成功；兼容接口也可能在 HTTP 200 的 status/msg 中返回业务错误
+          schema:
+            allOf:
+            - $ref: '#/definitions/types.APIResponse'
+            - properties:
+                data:
+                  items:
+                    $ref: '#/definitions/types.StatementListItem'
+                  type: array
+              type: object
+        "400":
+          description: 请求失败
+          schema:
+            $ref: '#/definitions/types.APIResponse'
+        "500":
+          description: 服务错误
+          schema:
+            $ref: '#/definitions/types.APIResponse'
+      security:
+      - AppID: []
+        SessionKey: []
+      summary: 流水列表，Query 同上
+      tags:
+      - SuperStatements
+  /super_statements/time:
+    get:
+      operationId: SuperStatementsHandler_Time
+      parameters:
+      - description: 账本 ID；未提供时使用用户默认账本
+        in: query
+        name: account_book_id
+        type: integer
+      - description: asset
+        in: query
+        name: asset
+        type: string
+      - description: asset_id
+        in: query
+        name: asset_id
+        type: string
+      - description: category_id
+        in: query
+        name: category_id
+        type: string
+      - description: month
+        in: query
+        name: month
+        type: string
+      - description: order_by
+        in: query
+        name: order_by
+        type: string
+      - description: year
+        in: query
+        name: year
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: 成功；兼容接口也可能在 HTTP 200 的 status/msg 中返回业务错误
+          schema:
+            allOf:
+            - $ref: '#/definitions/types.APIResponse'
+            - properties:
+                data:
+                  $ref: '#/definitions/types.SuperTimeResponse'
+              type: object
+        "400":
+          description: 请求失败
+          schema:
+            $ref: '#/definitions/types.APIResponse'
+        "500":
+          description: 服务错误
+          schema:
+            $ref: '#/definitions/types.APIResponse'
+      security:
+      - AppID: []
+        SessionKey: []
+      summary: '月度汇总时间线，Query: `year`, `month`, `asset`, `asset_id`, `category_id`,
+        `order_by`'
+      tags:
+      - SuperStatements
+  /upload:
+    post:
+      consumes:
+      - multipart/form-data
+      operationId: AuthHandler_Upload
+      parameters:
+      - description: 账本 ID；未提供时使用用户默认账本
+        in: query
+        name: account_book_id
+        type: integer
+      - description: 上传文件
+        in: formData
+        name: file
+        required: true
+        type: file
+      - description: statement_id
+        in: formData
+        name: statement_id
+        type: string
+      - description: type
+        in: formData
+        name: type
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: 成功；兼容接口也可能在 HTTP 200 的 status/msg 中返回业务错误
+          schema:
+            $ref: '#/definitions/types.UploadResult'
+        "404":
+          description: 请求失败
+          schema:
+            $ref: '#/definitions/types.APIResponse'
+        "500":
+          description: 服务错误
+          schema:
+            $ref: '#/definitions/types.APIResponse'
+      security:
+      - AppID: []
+        SessionKey: []
+      summary: 上传文件（FormData），字段：`file`(文件)、`type`、`statement_id`(选填)
+      tags:
+      - Auth
+  /users:
+    get:
+      operationId: UserHandler_GetUserInfo
+      parameters:
+      - description: 账本 ID；未提供时使用用户默认账本
+        in: query
+        name: account_book_id
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: 成功；兼容接口也可能在 HTTP 200 的 status/msg 中返回业务错误
+          schema:
+            allOf:
+            - $ref: '#/definitions/types.APIResponse'
+            - properties:
+                data:
+                  $ref: '#/definitions/types.UserProfile'
+              type: object
+        "500":
+          description: 服务错误
+          schema:
+            $ref: '#/definitions/types.APIResponse'
+      security:
+      - AppID: []
+        SessionKey: []
+      summary: 获取当前用户信息
+      tags:
+      - User
+  /users/scan_login:
+    post:
+      consumes:
+      - application/json
+      operationId: UserHandler_ScanLogin
+      parameters:
+      - description: 账本 ID；未提供时使用用户默认账本
+        in: query
+        name: account_book_id
+        type: integer
+      - description: 请求体
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/types.UserScanLoginRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: 成功；兼容接口也可能在 HTTP 200 的 status/msg 中返回业务错误
+          schema:
+            $ref: '#/definitions/types.APIResponse'
+        "500":
+          description: 服务错误
+          schema:
+            $ref: '#/definitions/types.APIResponse'
+      security:
+      - AppID: []
+        SessionKey: []
+      summary: 'PC 扫码登录，Body: `{qr_code}`'
+      tags:
+      - User
+  /users/update_user:
+    put:
+      consumes:
+      - application/json
+      operationId: UserHandler_UpdateUser
+      parameters:
+      - description: 账本 ID；未提供时使用用户默认账本
+        in: query
+        name: account_book_id
+        type: integer
+      - description: 请求体
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/types.UserUpdateRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: 成功；兼容接口也可能在 HTTP 200 的 status/msg 中返回业务错误
+          schema:
+            $ref: '#/definitions/types.APIResponse'
+        "500":
+          description: 服务错误
+          schema:
+            $ref: '#/definitions/types.APIResponse'
+      security:
+      - AppID: []
+        SessionKey: []
+      summary: '更新用户，Body: `{user: {theme_id, country, city, gender, language, province,
+        bg_avatar_id, hidden_asset_money, avatar_url, nickname, bg_avatar}}`，所有字段可选'
+      tags:
+      - User
+  /wallet:
+    get:
+      operationId: FinancesHandler_Wallet
+      parameters:
+      - description: 账本 ID；未提供时使用用户默认账本
+        in: query
+        name: account_book_id
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: 成功；兼容接口也可能在 HTTP 200 的 status/msg 中返回业务错误
+          schema:
+            $ref: '#/definitions/types.WalletResponse'
+        "500":
+          description: 服务错误
+          schema:
+            $ref: '#/definitions/types.APIResponse'
+      security:
+      - AppID: []
+        SessionKey: []
+      summary: 钱包总览
+      tags:
+      - Finances
+  /wallet/information:
+    get:
+      operationId: FinancesHandler_WalletInformation
+      parameters:
+      - description: 账本 ID；未提供时使用用户默认账本
+        in: query
+        name: account_book_id
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: 成功；兼容接口也可能在 HTTP 200 的 status/msg 中返回业务错误
+          schema:
+            $ref: '#/definitions/types.WalletInformation'
+        "400":
+          description: 请求失败
+          schema:
+            $ref: '#/definitions/types.APIResponse'
+        "404":
+          description: 请求失败
+          schema:
+            $ref: '#/definitions/types.APIResponse'
+        "500":
+          description: 服务错误
+          schema:
+            $ref: '#/definitions/types.APIResponse'
+      security:
+      - AppID: []
+        SessionKey: []
+      summary: '资产详情，Query: `asset_id`(必填)'
+      tags:
+      - Finances
+  /wallet/statement_list:
+    get:
+      operationId: FinancesHandler_WalletStatementList
+      parameters:
+      - description: 账本 ID；未提供时使用用户默认账本
+        in: query
+        name: account_book_id
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: 成功；兼容接口也可能在 HTTP 200 的 status/msg 中返回业务错误
+          schema:
+            allOf:
+            - $ref: '#/definitions/types.APIResponse'
+            - properties:
+                data:
+                  items:
+                    $ref: '#/definitions/types.StatementListItem'
+                  type: array
+              type: object
+        "400":
+          description: 请求失败
+          schema:
+            $ref: '#/definitions/types.APIResponse'
+        "500":
+          description: 服务错误
+          schema:
+            $ref: '#/definitions/types.APIResponse'
+      security:
+      - AppID: []
+        SessionKey: []
+      summary: '资产关联账单，Query: `asset_id`, `year`, `month`(均必填)'
+      tags:
+      - Finances
+  /wallet/surplus:
+    put:
+      consumes:
+      - application/json
+      operationId: AssetsHandler_UpdateSurplus
+      parameters:
+      - description: 账本 ID；未提供时使用用户默认账本
+        in: query
+        name: account_book_id
+        type: integer
+      - description: 请求体
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/types.AssetSurplusRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: 成功；兼容接口也可能在 HTTP 200 的 status/msg 中返回业务错误
+          schema:
+            $ref: '#/definitions/types.APIResponse'
+        "400":
+          description: 请求失败
+          schema:
+            $ref: '#/definitions/types.APIResponse'
+        "404":
+          description: 请求失败
+          schema:
+            $ref: '#/definitions/types.APIResponse'
+        "500":
+          description: 服务错误
+          schema:
+            $ref: '#/definitions/types.APIResponse'
+      security:
+      - AppID: []
+        SessionKey: []
+      summary: '更新资产余额，Body: `{asset_id, amount}`，amount 支持数字或字符串'
+      tags:
+      - Assets
+  /wallet/time_line:
+    get:
+      operationId: FinancesHandler_WalletTimeline
+      parameters:
+      - description: 账本 ID；未提供时使用用户默认账本
+        in: query
+        name: account_book_id
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: 成功；兼容接口也可能在 HTTP 200 的 status/msg 中返回业务错误
+          schema:
+            $ref: '#/definitions/types.WalletTimelineResponse'
+        "400":
+          description: 请求失败
+          schema:
+            $ref: '#/definitions/types.APIResponse'
+        "500":
+          description: 服务错误
+          schema:
+            $ref: '#/definitions/types.APIResponse'
+      security:
+      - AppID: []
+        SessionKey: []
+      summary: '资产时间线，Query: `asset_id`(必填)'
+      tags:
+      - Finances
+securityDefinitions:
+  AppID:
+    in: header
+    name: X-WX-APP-ID
+    type: apiKey
+  SessionKey:
+    in: header
+    name: X-WX-Skey
+    type: apiKey
+swagger: "2.0"

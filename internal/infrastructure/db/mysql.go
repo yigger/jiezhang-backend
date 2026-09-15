@@ -23,6 +23,7 @@ func NewMySQL(dsn string) (*gorm.DB, error) {
 	sqlDB.SetConnMaxLifetime(3 * time.Minute)
 
 	if err := sqlDB.Ping(); err != nil {
+		_ = sqlDB.Close()
 		return nil, err
 	}
 

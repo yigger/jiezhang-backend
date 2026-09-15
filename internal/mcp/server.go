@@ -8,31 +8,38 @@ import (
 	"time"
 
 	"github.com/modelcontextprotocol/go-sdk/mcp"
-
-	"github.com/yigger/jiezhang-backend/internal/service"
-	statementdto "github.com/yigger/jiezhang-backend/internal/service/statement"
+	accountbookservice "github.com/yigger/jiezhang-backend/internal/service/accountbook"
+	authservice "github.com/yigger/jiezhang-backend/internal/service/auth"
+	budgetservice "github.com/yigger/jiezhang-backend/internal/service/budget"
+	financeservice "github.com/yigger/jiezhang-backend/internal/service/finance"
+	statementservice "github.com/yigger/jiezhang-backend/internal/service/statement"
+	statisticsservice "github.com/yigger/jiezhang-backend/internal/service/statistics"
+	"github.com/yigger/jiezhang-backend/internal/types"
 )
 
 // Server wraps the MCP server, registered tools, and the HTTP handler.
 type Server struct {
 	mcpServer *mcp.Server
+	sessions  *authservice.SessionService
+	access    *accountbookservice.AccessService
 
-	statementSvc   service.StatementService
-	financeSvc     service.FinanceService
-	statisticsSvc  service.StatisticsService
-	accountBookSvc service.AccountBookService
-	budgetSvc      service.BudgetService
+	statementSvc   *statementservice.Reader
+	financeSvc     financeservice.FinanceService
+	statisticsSvc  statisticsservice.StatisticsService
+	accountBookSvc accountbookservice.AccountBookService
+	budgetSvc      budgetservice.BudgetService
 }
 
 // NewServer creates an MCP server with all tools registered.
 func NewServer(
-	statementSvc service.StatementService,
-	financeSvc service.FinanceService,
-	statisticsSvc service.StatisticsService,
-	accountBookSvc service.AccountBookService,
-	budgetSvc service.BudgetService,
+	sessions *authservice.SessionService, access *accountbookservice.AccessService,
+	statementSvc *statementservice.Reader,
+	financeSvc financeservice.FinanceService,
+	statisticsSvc statisticsservice.StatisticsService,
+	accountBookSvc accountbookservice.AccountBookService,
+	budgetSvc budgetservice.BudgetService,
 ) *Server {
-	s := &Server{
+	s := &Server{sessions: sessions, access: access,
 		statementSvc:   statementSvc,
 		financeSvc:     financeSvc,
 		statisticsSvc:  statisticsSvc,
@@ -54,15 +61,27 @@ func NewServer(
 // Handler returns an http.Handler for the MCP endpoint using Streamable HTTP
 // in stateless + JSON mode.
 func (s *Server) Handler() http.Handler {
-	return mcp.NewStreamableHTTPHandler(
+	transport := mcp.NewStreamableHTTPHandler(
 		func(r *http.Request) *mcp.Server {
 			return s.mcpServer
 		},
 		&mcp.StreamableHTTPOptions{
-			Stateless:   true,
+			Stateless:    true,
 			JSONResponse: true,
 		},
 	)
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		if s.sessions == nil || s.access == nil {
+			http.Error(w, "authentication unavailable", http.StatusServiceUnavailable)
+			return
+		}
+		user, err := s.sessions.Authenticate(r.Context(), r.Header.Get("X-WX-APP-ID"), r.Header.Get("X-WX-Skey"))
+		if err != nil {
+			http.Error(w, "unauthorized", http.StatusUnauthorized)
+			return
+		}
+		transport.ServeHTTP(w, r.WithContext(authservice.WithUser(r.Context(), user)))
+	})
 }
 
 func (s *Server) registerTools() {
@@ -87,8 +106,8 @@ type queryStatementsInput struct {
 }
 
 type queryStatementsOutput struct {
-	Total      int                  `json:"total" jsonschema:"符合条件的总条数"`
-	Statements []statementListItem  `json:"statements" jsonschema:"账单列表"`
+	Total      int                 `json:"total" jsonschema:"符合条件的总条数"`
+	Statements []statementListItem `json:"statements" jsonschema:"账单列表"`
 }
 
 type statementListItem struct {
@@ -108,6 +127,14 @@ func (s *Server) registerQueryStatements() {
 		Name:        "query_statements",
 		Description: "查询账单流水。支持按日期范围、类型、关键词筛选。返回符合条件的账单列表。",
 	}, func(ctx context.Context, _ *mcp.CallToolRequest, input queryStatementsInput) (*mcp.CallToolResult, queryStatementsOutput, error) {
+		user, accessErr := authservice.CurrentUser(ctx)
+		if accessErr != nil {
+			return nil, queryStatementsOutput{}, accessErr
+		}
+		if _, accessErr = s.access.Authorize(ctx, input.AccountBookID, user.ID); accessErr != nil {
+			return nil, queryStatementsOutput{}, accessErr
+		}
+
 		now := time.Now()
 		startDate := firstDayOfMonth(now)
 		endDate := now
@@ -130,12 +157,12 @@ func (s *Server) registerQueryStatements() {
 		}
 
 		// Use SearchStatements when keyword is given, otherwise GetStatements
-		var items []statementdto.ListItem
+		var items []types.StatementListItem
 		var err error
 		if input.Keyword != "" {
 			items, err = s.statementSvc.SearchStatements(ctx, input.AccountBookID, input.Keyword)
 		} else {
-			listInput := statementdto.ListInput{
+			listInput := statementservice.ListInput{
 				AccountBookID: input.AccountBookID,
 				StartDate:     &startDate,
 				EndDate:       &endDate,
@@ -206,6 +233,14 @@ func (s *Server) registerGetWalletOverview() {
 		Name:        "get_wallet_overview",
 		Description: "获取钱包/财务总览。返回总资产、净资产、负债以及各资产账户余额。",
 	}, func(ctx context.Context, _ *mcp.CallToolRequest, input walletOverviewInput) (*mcp.CallToolResult, walletOverviewOutput, error) {
+		user, accessErr := authservice.CurrentUser(ctx)
+		if accessErr != nil {
+			return nil, walletOverviewOutput{}, accessErr
+		}
+		if _, accessErr = s.access.Authorize(ctx, input.AccountBookID, user.ID); accessErr != nil {
+			return nil, walletOverviewOutput{}, accessErr
+		}
+
 		wallet, err := s.financeSvc.GetWallet(ctx, input.AccountBookID)
 		if err != nil {
 			return nil, walletOverviewOutput{}, fmt.Errorf("获取财务概览失败: %w", err)
@@ -236,9 +271,9 @@ func (s *Server) registerGetWalletOverview() {
 // ---------------------------------------------------------------------------
 
 type monthlyStatisticsInput struct {
-	AccountBookID int64  `json:"account_book_id" jsonschema:"账本 ID（必填）"`
-	Year          int    `json:"year,omitempty" jsonschema:"年份，不填为当前年份"`
-	Month         int    `json:"month,omitempty" jsonschema:"月份 1-12，不填为当前月份"`
+	AccountBookID int64 `json:"account_book_id" jsonschema:"账本 ID（必填）"`
+	Year          int   `json:"year,omitempty" jsonschema:"年份，不填为当前年份"`
+	Month         int   `json:"month,omitempty" jsonschema:"月份 1-12，不填为当前月份"`
 }
 
 type monthlyStatisticsOutput struct {
@@ -255,6 +290,14 @@ func (s *Server) registerGetMonthlyStatistics() {
 		Name:        "get_monthly_statistics",
 		Description: "获取月度收支统计数据。返回指定月份的汇总收入、支出、还款和结余。",
 	}, func(ctx context.Context, _ *mcp.CallToolRequest, input monthlyStatisticsInput) (*mcp.CallToolResult, monthlyStatisticsOutput, error) {
+		user, accessErr := authservice.CurrentUser(ctx)
+		if accessErr != nil {
+			return nil, monthlyStatisticsOutput{}, accessErr
+		}
+		if _, accessErr = s.access.Authorize(ctx, input.AccountBookID, user.ID); accessErr != nil {
+			return nil, monthlyStatisticsOutput{}, accessErr
+		}
+
 		if input.Year <= 0 {
 			input.Year = time.Now().Year()
 		}
@@ -304,6 +347,15 @@ func (s *Server) registerListAccountBooks() {
 		Name:        "list_account_books",
 		Description: "列出指定用户的所有账本。返回账本 ID、名称、类型和预算。",
 	}, func(ctx context.Context, _ *mcp.CallToolRequest, input listAccountBooksInput) (*mcp.CallToolResult, listAccountBooksOutput, error) {
+		user, accessErr := authservice.CurrentUser(ctx)
+		if accessErr != nil {
+			return nil, listAccountBooksOutput{}, accessErr
+		}
+		if input.UserID != 0 && input.UserID != user.ID {
+			return nil, listAccountBooksOutput{}, accountbookservice.ErrAccessDenied
+		}
+		input.UserID = user.ID
+
 		books, err := s.accountBookSvc.List(ctx, input.UserID)
 		if err != nil {
 			return nil, listAccountBooksOutput{}, fmt.Errorf("获取账本列表失败: %w", err)
@@ -346,6 +398,14 @@ func (s *Server) registerGetBudgetSummary() {
 		Name:        "get_budget_summary",
 		Description: "获取预算使用情况。返回某月的预算总额、已用金额和剩余金额。",
 	}, func(ctx context.Context, _ *mcp.CallToolRequest, input budgetSummaryInput) (*mcp.CallToolResult, budgetSummaryOutput, error) {
+		user, accessErr := authservice.CurrentUser(ctx)
+		if accessErr != nil {
+			return nil, budgetSummaryOutput{}, accessErr
+		}
+		if _, accessErr = s.access.Authorize(ctx, input.AccountBookID, user.ID); accessErr != nil {
+			return nil, budgetSummaryOutput{}, accessErr
+		}
+
 		if input.Year <= 0 {
 			input.Year = time.Now().Year()
 		}

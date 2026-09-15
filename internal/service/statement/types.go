@@ -1,6 +1,8 @@
 package statement
 
-import "time"
+import (
+	"time"
+)
 
 type ListInput struct {
 	UserID            int64
@@ -67,71 +69,4 @@ type UpdateInput struct {
 	UserID        int64
 	AccountBookID int64
 	Patch         PatchInput
-}
-
-type Payee struct {
-	ID   int64  `json:"id"`
-	Name string `json:"name"`
-}
-
-type BaseItem struct {
-	ID           int64   `json:"id"`
-	Type         string  `json:"type"`
-	Amount       float64 `json:"amount"`
-	Description  string  `json:"description"`
-	Title        string  `json:"title"`
-	TargetObject string  `json:"target_object"`
-	Mood         string  `json:"mood"`
-	Money        string  `json:"money"`
-	Category     string  `json:"category"`
-	IconPath     string  `json:"icon_path"`
-	Asset        string  `json:"asset"`
-	Date         string  `json:"date"`
-	Time         string  `json:"time"`
-	TimeStr      string  `json:"timeStr"`
-	Week         string  `json:"week"`
-	Payee        Payee   `json:"payee"`
-	Remark       string  `json:"remark"`
-	CategoryID   int64   `json:"category_id"`
-	AssetID      int64   `json:"asset_id"`
-}
-
-type ListItem struct {
-	BaseItem
-	Location  string    `json:"location"`
-	Province  string    `json:"province"`
-	City      string    `json:"city"`
-	Street    string    `json:"street"`
-	MonthDay  string    `json:"month_day"`
-	HasPic    bool      `json:"has_pic"`
-	CreatedAt time.Time `json:"created_at"`
-	UpdatedAt time.Time `json:"updated_at"`
-}
-
-type TargetAssetInfo struct {
-	ID   int64  `json:"id"`
-	Name string `json:"name"`
-}
-
-type UploadFileItem struct {
-	ID  int64  `json:"id"`
-	URL string `json:"url"`
-}
-
-type DetailItem struct {
-	BaseItem
-	AmountNumber float64         `json:"amount_number"`
-	Location     string          `json:"location"`
-	Province     string          `json:"province"`
-	City         string          `json:"city"`
-	Street       string          `json:"street"`
-	MonthDay     string          `json:"month_day"`
-	HasPic       bool            `json:"has_pic"`
-	CreatedAt    time.Time       `json:"created_at"`
-	UpdatedAt    time.Time       `json:"updated_at"`
-	UploadFiles  []UploadFileItem `json:"upload_files"`
-	TargetAssetID int64           `json:"target_asset_id"`
-	Residue      string           `json:"residue"`
-	TargetAsset  *TargetAssetInfo `json:"target_asset,omitempty"`
-	CanEdit      bool             `json:"can_edit"`
 }

@@ -4,8 +4,8 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/yigger/jiezhang-backend/internal/repository"
-	"github.com/yigger/jiezhang-backend/internal/service/helper"
+	helperservice "github.com/yigger/jiezhang-backend/internal/service/helper"
+	"github.com/yigger/jiezhang-backend/internal/types"
 )
 
 type URLBuilder interface {
@@ -27,16 +27,16 @@ func (m RowMapper) BuildPublicURL(raw string) string {
 	return m.urlBuilder.BuildPublicURL(raw)
 }
 
-func (m RowMapper) ToListItem(row repository.StatementListRowRecord) ListItem {
-	return ListItem{
-		BaseItem: BaseItem{
+func (m RowMapper) ToListItem(row helperservice.StatementData) types.StatementListItem {
+	return types.StatementListItem{
+		StatementBaseItem: types.StatementBaseItem{
 			ID:           row.ID,
 			Type:         row.Type,
 			Amount:       row.Amount,
 			Description:  row.Description,
 			CategoryID:   row.CategoryID,
 			AssetID:      row.AssetID,
-			Title:        helper.StatementTitle(row),
+			Title:        helperservice.StatementTitle(row),
 			TargetObject: row.TargetObject,
 			Mood:         row.Mood,
 			Money:        fmt.Sprintf("%.2f", row.Amount),
@@ -46,8 +46,8 @@ func (m RowMapper) ToListItem(row repository.StatementListRowRecord) ListItem {
 			Date:         row.CreatedAt.Format("2006-01-02"),
 			Time:         row.CreatedAt.Format("15:04:05"),
 			TimeStr:      row.CreatedAt.Format("01-02 15:04"),
-			Week:         helper.WeekdayCN(row.CreatedAt.Weekday()),
-			Payee: Payee{
+			Week:         helperservice.WeekdayCN(row.CreatedAt.Weekday()),
+			Payee: types.StatementPayee{
 				ID:   row.PayeeID,
 				Name: row.PayeeName,
 			},
@@ -64,7 +64,7 @@ func (m RowMapper) ToListItem(row repository.StatementListRowRecord) ListItem {
 	}
 }
 
-func (m RowMapper) ToDetailItem(row repository.StatementListRowRecord, currentUserID int64, canAdmin bool, uploadFiles []UploadFileItem) DetailItem {
+func (m RowMapper) ToDetailItem(row helperservice.StatementData, currentUserID int64, canAdmin bool, uploadFiles []types.StatementUploadFileItem) types.StatementDetailItem {
 	item := m.ToListItem(row)
 
 	categoryName := row.CategoryName
@@ -80,16 +80,16 @@ func (m RowMapper) ToDetailItem(row repository.StatementListRowRecord, currentUs
 
 	canEdit := row.UserID == currentUserID || canAdmin
 
-	var targetAsset *TargetAssetInfo
+	var targetAsset *types.StatementTargetAssetInfo
 	if row.Type == "transfer" && row.TargetAssetID > 0 {
-		targetAsset = &TargetAssetInfo{
+		targetAsset = &types.StatementTargetAssetInfo{
 			ID:   row.TargetAssetID,
 			Name: row.TargetAssetName,
 		}
 	}
 
-	return DetailItem{
-		BaseItem: BaseItem{
+	return types.StatementDetailItem{
+		StatementBaseItem: types.StatementBaseItem{
 			ID:           row.ID,
 			Type:         row.Type,
 			Amount:       row.Amount,
@@ -106,27 +106,27 @@ func (m RowMapper) ToDetailItem(row repository.StatementListRowRecord, currentUs
 			Date:         row.CreatedAt.Format("2006-01-02"),
 			Time:         row.CreatedAt.Format("15:04:05"),
 			TimeStr:      row.CreatedAt.Format("01-02 15:04"),
-			Week:         helper.WeekdayCN(row.CreatedAt.Weekday()),
-			Payee: Payee{
+			Week:         helperservice.WeekdayCN(row.CreatedAt.Weekday()),
+			Payee: types.StatementPayee{
 				ID:   row.PayeeID,
 				Name: row.PayeeName,
 			},
 			Remark: row.Remark,
 		},
-		AmountNumber: row.Amount,
-		Location:     item.Location,
-		Province:     item.Province,
-		City:         item.City,
-		Street:       item.Street,
-		MonthDay:     item.MonthDay,
-		HasPic:       item.HasPic,
-		CreatedAt:    item.CreatedAt,
-		UpdatedAt:    item.UpdatedAt,
-		UploadFiles:  uploadFiles,
+		AmountNumber:  row.Amount,
+		Location:      item.Location,
+		Province:      item.Province,
+		City:          item.City,
+		Street:        item.Street,
+		MonthDay:      item.MonthDay,
+		HasPic:        item.HasPic,
+		CreatedAt:     item.CreatedAt,
+		UpdatedAt:     item.UpdatedAt,
+		UploadFiles:   uploadFiles,
 		TargetAssetID: row.TargetAssetID,
-		Residue:      residueStr,
-		TargetAsset:  targetAsset,
-		CanEdit:      canEdit,
+		Residue:       residueStr,
+		TargetAsset:   targetAsset,
+		CanEdit:       canEdit,
 	}
 }
 

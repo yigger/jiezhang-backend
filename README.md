@@ -1,217 +1,94 @@
 # jiezhang-backend
 
-> Go + Gin 实现的记账小程序后端
+基于 Go、Gin、GORM 和 MySQL 的记账小程序后端，提供账本、账单、资产、分类、预算、统计、分享、上传及 Excel 导出接口。Redis 用于缓存，微信小程序登录通过 `jscode2session` 完成。
 
-## 技术栈
+## 本地启动
 
-| 组件 | 选型 |
-|------|------|
-| Web 框架 | [Gin](https://github.com/gin-gonic/gin) v1.12 |
-| ORM | [GORM](https://gorm.io) v1.31 + MySQL 驱动 |
-| 数据库 | MySQL 8.x |
-| 缓存 | Redis（可选，未配置时用内存缓存） |
-| 微信登录 | `jscode2session` API |
-| Excel 导出 | [excelize](https://github.com/xuri/excelize) v2 |
-| 签名 URL | HMAC-SHA256（防私密文件直接访问） |
-
-## 快速开始
-
-### 环境要求
-
-- Go 1.26+
-- MySQL 8.x
-- Redis（可选，建议生产环境配置）
-
-### 启动
+需要 Go 1.26.3 或更高版本、可访问的 MySQL，以及微信小程序配置。Redis 可选。
 
 ```bash
-# 1. 克隆项目
-git clone https://github.com/yigger/jiezhang-backend.git
-cd jiezhang-backend
-
-# 2. 创建环境配置
 cp .env.example .env
-# 编辑 .env，填入真实的数据库连接、小程序密钥等
-
-# 3. 安装依赖并运行
-go mod tidy
+# 编辑 .env，替换数据库连接、小程序配置和会话密钥
+# 不使用 Redis 时，将 REDIS_URL 留空
+go mod download
 go run .
 ```
 
-服务默认监听 `http://localhost:10240`。
+在项目根目录运行。默认地址为 `http://localhost:10240`，接口文档为 [Swagger UI](http://localhost:10240/swagger/)，原始描述为 `/swagger/doc.json`。
 
-### 环境变量
+服务连接已有数据库，**不会自动建表或执行迁移**。仓库未提供完整的建库与初始化数据脚本；首次接手需取得测试数据库及所需初始数据。表模型清单与字段兼容说明见 [数据库模型](docs/database-models.md)。
 
-| 变量 | 必填 | 默认值 | 说明 |
-|------|------|--------|------|
-| `MYSQL_DSN` | ✅ | — | MySQL 连接串 |
-| `MINIPROGRAM_APPID` | ✅ | — | 微信小程序 AppID |
-| `MINIPROGRAM_SECRET` | ✅ | — | 微信小程序 Secret |
-| `SESSION_TOKEN_SECRET` | ✅ | — | 会话签名密钥 |
-| `PORT` | 否 | `10240` | 监听端口 |
-| `PUBLIC_BASE_URL` | 否 | `http://localhost:<PORT>` | 生成图片/文件链接的域名 |
-| `REDIS_URL` | 否 | — | Redis 连接（不配则用内存缓存） |
-| `GIN_MODE` | 否 | `debug` | `debug` / `release` / `test` |
+## 配置
 
-## 项目结构
+配置从当前工作目录的 `.env` 加载，已设置的进程环境变量优先。不要提交真实凭据。
 
-```
-.
-├── main.go                          # 入口
-├── cmd/server/main.go               # 备选入口（内容相同）
-├── go.mod
-├── .env.example                     # 环境变量模板
-├── API.md                           # 完整 API 接口文档
-├── public/                          # 静态文件（图片、上传附件）
-│   ├── images/
-│   │   ├── asset/                   # 资产图标
-│   │   └── category/                # 分类图标
-│   └── private/                     # 私有文件（含签名鉴权）
-└── internal/
-    ├── bootstrap/
-    │   ├── app.go                   # 应用启动组装（依赖注入）
-    │   └── modules/                 # 15 个模块组装器
-    │       ├── auth_module.go
-    │       ├── user_module.go
-    │       ├── home_module.go
-    │       ├── statement_module.go
-    │       ├── ...（每领域一个文件）
-    │       └── super_module.go
-    ├── config/
-    │   └── config.go               # 配置加载（.env + 环境变量）
-    ├── domain/                      # 领域实体
-    │   ├── user.go
-    │   ├── statement.go
-    │   ├── category.go
-    │   ├── account_book.go
-    │   └── payee.go
-    ├── repository/                  # 数据访问接口定义
-    │   ├── user_repository.go
-    │   ├── statement_repository.go
-    │   ├── ...（每聚合一个接口）
-    │   └── mysql/                   # GORM / MySQL 实现
-    │       ├── user_repository.go
-    │       ├── statement_repository.go
-    │       └── ...
-    ├── service/                     # 业务逻辑层
-    │   ├── statement_service.go
-    │   ├── statement_export_excel.go
-    │   ├── home_service.go
-    │   ├── ...（每领域一个服务）
-    │   ├── auth/
-    │   │   └── check_openid_service.go
-    │   ├── statement/
-    │   │   ├── types.go             # DTO + 响应类型
-    │   │   └── mapper.go            # DB row → DTO 映射
-    │   └── helper/
-    │       └── statement_helper.go
-    ├── http/
-    │   ├── router/
-    │   │   └── router.go           # 83 个路由注册
-    │   ├── handler/                 # HTTP 处理层
-    │   │   ├── auth_handler.go
-    │   │   ├── statements_handler.go
-    │   │   ├── ...（每领域一个 handler）
-    │   │   └── request_context.go   # 请求上下文提取（currentUser 等）
-    │   ├── middleware/
-    │   │   ├── api_v1_auth.go       # Session 鉴权
-    │   │   ├── signed_url.go        # 私有文件签名校验
-    │   │   └── access_log.go        # 请求日志
-    │   └── dto/                     # 请求体 DTO
-    │       ├── statement.go
-    │       ├── asset.go
-    │       └── ...
-    └── infrastructure/              # 基础设施
-        ├── db/mysql.go              # MySQL 连接
-        ├── sessioncache/            # 缓存抽象
-        │   ├── cache.go             # Cache 接口
-        │   └── redis_cache.go       # Redis 实现
-        ├── signedurl/signer.go      # HMAC URL 签名
-        ├── urlbuilder/              # 公开 URL 构建
-        └── wechat/client.go         # 微信 API 客户端
+| 变量 | 默认值 | 说明 |
+| --- | --- | --- |
+| `MYSQL_DSN` | 无，必填 | MySQL DSN；参考 `.env.example`，保留时间解析配置 |
+| `MINIPROGRAM_APPID` | 无，必填 | 微信小程序 AppID |
+| `MINIPROGRAM_SECRET` | 无，必填 | 微信小程序 Secret |
+| `SESSION_TOKEN_SECRET` | 无，必填 | Token 和 URL 签名使用的密钥 |
+| `ENV` | `dev` | `dev` 使用开发鉴权；部署时设为 `production` |
+| `GIN_MODE` | `debug` | 部署时设为 `release`；此配置不会关闭开发鉴权 |
+| `PORT` | `10240` | HTTP 监听端口 |
+| `PUBLIC_BASE_URL` | `http://localhost:<PORT>` | 返回给客户端的文件链接前缀 |
+| `REDIS_URL` | 空 | 留空使用内存缓存；连接失败也会记录日志并回退内存缓存 |
+
+`ENV=dev` 时，鉴权直接读取用户 ID 1，跳过 AppID 和 Session 校验；测试库需要该用户及其可访问的账本。开发模式仍会校验账本权限。**对外部署必须显式设置 `ENV=production`**，仅修改 `GIN_MODE` 不够。
+
+非开发模式通过 `X-WX-APP-ID` 和 `X-WX-Skey` 鉴权。登录接口使用 `X-WX-Code`，具体参数见 Swagger。账本从 `account_book_id` 查询参数或用户默认账本获取。部分兼容接口用 HTTP 200 返回业务失败，客户端还需检查响应中的 `status`、`msg` 或 `message`。
+
+内存缓存不跨实例共享，进程重启会丢失缓存内容；多实例部署应配置共享 Redis，并检查启动日志是否发生回退。配置结构中保留的 `APP_NAME`、`MCP_API_KEY` 当前不控制已注册 HTTP 接口；MCP 适配器尚未接入启动路由。
+
+## 代码导航
+
+```text
+main.go                     唯一启动入口、Swagger 基础注解
+internal/
+  bootstrap/app.go          配置校验、资源生命周期、setupRoutes 显式组装依赖
+  config/                   环境配置读取
+  controller/               HTTP 参数绑定、调用 service、错误映射、接口注解
+  service/<业务>/           业务规则、权限校验、用例编排
+  repo/                     仓储接口、复杂查询条件、SQL 聚合结果
+  repo/mysql/               GORM/SQL 实现和事务
+  model/                    全部数据表映射，按表平铺
+  types/                    请求、响应、认证上下文及共享业务类型
+  router/                   路由、Swagger、路由契约测试
+  middleware/               HTTP 鉴权适配、日志、文件 URL 签名检查
+  infrastructure/           数据库连接、缓存、微信、文件、Token 和 Excel 实现
+  mcp/                      MCP 适配器；当前没有注册 HTTP 入口
 ```
 
-## 架构
+依赖方向是 `controller → service → repo 接口`，`repo/mysql` 实现接口。所有依赖通过构造函数显式传入，在 `bootstrap/app.go` 的 `setupRoutes` 中组装，不使用运行时 DI 容器。Controller、Repo、Model、Types 按文件平铺，Service 按业务拆包。
 
-### 分层架构
+仓储返回统一表模型；Service 读取关联数据并组装响应。共享账单组装逻辑在 `service/helper/statement_assembler.go`，响应映射在 `service/statement/mapper.go`。不要为同一张表再定义业务专用的 Row/Record 副本。
 
-```
-┌─────────────────────────────────────────────┐
-│  handler (HTTP)                              │  ← 请求绑定、响应序列化
-├─────────────────────────────────────────────┤
-│  service (业务逻辑)                           │  ← 核心逻辑、协调编排
-├─────────────────────────────────────────────┤
-│  repository (数据访问接口)                     │  ← 接口定义（无外部依赖）
-│  repository/mysql (GORM 实现)                 │  ← SQL 查询、事务
-├─────────────────────────────────────────────┤
-│  domain (领域实体)                            │  ← 纯结构体，无 ORM 标签
-├─────────────────────────────────────────────┤
-│  infrastructure (基础设施)                    │  ← DB、缓存、微信 SDK、签名
-└─────────────────────────────────────────────┘
-```
+账单写入由 `service/statement.Writer` 发起事务。更新、删除先锁定当前账单并校验归属；更新在锁内合并部分字段。Service 计算余额增减值，MySQL 实现在同一事务内写入账单和资产余额，查询响应在提交后进行。
 
-### 设计约定
-
-- **依赖注入**：`bootstrap/app.go` 和 `bootstrap/modules/*.go` 手动组装依赖，不使用 DI 框架
-- **接口隔离**：`repository/` 下定义接口，`repository/mysql/` 下实现，service 只依赖接口
-- **领域与持久化分离**：`domain/` 的实体没有 GORM 标签，`repository/mysql/` 有独立的 model 结构体
-- **DTO 层**：`http/dto/` 定义请求体结构，与领域实体彻底解耦
-- **模块化**：每个业务领域（auth、statement、category 等）有独立的 handler、service、repository 模块构造函数
-
-## 如何加入开发
-
-### 1. 理解代码流程（以"创建账单"为例）
-
-```
-客户端 POST /api/statements
-  → router.go 路由到 statementsHandler.Create
-  → handler: 绑定 DTO → 调用 service
-  → service: normalizeStatementWriteInput（校验 + 特殊分类查找 + 余额计算）
-  → repository: MySQL INSERT
-  → service: 回查 detail → rowMapper.ToListItem → 返回 JSON
-```
-
-### 2. 新增一个业务领域
+## 开发与验证
 
 ```bash
-# 以"标签"为例，需要创建以下文件：
-internal/domain/tag.go                          # 领域实体
-internal/repository/tag_repository.go           # 接口定义
-internal/repository/mysql/tag_repository.go     # MySQL 实现
-internal/service/tag_service.go                 # 业务逻辑
-internal/http/handler/tag_handler.go            # HTTP 处理
-internal/http/dto/tag.go                        # 请求 DTO
-internal/bootstrap/modules/tag_module.go        # 依赖组装
-
-# 然后在以下文件中注册：
-internal/bootstrap/app.go                       # 调用 BuildTagModule
-internal/http/router/router.go                  # 注册路由
+make test       # go test ./...
+make swagger    # 从 main.go、Controller 注解生成 docs/swagger
+make vet        # go vet ./...
+make build      # 输出 bin/jiezhang-server
+make check      # 生成 Swagger、全量测试、vet、编译
 ```
 
-### 3. 代码规范
+新增业务时，按需要补充表模型、Repo 接口与 MySQL 实现、Service、Types 和 Controller，再在 `setupRoutes` 注入依赖、在 Router 注册路由。详细修改约定见 [AGENTS.md](AGENTS.md)。
 
-- 错误处理：repository 层定义 `var ErrXxxNotFound`，service 层用 `errors.Is` 判断
-- 事务：需要事务的操作在 repository 的 MySQL 实现中用 `db.Transaction()`
-- 日志：使用 Go 标准 `log` 包，关键节点打日志
-- 避免 N+1：列表查询尽量用 JOIN，不用循环单条查询
+接口文档以 Controller 注解及生成的 [Swagger](docs/swagger/swagger.yaml) 为准。不要手改生成文件；修改接口后运行 `make swagger` 并提交产物。有意变更方法或路径时，同时审查 `internal/router/testdata/routes.golden`。
 
-### 4. API 文档
+现有检查包括路由与 Swagger 一致性、分层依赖、数据库结构快照、权限、余额规则、事务提交/回滚、分享 Token、文件和 Excel。分层检查位于 `internal/repo/dependencies_test.go`。测试使用 SQL mock 和结构快照，不会连接真实 MySQL，也不能代替数据库集成测试。涉及写入链路时，仍需在测试数据库回归账单创建、更新、删除及对应余额变化。
 
-详见 [API.md](API.md)，覆盖全部 83 个接口，含请求参数和响应格式。
-
-## 部署
+## 运行与部署
 
 ```bash
-# 编译二进制
-go build -o jiezhang-server .
-
-# 直接运行
-./jiezhang-server
-
-# 或配合 systemd / supervisor 守护进程
-# 要求：
-# - .env 文件与二进制同目录（或通过环境变量注入）
-# - MySQL 可达
-# - Redis 可达（可选）
-# - public/ 目录存在（用于静态文件服务）
+make build
+# 在配置所在的工作目录启动，也可以通过进程环境变量注入配置
+./bin/jiezhang-server
 ```
+
+设置 `ENV=production`、`GIN_MODE=release` 和客户端可访问的 `PUBLIC_BASE_URL`。服务从当前工作目录读取 `.env`，文件存储也相对于当前工作目录；启动会创建 `public/`，运行账号需要写权限。部署时保留并持久化上传文件，不要把工作目录切换到临时目录。
+
+应用收到 SIGINT/SIGTERM 后执行 HTTP 优雅关闭并释放缓存与数据库连接。首次上线或变更持久化逻辑前，在测试环境验证业务链路；`make check` 不包含部署和真实数据库回归。

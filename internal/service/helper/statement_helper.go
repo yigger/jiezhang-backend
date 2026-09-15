@@ -3,11 +3,9 @@ package helper
 import (
 	"fmt"
 	"time"
-
-	"github.com/yigger/jiezhang-backend/internal/repository"
 )
 
-func StatementTitle(row repository.StatementListRowRecord) string {
+func StatementTitle(row StatementData) string {
 	if row.Type == "transfer" || row.Type == "repayment" {
 		return fmt.Sprintf("%s->%s", row.AssetName, row.TargetAssetName)
 	}
