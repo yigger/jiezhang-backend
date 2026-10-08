@@ -31,6 +31,8 @@ func TestRouteContract(t *testing.T) {
 		controller.SuperStatementsHandler{},
 		controller.SuperChartHandler{},
 		controller.StatisticsHandler{})
+	RegisterInsights(engine, func(c *gin.Context) { c.Next() }, controller.InsightsHandler{})
+	RegisterCalendarJournal(engine, func(c *gin.Context) { c.Next() }, controller.CalendarJournalHandler{})
 	var routes []string
 	for _, r := range engine.Routes() {
 		if strings.HasPrefix(r.Path, "/api/") {

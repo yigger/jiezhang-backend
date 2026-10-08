@@ -17,6 +17,8 @@ type ListInput struct {
 }
 
 type WriteInput struct {
+	ProjectID     int64
+	ConsumerID    int64
 	StatementID   int64
 	UserID        int64
 	AccountBookID int64

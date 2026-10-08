@@ -36,3 +36,19 @@
 | `users` | [`User`](../internal/model/user.go) |
 | `user_assets` | [`UserAsset`](../internal/model/user_asset.go) |
 | `users_assets` | [`UserAssetAssignment`](../internal/model/user_asset_assignment.go) |
+
+## 分析功能新增表
+
+`migrations/20261006_insights.sql` 仅新增五张 InnoDB 表：项目、固定开销规则、账单分析标注、资产组合快照和商家汇总别名。现有财务表不变，服务不会自动迁移。部署新写入接口前需执行一次迁移。快照中的 `planned_migrations` 明确标记这些表的元数据来自迁移定义，尚未在线采集；原有 24 张表仍来自只读采集。部署后应重新采集并验证。
+
+账单标注只用于归集与展示，不影响资产余额。分摊保存整数分的成员金额，资产组合快照保留每个叶子资产当时的余额及类型，历史缺失不补零。
+
+项目参与人、起止日期及账单消费人由 `migrations/20261007_project_details.sql` 添加，仅扩展分析表，可空以兼容历史项目。项目起止日期是计划范围，不会隐藏已经归集的范围外账单。项目快捷记账在原财务事务内同时创建分析标注。
+
+固定开销调度迁移 `migrations/20261007_fixed_cost_schedule.sql` 为 `insight_fixed_costs` 增加可空 `next_run_date`，并创建 `insight_fixed_cost_runs`。执行记录唯一键 `(fixed_cost_id, due_date)` 保存每期身份，账单删除不删除执行记录，避免定时检查恢复用户已删除的账单。规则日期推进和财务写入同事务，旧规则不默认生成账单。
+
+项目外观迁移 `migrations/20261008_project_appearance.sql` 添加可空 `icon`（varchar(64)）和 `color`（varchar(7)）。旧项目留空并由客户端显示默认图标与绿色；编辑时省略字段保留已选外观，空字符串恢复默认。
+
+## 日历手帐
+
+`migrations/20261008_calendar_journal.sql` 新增 `calendar_journals`（`CalendarJournal`），唯一键为账簿、用户和日期。手帐为用户个人记录，同账簿其他成员不能读取或覆盖。日期保存为 YYYY-MM-DD 文本，避免时区转换。心情与 200 字日记独立于财务账单；零消费由用户确认，读取月度手帐时发现当天支出会持久撤销印章。收入、转账不撤销。迁移需要部署时执行，服务不会自动创建表。

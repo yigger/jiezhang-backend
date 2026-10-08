@@ -16,7 +16,7 @@ go run .
 
 在项目根目录运行。默认地址为 `http://localhost:10240`，接口文档为 [Swagger UI](http://localhost:10240/swagger/)，原始描述为 `/swagger/doc.json`。
 
-服务连接已有数据库，**不会自动建表或执行迁移**。仓库未提供完整的建库与初始化数据脚本；首次接手需取得测试数据库及所需初始数据。表模型清单与字段兼容说明见 [数据库模型](docs/database-models.md)。
+服务连接已有数据库，**不会自动建表或执行迁移**。分析功能新增的五张表需在部署前执行一次 [`migrations/20261006_insights.sql`](migrations/20261006_insights.sql)，再执行 [`migrations/20261007_project_details.sql`](migrations/20261007_project_details.sql) 补项目参与人、时间范围和消费人字段，再执行 [`migrations/20261007_fixed_cost_schedule.sql`](migrations/20261007_fixed_cost_schedule.sql) 添加固定开销调度字段和执行记录，再执行 [`migrations/20261008_project_appearance.sql`](migrations/20261008_project_appearance.sql) 添加项目图标与颜色；这些迁移仅创建或扩展分析表，保留现有账单与资产数据。仓库未提供完整的建库与初始化数据脚本；首次接手需取得测试数据库及所需初始数据。表模型清单与字段兼容说明见 [数据库模型](docs/database-models.md)。
 
 ## 配置
 
@@ -92,3 +92,19 @@ make build
 设置 `ENV=production`、`GIN_MODE=release` 和客户端可访问的 `PUBLIC_BASE_URL`。服务从当前工作目录读取 `.env`，文件存储也相对于当前工作目录；启动会创建 `public/`，运行账号需要写权限。部署时保留并持久化上传文件，不要把工作目录切换到临时目录。
 
 应用收到 SIGINT/SIGTERM 后执行 HTTP 优雅关闭并释放缓存与数据库连接。首次上线或变更持久化逻辑前，在测试环境验证业务链路；`make check` 不包含部署和真实数据库回归。
+
+分析功能的 MySQL 集成测试只连接显式指定的临时本地实例，使用 `/tmp/jiezhang-insights-db.*` 下的 socket，并创建和清理独立测试 schema：
+
+```bash
+INSIGHTS_TEST_MYSQL_SOCKET=/tmp/jiezhang-insights-db.example/mysql.sock go test ./internal/service/insights -run TestMySQLInsightLifecycle -count=1
+```
+
+未提供该 socket 时测试跳过；普通 `make check` 不连接业务数据库。
+
+### 固定开销自动记账
+
+服务运行时启动 cron（`CRON_TZ=Asia/Shanghai 55 23 * * *`）：每晚 23:55 检查已经确认启用的固定开销，将到期支出从所选钱包入账。首次日期按保存时的当月指定日计算；如果当月日期已过，向后移动规则周期（月）；以后每期都从计划月份计算，31 日在短月份取月底，下一期恢复 31 日。暂停后不生成账单，再次启用从当前日期重新排期，不补暂停期间。
+
+重启时补查已经结束的日期（23:55 前只补到昨天），遗漏期数逐期处理。账单、钱包余额、固定开销标注、执行记录与下一次日期使用同一个财务事务；账簿行锁及 `(fixed_cost_id, due_date)` 唯一约束保护重复检查和多实例执行。同一规则同一计划月份只生成一次，修改日期或删除已生成账单也不会重复生成当期。分类、钱包或创建人权限失效时回滚该期，日志报告错误，其他规则继续处理。现有预算规则的 `next_run_date` 留空，用户重新确认分类和钱包后才开始自动记账。必须先执行迁移再启动新版服务；服务不会自动迁移数据库。
+
+日历手帐上线前执行 `migrations/20261008_calendar_journal.sql`。手帐按用户、账簿、日期隔离；清空内容可重复保存，不修改财务数据。元数据快照中的新表按迁移定义记录，尚未在线验证。
