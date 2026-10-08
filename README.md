@@ -71,7 +71,8 @@ internal/
 make test       # go test ./...
 make swagger    # 从 main.go、Controller 注解生成 docs/swagger
 make vet        # go vet ./...
-make build      # 输出 bin/jiezhang-server
+make build      # 本机编译，输出 bin/jiezhang-server
+make build-server # Linux amd64，输出 bin/linux-amd64/jiezhang-backend
 make check      # 生成 Swagger、全量测试、vet、编译
 ```
 
@@ -88,6 +89,15 @@ make build
 # 在配置所在的工作目录启动，也可以通过进程环境变量注入配置
 ./bin/jiezhang-server
 ```
+
+在 macOS 上为 Linux 服务器编译时，使用服务器构建目标（关闭 CGO）：
+
+```bash
+make build-server                   # 服务器 uname -m 返回 x86_64
+make build-server SERVER_ARCH=arm64  # 服务器 uname -m 返回 aarch64
+```
+
+将对应的 `bin/linux-<架构>/jiezhang-backend` 上传到服务器，在配置所在目录执行 `./jiezhang-backend`。本机与服务器产物分目录保存，避免上传 macOS 可执行文件。
 
 设置 `ENV=production`、`GIN_MODE=release` 和客户端可访问的 `PUBLIC_BASE_URL`。服务从当前工作目录读取 `.env`，文件存储也相对于当前工作目录；启动会创建 `public/`，运行账号需要写权限。部署时保留并持久化上传文件，不要把工作目录切换到临时目录。
 

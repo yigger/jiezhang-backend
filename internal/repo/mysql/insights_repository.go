@@ -15,7 +15,7 @@ func NewInsightsRepository(db *gorm.DB) *InsightsRepository { return &InsightsRe
 func (r *InsightsRepository) ListRows(ctx context.Context, bookID int64, start, end time.Time) ([]repo.InsightStatementRecord, error) {
 	rows := make([]repo.InsightStatementRecord, 0)
 	err := r.db.WithContext(ctx).Table("statements s").
-		Select("s.*, COALESCE(c.name, '') AS category_name, COALESCE(NULLIF(ma.name, ''), p.name, '') AS merchant_name, COALESCE(NULLIF(ac.remark, ''), NULLIF(u.name, ''), NULLIF(u.nickname, ''), CONCAT('成员 ', s.user_id)) AS member_name").
+		Select("s.id, s.user_id, s.category_id, s.asset_id, s.amount, s.type, s.description, s.created_at, s.payee_id, COALESCE(c.name, '') AS category_name, COALESCE(NULLIF(ma.name, ''), p.name, '') AS merchant_name, COALESCE(NULLIF(ac.remark, ''), NULLIF(u.nickname, ''), CONCAT('成员 ', s.user_id)) AS member_name").
 		Joins("LEFT JOIN categories c ON c.id = s.category_id AND (c.account_book_id = s.account_book_id OR c.account_book_id = 0)").
 		Joins("LEFT JOIN payees p ON p.id = s.payee_id AND p.account_book_id = s.account_book_id").
 		Joins("LEFT JOIN insight_merchant_aliases ma ON ma.payee_id = p.id AND ma.account_book_id = s.account_book_id").
