@@ -4217,23 +4217,6 @@
       "TABLE_NAME": "users"
     },
     {
-      "CHARACTER_MAXIMUM_LENGTH": 100,
-      "COLUMN_COMMENT": "",
-      "COLUMN_DEFAULT": "",
-      "COLUMN_KEY": "",
-      "COLUMN_NAME": "name",
-      "COLUMN_TYPE": "varchar(100)",
-      "DATA_TYPE": "varchar",
-      "DATETIME_PRECISION": null,
-      "EXTRA": "",
-      "GENERATION_EXPRESSION": "",
-      "IS_NULLABLE": "NO",
-      "NUMERIC_PRECISION": null,
-      "NUMERIC_SCALE": null,
-      "ORDINAL_POSITION": 32,
-      "TABLE_NAME": "users"
-    },
-    {
       "CHARACTER_MAXIMUM_LENGTH": null,
       "COLUMN_COMMENT": "",
       "COLUMN_DEFAULT": null,
