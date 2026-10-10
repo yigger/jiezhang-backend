@@ -21,6 +21,8 @@ type ShareKeyData struct {
 }
 
 type StatementWritePayload struct {
+	ProjectID    int64          `json:"project_id"`
+	ConsumerID   int64          `json:"consumer_id"`
 	Type         string         `json:"type"`
 	Amount       FlexibleAmount `json:"amount"`
 	Description  string         `json:"description"`

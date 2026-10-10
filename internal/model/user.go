@@ -38,7 +38,6 @@ type User struct {
 	Password         *string   `gorm:"column:password;type:varchar(255)" json:"-"`
 	Salt             *string   `gorm:"column:salt;type:varchar(255)" json:"-"`
 	AccountBookID    int64     `gorm:"column:account_book_id;type:int"`
-	Name             string    `gorm:"column:name;type:varchar(100);not null;default:''"`
 }
 
 func (User) TableName() string { return "users" }

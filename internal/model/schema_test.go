@@ -12,7 +12,7 @@ import (
 	"gorm.io/gorm/schema"
 )
 
-// This fixture contains only information_schema metadata, never application rows.
+// This fixture contains captured metadata and explicitly marked planned migration metadata, never application rows.
 func TestModelsMatchDatabaseSchema(t *testing.T) {
 	data, err := os.ReadFile("testdata/schema_snapshot.json")
 	if err != nil {
@@ -44,6 +44,13 @@ func TestModelsMatchDatabaseSchema(t *testing.T) {
 		t.Fatal(err)
 	}
 	models := []any{
+		&model.CalendarJournal{},
+		&model.InsightMerchantAlias{},
+		&model.InsightProject{},
+		&model.InsightFixedCost{},
+		&model.InsightFixedCostRun{},
+		&model.InsightStatementAnnotation{},
+		&model.InsightPortfolioSnapshot{},
 		&model.AccountBookCollaborator{},
 		&model.AccountBookFriendRef{},
 		&model.AccountBook{},

@@ -4217,23 +4217,6 @@
       "TABLE_NAME": "users"
     },
     {
-      "CHARACTER_MAXIMUM_LENGTH": 100,
-      "COLUMN_COMMENT": "",
-      "COLUMN_DEFAULT": "",
-      "COLUMN_KEY": "",
-      "COLUMN_NAME": "name",
-      "COLUMN_TYPE": "varchar(100)",
-      "DATA_TYPE": "varchar",
-      "DATETIME_PRECISION": null,
-      "EXTRA": "",
-      "GENERATION_EXPRESSION": "",
-      "IS_NULLABLE": "NO",
-      "NUMERIC_PRECISION": null,
-      "NUMERIC_SCALE": null,
-      "ORDINAL_POSITION": 32,
-      "TABLE_NAME": "users"
-    },
-    {
       "CHARACTER_MAXIMUM_LENGTH": null,
       "COLUMN_COMMENT": "",
       "COLUMN_DEFAULT": null,
@@ -4351,6 +4334,644 @@
       "NUMERIC_SCALE": 0,
       "ORDINAL_POSITION": 7,
       "TABLE_NAME": "users_assets"
+    },
+    {
+      "TABLE_NAME": "insight_projects",
+      "COLUMN_NAME": "id",
+      "COLUMN_TYPE": "bigint",
+      "IS_NULLABLE": "NO",
+      "COLUMN_KEY": "PRI",
+      "EXTRA": "auto_increment",
+      "COLUMN_DEFAULT": null
+    },
+    {
+      "TABLE_NAME": "insight_projects",
+      "COLUMN_NAME": "account_book_id",
+      "COLUMN_TYPE": "bigint",
+      "IS_NULLABLE": "NO",
+      "COLUMN_KEY": "MUL",
+      "EXTRA": "",
+      "COLUMN_DEFAULT": null
+    },
+    {
+      "TABLE_NAME": "insight_projects",
+      "COLUMN_NAME": "creator_id",
+      "COLUMN_TYPE": "bigint",
+      "IS_NULLABLE": "NO",
+      "COLUMN_KEY": "",
+      "EXTRA": "",
+      "COLUMN_DEFAULT": null
+    },
+    {
+      "TABLE_NAME": "insight_projects",
+      "COLUMN_NAME": "name",
+      "COLUMN_TYPE": "varchar(100)",
+      "IS_NULLABLE": "NO",
+      "COLUMN_KEY": "",
+      "EXTRA": "",
+      "COLUMN_DEFAULT": null
+    },
+    {
+      "TABLE_NAME": "insight_projects",
+      "COLUMN_NAME": "budget_cents",
+      "COLUMN_TYPE": "bigint",
+      "IS_NULLABLE": "NO",
+      "COLUMN_KEY": "",
+      "EXTRA": "",
+      "COLUMN_DEFAULT": null
+    },
+    {
+      "TABLE_NAME": "insight_projects",
+      "COLUMN_NAME": "archived",
+      "COLUMN_TYPE": "tinyint(1)",
+      "IS_NULLABLE": "NO",
+      "COLUMN_KEY": "",
+      "EXTRA": "",
+      "COLUMN_DEFAULT": null
+    },
+    {
+      "TABLE_NAME": "insight_projects",
+      "COLUMN_NAME": "created_at",
+      "COLUMN_TYPE": "datetime",
+      "IS_NULLABLE": "NO",
+      "COLUMN_KEY": "",
+      "EXTRA": "",
+      "COLUMN_DEFAULT": null
+    },
+    {
+      "TABLE_NAME": "insight_projects",
+      "COLUMN_NAME": "updated_at",
+      "COLUMN_TYPE": "datetime",
+      "IS_NULLABLE": "NO",
+      "COLUMN_KEY": "",
+      "EXTRA": "",
+      "COLUMN_DEFAULT": null
+    },
+    {
+      "TABLE_NAME": "insight_fixed_costs",
+      "COLUMN_NAME": "id",
+      "COLUMN_TYPE": "bigint",
+      "IS_NULLABLE": "NO",
+      "COLUMN_KEY": "PRI",
+      "EXTRA": "auto_increment",
+      "COLUMN_DEFAULT": null
+    },
+    {
+      "TABLE_NAME": "insight_fixed_costs",
+      "COLUMN_NAME": "account_book_id",
+      "COLUMN_TYPE": "bigint",
+      "IS_NULLABLE": "NO",
+      "COLUMN_KEY": "MUL",
+      "EXTRA": "",
+      "COLUMN_DEFAULT": null
+    },
+    {
+      "TABLE_NAME": "insight_fixed_costs",
+      "COLUMN_NAME": "creator_id",
+      "COLUMN_TYPE": "bigint",
+      "IS_NULLABLE": "NO",
+      "COLUMN_KEY": "",
+      "EXTRA": "",
+      "COLUMN_DEFAULT": null
+    },
+    {
+      "TABLE_NAME": "insight_fixed_costs",
+      "COLUMN_NAME": "name",
+      "COLUMN_TYPE": "varchar(100)",
+      "IS_NULLABLE": "NO",
+      "COLUMN_KEY": "",
+      "EXTRA": "",
+      "COLUMN_DEFAULT": null
+    },
+    {
+      "TABLE_NAME": "insight_fixed_costs",
+      "COLUMN_NAME": "amount_cents",
+      "COLUMN_TYPE": "bigint",
+      "IS_NULLABLE": "NO",
+      "COLUMN_KEY": "",
+      "EXTRA": "",
+      "COLUMN_DEFAULT": null
+    },
+    {
+      "TABLE_NAME": "insight_fixed_costs",
+      "COLUMN_NAME": "category_id",
+      "COLUMN_TYPE": "bigint",
+      "IS_NULLABLE": "NO",
+      "COLUMN_KEY": "",
+      "EXTRA": "",
+      "COLUMN_DEFAULT": null
+    },
+    {
+      "TABLE_NAME": "insight_fixed_costs",
+      "COLUMN_NAME": "asset_id",
+      "COLUMN_TYPE": "bigint",
+      "IS_NULLABLE": "NO",
+      "COLUMN_KEY": "",
+      "EXTRA": "",
+      "COLUMN_DEFAULT": null
+    },
+    {
+      "TABLE_NAME": "insight_fixed_costs",
+      "COLUMN_NAME": "interval_months",
+      "COLUMN_TYPE": "int",
+      "IS_NULLABLE": "NO",
+      "COLUMN_KEY": "",
+      "EXTRA": "",
+      "COLUMN_DEFAULT": null
+    },
+    {
+      "TABLE_NAME": "insight_fixed_costs",
+      "COLUMN_NAME": "due_day",
+      "COLUMN_TYPE": "int",
+      "IS_NULLABLE": "NO",
+      "COLUMN_KEY": "",
+      "EXTRA": "",
+      "COLUMN_DEFAULT": null
+    },
+    {
+      "TABLE_NAME": "insight_fixed_costs",
+      "COLUMN_NAME": "candidate_key",
+      "COLUMN_TYPE": "varchar(255)",
+      "IS_NULLABLE": "NO",
+      "COLUMN_KEY": "",
+      "EXTRA": "",
+      "COLUMN_DEFAULT": null
+    },
+    {
+      "TABLE_NAME": "insight_fixed_costs",
+      "COLUMN_NAME": "active",
+      "COLUMN_TYPE": "tinyint(1)",
+      "IS_NULLABLE": "NO",
+      "COLUMN_KEY": "",
+      "EXTRA": "",
+      "COLUMN_DEFAULT": null
+    },
+    {
+      "TABLE_NAME": "insight_fixed_costs",
+      "COLUMN_NAME": "created_at",
+      "COLUMN_TYPE": "datetime",
+      "IS_NULLABLE": "NO",
+      "COLUMN_KEY": "",
+      "EXTRA": "",
+      "COLUMN_DEFAULT": null
+    },
+    {
+      "TABLE_NAME": "insight_fixed_costs",
+      "COLUMN_NAME": "updated_at",
+      "COLUMN_TYPE": "datetime",
+      "IS_NULLABLE": "NO",
+      "COLUMN_KEY": "",
+      "EXTRA": "",
+      "COLUMN_DEFAULT": null
+    },
+    {
+      "TABLE_NAME": "insight_statement_annotations",
+      "COLUMN_NAME": "id",
+      "COLUMN_TYPE": "bigint",
+      "IS_NULLABLE": "NO",
+      "COLUMN_KEY": "PRI",
+      "EXTRA": "auto_increment",
+      "COLUMN_DEFAULT": null
+    },
+    {
+      "TABLE_NAME": "insight_statement_annotations",
+      "COLUMN_NAME": "account_book_id",
+      "COLUMN_TYPE": "bigint",
+      "IS_NULLABLE": "NO",
+      "COLUMN_KEY": "MUL",
+      "EXTRA": "",
+      "COLUMN_DEFAULT": null
+    },
+    {
+      "TABLE_NAME": "insight_statement_annotations",
+      "COLUMN_NAME": "creator_id",
+      "COLUMN_TYPE": "bigint",
+      "IS_NULLABLE": "NO",
+      "COLUMN_KEY": "",
+      "EXTRA": "",
+      "COLUMN_DEFAULT": null
+    },
+    {
+      "TABLE_NAME": "insight_statement_annotations",
+      "COLUMN_NAME": "statement_id",
+      "COLUMN_TYPE": "bigint",
+      "IS_NULLABLE": "NO",
+      "COLUMN_KEY": "UNI",
+      "EXTRA": "",
+      "COLUMN_DEFAULT": null
+    },
+    {
+      "TABLE_NAME": "insight_statement_annotations",
+      "COLUMN_NAME": "project_id",
+      "COLUMN_TYPE": "bigint",
+      "IS_NULLABLE": "YES",
+      "COLUMN_KEY": "",
+      "EXTRA": "",
+      "COLUMN_DEFAULT": null
+    },
+    {
+      "TABLE_NAME": "insight_statement_annotations",
+      "COLUMN_NAME": "payer_id",
+      "COLUMN_TYPE": "bigint",
+      "IS_NULLABLE": "YES",
+      "COLUMN_KEY": "",
+      "EXTRA": "",
+      "COLUMN_DEFAULT": null
+    },
+    {
+      "TABLE_NAME": "insight_statement_annotations",
+      "COLUMN_NAME": "allocations",
+      "COLUMN_TYPE": "json",
+      "IS_NULLABLE": "YES",
+      "COLUMN_KEY": "",
+      "EXTRA": "",
+      "COLUMN_DEFAULT": null
+    },
+    {
+      "TABLE_NAME": "insight_statement_annotations",
+      "COLUMN_NAME": "fixed_cost_id",
+      "COLUMN_TYPE": "bigint",
+      "IS_NULLABLE": "YES",
+      "COLUMN_KEY": "",
+      "EXTRA": "",
+      "COLUMN_DEFAULT": null
+    },
+    {
+      "TABLE_NAME": "insight_statement_annotations",
+      "COLUMN_NAME": "created_at",
+      "COLUMN_TYPE": "datetime",
+      "IS_NULLABLE": "NO",
+      "COLUMN_KEY": "",
+      "EXTRA": "",
+      "COLUMN_DEFAULT": null
+    },
+    {
+      "TABLE_NAME": "insight_statement_annotations",
+      "COLUMN_NAME": "updated_at",
+      "COLUMN_TYPE": "datetime",
+      "IS_NULLABLE": "NO",
+      "COLUMN_KEY": "",
+      "EXTRA": "",
+      "COLUMN_DEFAULT": null
+    },
+    {
+      "TABLE_NAME": "insight_portfolio_snapshots",
+      "COLUMN_NAME": "id",
+      "COLUMN_TYPE": "bigint",
+      "IS_NULLABLE": "NO",
+      "COLUMN_KEY": "PRI",
+      "EXTRA": "auto_increment",
+      "COLUMN_DEFAULT": null
+    },
+    {
+      "TABLE_NAME": "insight_portfolio_snapshots",
+      "COLUMN_NAME": "account_book_id",
+      "COLUMN_TYPE": "bigint",
+      "IS_NULLABLE": "NO",
+      "COLUMN_KEY": "MUL",
+      "EXTRA": "",
+      "COLUMN_DEFAULT": null
+    },
+    {
+      "TABLE_NAME": "insight_portfolio_snapshots",
+      "COLUMN_NAME": "creator_id",
+      "COLUMN_TYPE": "bigint",
+      "IS_NULLABLE": "NO",
+      "COLUMN_KEY": "",
+      "EXTRA": "",
+      "COLUMN_DEFAULT": null
+    },
+    {
+      "TABLE_NAME": "insight_portfolio_snapshots",
+      "COLUMN_NAME": "assets_cents",
+      "COLUMN_TYPE": "bigint",
+      "IS_NULLABLE": "NO",
+      "COLUMN_KEY": "",
+      "EXTRA": "",
+      "COLUMN_DEFAULT": null
+    },
+    {
+      "TABLE_NAME": "insight_portfolio_snapshots",
+      "COLUMN_NAME": "liabilities_cents",
+      "COLUMN_TYPE": "bigint",
+      "IS_NULLABLE": "NO",
+      "COLUMN_KEY": "",
+      "EXTRA": "",
+      "COLUMN_DEFAULT": null
+    },
+    {
+      "TABLE_NAME": "insight_portfolio_snapshots",
+      "COLUMN_NAME": "balances",
+      "COLUMN_TYPE": "json",
+      "IS_NULLABLE": "NO",
+      "COLUMN_KEY": "",
+      "EXTRA": "",
+      "COLUMN_DEFAULT": null
+    },
+    {
+      "TABLE_NAME": "insight_portfolio_snapshots",
+      "COLUMN_NAME": "note",
+      "COLUMN_TYPE": "varchar(255)",
+      "IS_NULLABLE": "NO",
+      "COLUMN_KEY": "",
+      "EXTRA": "",
+      "COLUMN_DEFAULT": null
+    },
+    {
+      "TABLE_NAME": "insight_portfolio_snapshots",
+      "COLUMN_NAME": "created_at",
+      "COLUMN_TYPE": "datetime",
+      "IS_NULLABLE": "NO",
+      "COLUMN_KEY": "",
+      "EXTRA": "",
+      "COLUMN_DEFAULT": null
+    },
+    {
+      "TABLE_NAME": "insight_portfolio_snapshots",
+      "COLUMN_NAME": "updated_at",
+      "COLUMN_TYPE": "datetime",
+      "IS_NULLABLE": "NO",
+      "COLUMN_KEY": "",
+      "EXTRA": "",
+      "COLUMN_DEFAULT": null
+    },
+    {
+      "TABLE_NAME": "insight_merchant_aliases",
+      "COLUMN_NAME": "id",
+      "COLUMN_TYPE": "bigint",
+      "IS_NULLABLE": "NO",
+      "COLUMN_KEY": "PRI",
+      "EXTRA": "auto_increment",
+      "COLUMN_DEFAULT": null
+    },
+    {
+      "TABLE_NAME": "insight_merchant_aliases",
+      "COLUMN_NAME": "account_book_id",
+      "COLUMN_TYPE": "bigint",
+      "IS_NULLABLE": "NO",
+      "COLUMN_KEY": "MUL",
+      "EXTRA": "",
+      "COLUMN_DEFAULT": null
+    },
+    {
+      "TABLE_NAME": "insight_merchant_aliases",
+      "COLUMN_NAME": "creator_id",
+      "COLUMN_TYPE": "bigint",
+      "IS_NULLABLE": "NO",
+      "COLUMN_KEY": "",
+      "EXTRA": "",
+      "COLUMN_DEFAULT": null
+    },
+    {
+      "TABLE_NAME": "insight_merchant_aliases",
+      "COLUMN_NAME": "payee_id",
+      "COLUMN_TYPE": "bigint",
+      "IS_NULLABLE": "NO",
+      "COLUMN_KEY": "UNI",
+      "EXTRA": "",
+      "COLUMN_DEFAULT": null
+    },
+    {
+      "TABLE_NAME": "insight_merchant_aliases",
+      "COLUMN_NAME": "name",
+      "COLUMN_TYPE": "varchar(100)",
+      "IS_NULLABLE": "NO",
+      "COLUMN_KEY": "",
+      "EXTRA": "",
+      "COLUMN_DEFAULT": null
+    },
+    {
+      "TABLE_NAME": "insight_merchant_aliases",
+      "COLUMN_NAME": "created_at",
+      "COLUMN_TYPE": "datetime",
+      "IS_NULLABLE": "NO",
+      "COLUMN_KEY": "",
+      "EXTRA": "",
+      "COLUMN_DEFAULT": null
+    },
+    {
+      "TABLE_NAME": "insight_merchant_aliases",
+      "COLUMN_NAME": "updated_at",
+      "COLUMN_TYPE": "datetime",
+      "IS_NULLABLE": "NO",
+      "COLUMN_KEY": "",
+      "EXTRA": "",
+      "COLUMN_DEFAULT": null
+    },
+    {
+      "TABLE_NAME": "insight_projects",
+      "COLUMN_NAME": "participant_ids",
+      "COLUMN_TYPE": "json",
+      "IS_NULLABLE": "YES",
+      "COLUMN_KEY": "",
+      "EXTRA": "",
+      "COLUMN_DEFAULT": null
+    },
+    {
+      "TABLE_NAME": "insight_projects",
+      "COLUMN_NAME": "start_date",
+      "COLUMN_TYPE": "date",
+      "IS_NULLABLE": "YES",
+      "COLUMN_KEY": "",
+      "EXTRA": "",
+      "COLUMN_DEFAULT": null
+    },
+    {
+      "TABLE_NAME": "insight_projects",
+      "COLUMN_NAME": "end_date",
+      "COLUMN_TYPE": "date",
+      "IS_NULLABLE": "YES",
+      "COLUMN_KEY": "",
+      "EXTRA": "",
+      "COLUMN_DEFAULT": null
+    },
+    {
+      "TABLE_NAME": "insight_statement_annotations",
+      "COLUMN_NAME": "consumer_id",
+      "COLUMN_TYPE": "bigint",
+      "IS_NULLABLE": "YES",
+      "COLUMN_KEY": "",
+      "EXTRA": "",
+      "COLUMN_DEFAULT": null
+    },
+    {
+      "TABLE_NAME": "insight_fixed_cost_runs",
+      "COLUMN_NAME": "id",
+      "COLUMN_TYPE": "bigint",
+      "IS_NULLABLE": "NO",
+      "COLUMN_KEY": "PRI",
+      "EXTRA": "auto_increment",
+      "COLUMN_DEFAULT": null,
+      "ORDINAL_POSITION": 1
+    },
+    {
+      "TABLE_NAME": "insight_fixed_cost_runs",
+      "COLUMN_NAME": "fixed_cost_id",
+      "COLUMN_TYPE": "bigint",
+      "IS_NULLABLE": "NO",
+      "COLUMN_KEY": "MUL",
+      "EXTRA": "",
+      "COLUMN_DEFAULT": null,
+      "ORDINAL_POSITION": 2
+    },
+    {
+      "TABLE_NAME": "insight_fixed_cost_runs",
+      "COLUMN_NAME": "due_date",
+      "COLUMN_TYPE": "date",
+      "IS_NULLABLE": "NO",
+      "COLUMN_KEY": "",
+      "EXTRA": "",
+      "COLUMN_DEFAULT": null,
+      "ORDINAL_POSITION": 3
+    },
+    {
+      "TABLE_NAME": "insight_fixed_cost_runs",
+      "COLUMN_NAME": "statement_id",
+      "COLUMN_TYPE": "bigint",
+      "IS_NULLABLE": "NO",
+      "COLUMN_KEY": "",
+      "EXTRA": "",
+      "COLUMN_DEFAULT": null,
+      "ORDINAL_POSITION": 4
+    },
+    {
+      "TABLE_NAME": "insight_fixed_cost_runs",
+      "COLUMN_NAME": "created_at",
+      "COLUMN_TYPE": "datetime",
+      "IS_NULLABLE": "NO",
+      "COLUMN_KEY": "",
+      "EXTRA": "",
+      "COLUMN_DEFAULT": null,
+      "ORDINAL_POSITION": 5
+    },
+    {
+      "TABLE_NAME": "insight_fixed_costs",
+      "COLUMN_NAME": "next_run_date",
+      "COLUMN_TYPE": "date",
+      "IS_NULLABLE": "YES",
+      "COLUMN_KEY": "",
+      "EXTRA": "",
+      "COLUMN_DEFAULT": null,
+      "ORDINAL_POSITION": 14
+    },
+    {
+      "TABLE_NAME": "insight_projects",
+      "COLUMN_NAME": "icon",
+      "COLUMN_TYPE": "varchar(64)",
+      "IS_NULLABLE": "YES",
+      "COLUMN_KEY": "",
+      "EXTRA": "",
+      "COLUMN_DEFAULT": null,
+      "ORDINAL_POSITION": 12
+    },
+    {
+      "TABLE_NAME": "insight_projects",
+      "COLUMN_NAME": "color",
+      "COLUMN_TYPE": "varchar(7)",
+      "IS_NULLABLE": "YES",
+      "COLUMN_KEY": "",
+      "EXTRA": "",
+      "COLUMN_DEFAULT": null,
+      "ORDINAL_POSITION": 13
+    },
+    {
+      "TABLE_NAME": "calendar_journals",
+      "COLUMN_NAME": "id",
+      "COLUMN_TYPE": "bigint",
+      "IS_NULLABLE": "NO",
+      "COLUMN_KEY": "PRI",
+      "EXTRA": "auto_increment",
+      "COLUMN_DEFAULT": null,
+      "DATA_TYPE": "bigint",
+      "ORDINAL_POSITION": 1
+    },
+    {
+      "TABLE_NAME": "calendar_journals",
+      "COLUMN_NAME": "account_book_id",
+      "COLUMN_TYPE": "bigint",
+      "IS_NULLABLE": "NO",
+      "COLUMN_KEY": "MUL",
+      "EXTRA": "",
+      "COLUMN_DEFAULT": null,
+      "DATA_TYPE": "bigint",
+      "ORDINAL_POSITION": 2
+    },
+    {
+      "TABLE_NAME": "calendar_journals",
+      "COLUMN_NAME": "user_id",
+      "COLUMN_TYPE": "bigint",
+      "IS_NULLABLE": "NO",
+      "COLUMN_KEY": "",
+      "EXTRA": "",
+      "COLUMN_DEFAULT": null,
+      "DATA_TYPE": "bigint",
+      "ORDINAL_POSITION": 3
+    },
+    {
+      "TABLE_NAME": "calendar_journals",
+      "COLUMN_NAME": "date",
+      "COLUMN_TYPE": "varchar(10)",
+      "IS_NULLABLE": "NO",
+      "COLUMN_KEY": "",
+      "EXTRA": "",
+      "COLUMN_DEFAULT": null,
+      "DATA_TYPE": "varchar",
+      "ORDINAL_POSITION": 4
+    },
+    {
+      "TABLE_NAME": "calendar_journals",
+      "COLUMN_NAME": "mood",
+      "COLUMN_TYPE": "varchar(16)",
+      "IS_NULLABLE": "NO",
+      "COLUMN_KEY": "",
+      "EXTRA": "",
+      "COLUMN_DEFAULT": "",
+      "DATA_TYPE": "varchar",
+      "ORDINAL_POSITION": 5
+    },
+    {
+      "TABLE_NAME": "calendar_journals",
+      "COLUMN_NAME": "note",
+      "COLUMN_TYPE": "varchar(800)",
+      "IS_NULLABLE": "NO",
+      "COLUMN_KEY": "",
+      "EXTRA": "",
+      "COLUMN_DEFAULT": "",
+      "DATA_TYPE": "varchar",
+      "ORDINAL_POSITION": 6
+    },
+    {
+      "TABLE_NAME": "calendar_journals",
+      "COLUMN_NAME": "zero_expense",
+      "COLUMN_TYPE": "tinyint(1)",
+      "IS_NULLABLE": "NO",
+      "COLUMN_KEY": "",
+      "EXTRA": "",
+      "COLUMN_DEFAULT": "0",
+      "DATA_TYPE": "tinyint",
+      "ORDINAL_POSITION": 7
+    },
+    {
+      "TABLE_NAME": "calendar_journals",
+      "COLUMN_NAME": "created_at",
+      "COLUMN_TYPE": "datetime",
+      "IS_NULLABLE": "NO",
+      "COLUMN_KEY": "",
+      "EXTRA": "",
+      "COLUMN_DEFAULT": null,
+      "DATA_TYPE": "datetime",
+      "ORDINAL_POSITION": 8
+    },
+    {
+      "TABLE_NAME": "calendar_journals",
+      "COLUMN_NAME": "updated_at",
+      "COLUMN_TYPE": "datetime",
+      "IS_NULLABLE": "NO",
+      "COLUMN_KEY": "",
+      "EXTRA": "",
+      "COLUMN_DEFAULT": null,
+      "DATA_TYPE": "datetime",
+      "ORDINAL_POSITION": 9
     }
   ],
   "foreign_keys": [
@@ -4812,6 +5433,158 @@
       "SEQ_IN_INDEX": 1,
       "SUB_PART": null,
       "TABLE_NAME": "users_assets"
+    },
+    {
+      "TABLE_NAME": "insight_projects",
+      "INDEX_NAME": "PRIMARY",
+      "COLUMN_NAME": "id",
+      "NON_UNIQUE": 0,
+      "SEQ_IN_INDEX": 1,
+      "SUB_PART": null
+    },
+    {
+      "TABLE_NAME": "insight_projects",
+      "INDEX_NAME": "idx_insight_projects_book",
+      "COLUMN_NAME": "account_book_id",
+      "NON_UNIQUE": 1,
+      "SEQ_IN_INDEX": 1,
+      "SUB_PART": null
+    },
+    {
+      "TABLE_NAME": "insight_fixed_costs",
+      "INDEX_NAME": "PRIMARY",
+      "COLUMN_NAME": "id",
+      "NON_UNIQUE": 0,
+      "SEQ_IN_INDEX": 1,
+      "SUB_PART": null
+    },
+    {
+      "TABLE_NAME": "insight_fixed_costs",
+      "INDEX_NAME": "idx_insight_fixed_costs_book",
+      "COLUMN_NAME": "account_book_id",
+      "NON_UNIQUE": 1,
+      "SEQ_IN_INDEX": 1,
+      "SUB_PART": null
+    },
+    {
+      "TABLE_NAME": "insight_statement_annotations",
+      "INDEX_NAME": "PRIMARY",
+      "COLUMN_NAME": "id",
+      "NON_UNIQUE": 0,
+      "SEQ_IN_INDEX": 1,
+      "SUB_PART": null
+    },
+    {
+      "TABLE_NAME": "insight_statement_annotations",
+      "INDEX_NAME": "idx_insight_statement_annotations_book",
+      "COLUMN_NAME": "account_book_id",
+      "NON_UNIQUE": 1,
+      "SEQ_IN_INDEX": 1,
+      "SUB_PART": null
+    },
+    {
+      "TABLE_NAME": "insight_statement_annotations",
+      "INDEX_NAME": "idx_insight_annotation_statement",
+      "COLUMN_NAME": "statement_id",
+      "NON_UNIQUE": 0,
+      "SEQ_IN_INDEX": 1,
+      "SUB_PART": null
+    },
+    {
+      "TABLE_NAME": "insight_portfolio_snapshots",
+      "INDEX_NAME": "PRIMARY",
+      "COLUMN_NAME": "id",
+      "NON_UNIQUE": 0,
+      "SEQ_IN_INDEX": 1,
+      "SUB_PART": null
+    },
+    {
+      "TABLE_NAME": "insight_portfolio_snapshots",
+      "INDEX_NAME": "idx_insight_portfolio_snapshots_book",
+      "COLUMN_NAME": "account_book_id",
+      "NON_UNIQUE": 1,
+      "SEQ_IN_INDEX": 1,
+      "SUB_PART": null
+    },
+    {
+      "TABLE_NAME": "insight_merchant_aliases",
+      "INDEX_NAME": "PRIMARY",
+      "COLUMN_NAME": "id",
+      "NON_UNIQUE": 0,
+      "SEQ_IN_INDEX": 1,
+      "SUB_PART": null
+    },
+    {
+      "TABLE_NAME": "insight_merchant_aliases",
+      "INDEX_NAME": "idx_insight_merchant_aliases_book",
+      "COLUMN_NAME": "account_book_id",
+      "NON_UNIQUE": 1,
+      "SEQ_IN_INDEX": 1,
+      "SUB_PART": null
+    },
+    {
+      "TABLE_NAME": "insight_merchant_aliases",
+      "INDEX_NAME": "idx_insight_merchant_aliases_payee",
+      "COLUMN_NAME": "payee_id",
+      "NON_UNIQUE": 0,
+      "SEQ_IN_INDEX": 1,
+      "SUB_PART": null
+    },
+    {
+      "TABLE_NAME": "insight_fixed_cost_runs",
+      "INDEX_NAME": "PRIMARY",
+      "COLUMN_NAME": "id",
+      "NON_UNIQUE": 0,
+      "SEQ_IN_INDEX": 1,
+      "SUB_PART": null
+    },
+    {
+      "TABLE_NAME": "insight_fixed_cost_runs",
+      "INDEX_NAME": "idx_insight_fixed_cost_run",
+      "COLUMN_NAME": "fixed_cost_id",
+      "NON_UNIQUE": 0,
+      "SEQ_IN_INDEX": 1,
+      "SUB_PART": null
+    },
+    {
+      "TABLE_NAME": "insight_fixed_cost_runs",
+      "INDEX_NAME": "idx_insight_fixed_cost_run",
+      "COLUMN_NAME": "due_date",
+      "NON_UNIQUE": 0,
+      "SEQ_IN_INDEX": 2,
+      "SUB_PART": null
+    },
+    {
+      "TABLE_NAME": "calendar_journals",
+      "INDEX_NAME": "PRIMARY",
+      "COLUMN_NAME": "id",
+      "NON_UNIQUE": 0,
+      "SEQ_IN_INDEX": 1,
+      "SUB_PART": null
+    },
+    {
+      "TABLE_NAME": "calendar_journals",
+      "INDEX_NAME": "idx_calendar_journal_day",
+      "COLUMN_NAME": "account_book_id",
+      "NON_UNIQUE": 0,
+      "SEQ_IN_INDEX": 1,
+      "SUB_PART": null
+    },
+    {
+      "TABLE_NAME": "calendar_journals",
+      "INDEX_NAME": "idx_calendar_journal_day",
+      "COLUMN_NAME": "user_id",
+      "NON_UNIQUE": 0,
+      "SEQ_IN_INDEX": 2,
+      "SUB_PART": null
+    },
+    {
+      "TABLE_NAME": "calendar_journals",
+      "INDEX_NAME": "idx_calendar_journal_day",
+      "COLUMN_NAME": "date",
+      "NON_UNIQUE": 0,
+      "SEQ_IN_INDEX": 3,
+      "SUB_PART": null
     }
   ],
   "tables": [
@@ -4958,7 +5731,71 @@
       "TABLE_COMMENT": "",
       "TABLE_NAME": "users_assets",
       "TABLE_TYPE": "BASE TABLE"
+    },
+    {
+      "TABLE_NAME": "insight_projects"
+    },
+    {
+      "TABLE_NAME": "insight_fixed_costs"
+    },
+    {
+      "TABLE_NAME": "insight_statement_annotations"
+    },
+    {
+      "TABLE_NAME": "insight_portfolio_snapshots"
+    },
+    {
+      "TABLE_NAME": "insight_merchant_aliases"
+    },
+    {
+      "TABLE_NAME": "insight_fixed_cost_runs"
+    },
+    {
+      "TABLE_NAME": "calendar_journals"
     }
   ],
-  "captured_at": "2026-09-15T13:58:13.852041+00:00"
+  "captured_at": "2026-09-15T13:58:13.852041+00:00",
+  "planned_migrations": [
+    {
+      "file": "migrations/20261006_insights.sql",
+      "tables": [
+        "insight_projects",
+        "insight_fixed_costs",
+        "insight_statement_annotations",
+        "insight_portfolio_snapshots",
+        "insight_merchant_aliases"
+      ],
+      "source": "migration specification; not captured from a live database"
+    },
+    {
+      "file": "migrations/20261007_project_details.sql",
+      "tables": [
+        "insight_projects",
+        "insight_statement_annotations"
+      ],
+      "source": "additive migration specification"
+    },
+    {
+      "file": "migrations/20261007_fixed_cost_schedule.sql",
+      "tables": [
+        "insight_fixed_costs",
+        "insight_fixed_cost_runs"
+      ],
+      "source": "additive migration specification"
+    },
+    {
+      "file": "migrations/20261008_project_appearance.sql",
+      "tables": [
+        "insight_projects"
+      ],
+      "source": "additive migration specification"
+    },
+    {
+      "file": "migrations/20261008_calendar_journal.sql",
+      "tables": [
+        "calendar_journals"
+      ],
+      "source": "migration specification; not captured from a live database"
+    }
+  ]
 }

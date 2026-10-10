@@ -785,6 +785,7 @@ func buildStatementWriteInput(c *gin.Context) (statementservice.WriteInput, erro
 	}
 
 	return statementservice.WriteInput{
+		ProjectID: p.ProjectID, ConsumerID: p.ConsumerID,
 		Type:         p.Type,
 		Amount:       amount,
 		Description:  p.Description,
