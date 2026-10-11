@@ -18,6 +18,7 @@ import (
 	"github.com/yigger/jiezhang-backend/internal/infrastructure/db"
 	"github.com/yigger/jiezhang-backend/internal/infrastructure/excel"
 	"github.com/yigger/jiezhang-backend/internal/infrastructure/filestore"
+	"github.com/yigger/jiezhang-backend/internal/infrastructure/fixedcostscheduler"
 	"github.com/yigger/jiezhang-backend/internal/infrastructure/sessioncache"
 	"github.com/yigger/jiezhang-backend/internal/infrastructure/sessiontoken"
 	"github.com/yigger/jiezhang-backend/internal/infrastructure/sharetoken"
@@ -31,11 +32,13 @@ import (
 	asset "github.com/yigger/jiezhang-backend/internal/service/asset"
 	auth "github.com/yigger/jiezhang-backend/internal/service/auth"
 	budget "github.com/yigger/jiezhang-backend/internal/service/budget"
+	"github.com/yigger/jiezhang-backend/internal/service/calendarjournal"
 	category "github.com/yigger/jiezhang-backend/internal/service/category"
 	exportservice "github.com/yigger/jiezhang-backend/internal/service/export"
 	finance "github.com/yigger/jiezhang-backend/internal/service/finance"
 	friend "github.com/yigger/jiezhang-backend/internal/service/friend"
 	home "github.com/yigger/jiezhang-backend/internal/service/home"
+	"github.com/yigger/jiezhang-backend/internal/service/insights"
 	message "github.com/yigger/jiezhang-backend/internal/service/message"
 	payee "github.com/yigger/jiezhang-backend/internal/service/payee"
 	reporting "github.com/yigger/jiezhang-backend/internal/service/reporting"
@@ -49,6 +52,7 @@ import (
 )
 
 type App struct {
+	fixedCosts     *fixedcostscheduler.Scheduler
 	server         *http.Server
 	closeResources func() error
 }
@@ -108,12 +112,17 @@ func New(cfg config.Config) (*App, error) {
 	engine.Static("/images", filepath.Join(publicDir, "images"))
 	engine.Static("/private", filepath.Join(publicDir, "private"))
 	engine.Static("/public", publicDir)
-	setupRoutes(engine, cfg, mysqlDB, cache)
-	return &App{server: &http.Server{Addr: cfg.ListenAddr(), Handler: engine, ReadHeaderTimeout: 10 * time.Second}, closeResources: cleanup}, nil
+	recurring := setupRoutes(engine, cfg, mysqlDB, cache)
+	fixedCosts, err := fixedcostscheduler.New(recurring.RunDueFixedCosts)
+	if err != nil {
+		_ = cleanup()
+		return nil, err
+	}
+	return &App{fixedCosts: fixedCosts, server: &http.Server{Addr: cfg.ListenAddr(), Handler: engine, ReadHeaderTimeout: 10 * time.Second}, closeResources: cleanup}, nil
 }
 
 // setupRoutes assembles dependencies explicitly and registers routes without querying the database.
-func setupRoutes(engine *gin.Engine, cfg config.Config, db *gorm.DB, cache sessioncache.Cache) {
+func setupRoutes(engine *gin.Engine, cfg config.Config, db *gorm.DB, cache sessioncache.Cache) *insights.StorageService {
 	users := mysql.NewUserRepository(db)
 	books := mysql.NewAccountBookRepository(db)
 	statements := mysql.NewStatementRepository(db)
@@ -179,16 +188,32 @@ func setupRoutes(engine *gin.Engine, cfg config.Config, db *gorm.DB, cache sessi
 	superChartHandler := controller.NewSuperChartHandler(superChartService)
 	statisticsHandler := controller.NewStatisticsHandler(statisticsService)
 
+	router.RegisterCalendarJournal(engine, authenticate, controller.NewCalendarJournalHandler(calendarjournal.New(mysql.NewCalendarJournalRepository(db))))
+	insightsService := insights.New(mysql.NewInsightsRepository(db))
+	insightsStorage := insights.NewStorage(mysql.NewInsightsStorage(db), mysql.NewInsightsRepository(db))
+	router.RegisterInsights(engine, authenticate, controller.NewInsightsHandler(insightsService, insightsStorage))
 	router.Register(engine,
 		authHandler, userHandler, authenticate, homeHandler, statementsHandler,
 		financesHandler, categoriesHandler, assetsHandler, accountBookHandler,
 		budgetsHandler, messagesHandler, payeesHandler, friendsHandler,
 		settingsHandler, superStatementsHandler, superChartHandler, statisticsHandler,
 	)
+	return insightsStorage
 }
 
-func (a *App) Close() error { return a.closeResources() }
+func (a *App) Close() error {
+	if a.fixedCosts != nil {
+		a.fixedCosts.Stop()
+	}
+	return a.closeResources()
+}
 func (a *App) Run(ctx context.Context) error {
+	if a.fixedCosts != nil {
+		if e := a.fixedCosts.Start(ctx); e != nil {
+			return e
+		}
+		defer a.fixedCosts.Stop()
+	}
 	done := make(chan error, 1)
 	go func() { done <- a.server.ListenAndServe() }()
 	select {

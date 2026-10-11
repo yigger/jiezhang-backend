@@ -222,7 +222,20 @@ func (s Writer) CreateStatement(ctx context.Context, input WriteInput) (types.St
 	err = s.transaction.WithinTransaction(ctx, func(tx repo.Mutation) error {
 		var e error
 		id, e = tx.Create(ctx, record, statementEffect(record.Type, record.Amount))
-		return e
+		if e != nil {
+			return e
+		}
+		if input.ProjectID > 0 {
+			projectTx, ok := tx.(repo.ProjectMutation)
+			if !ok {
+				return ValidateError{Message: "project entries unavailable"}
+			}
+			if record.Type != "income" && record.Type != "expend" {
+				return ValidateError{Message: "invalid project entry type"}
+			}
+			return projectTx.AttachProject(ctx, input.AccountBookID, id, input.ProjectID, input.ConsumerID, input.UserID)
+		}
+		return nil
 	})
 	if err != nil {
 		return types.StatementListItem{}, err

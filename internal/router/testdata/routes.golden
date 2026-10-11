@@ -14,6 +14,7 @@ GET /api/assets/:id
 GET /api/budgets
 GET /api/budgets/:categoryId
 GET /api/budgets/parent
+GET /api/calendar/journal
 GET /api/categories/:id
 GET /api/categories/category_childs
 GET /api/categories/category_list
@@ -29,6 +30,8 @@ GET /api/header
 GET /api/icons/assets_with_url
 GET /api/icons/categories_with_url
 GET /api/index
+GET /api/insights/report
+GET /api/insights/workspace
 GET /api/message
 GET /api/message/:id
 GET /api/payees
@@ -64,6 +67,9 @@ POST /api/categories
 POST /api/check_openid
 POST /api/friends/accept_apply
 POST /api/friends/invite
+POST /api/insights/fixed_costs
+POST /api/insights/portfolio
+POST /api/insights/projects
 POST /api/payees
 POST /api/settings/feedback
 POST /api/statements
@@ -75,8 +81,11 @@ PUT /api/account_books/:id
 PUT /api/account_books/:id/switch
 PUT /api/assets/:id
 PUT /api/budgets/0
+PUT /api/calendar/journal
 PUT /api/categories/:id
 PUT /api/friends/:collaboratorId
+PUT /api/insights/annotation
+PUT /api/insights/merchants
 PUT /api/payees/:id
 PUT /api/statements/:statementId
 PUT /api/users/update_user

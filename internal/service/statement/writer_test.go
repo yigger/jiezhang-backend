@@ -138,3 +138,37 @@ func TestCreateAndDeletePassBalanceEffects(t *testing.T) {
 		t.Fatalf("delete: err=%v effect=%+v committed=%v", err, store.effect, store.committed)
 	}
 }
+
+type projectWriterStore struct {
+	*writerStore
+	project, consumer int64
+	attachFailure     error
+}
+
+func (s *projectWriterStore) WithinTransaction(ctx context.Context, fn func(repo.Mutation) error) error {
+	s.inTx = true
+	defer func() { s.inTx = false }()
+	err := fn(s)
+	s.committed = err == nil
+	return err
+}
+func (s *projectWriterStore) AttachProject(_ context.Context, book, id, project, consumer, user int64) error {
+	if !s.inTx || id != 1 || book != 5 || user != 2 {
+		panic("annotation outside financial transaction")
+	}
+	s.project, s.consumer = project, consumer
+	return s.attachFailure
+}
+func TestProjectCreationAttachesMetadataInFinancialTransaction(t *testing.T) {
+	for _, fail := range []bool{false, true} {
+		store := &projectWriterStore{writerStore: &writerStore{current: tablemodel.Statement{ID: 1, UserID: 2, Type: "expend", AssetID: 3, CategoryID: 4, Amount: 10}}}
+		if fail {
+			store.attachFailure = errors.New("invalid participant")
+		}
+		writer := NewWriter(store, nil, store, nil, NewRowMapper(nil))
+		_, err := writer.CreateStatement(context.Background(), WriteInput{UserID: 2, AccountBookID: 5, Type: "expend", Amount: 10, AssetID: 3, CategoryID: 4, ProjectID: 7, ConsumerID: 2})
+		if (err != nil) != fail || store.committed == fail || store.project != 7 || store.consumer != 2 {
+			t.Fatalf("project creation: %+v %v", store, err)
+		}
+	}
+}

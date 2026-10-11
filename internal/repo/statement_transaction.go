@@ -35,3 +35,8 @@ type BalanceEffect struct {
 	Source, Target float64
 	HasTarget      bool
 }
+
+// ProjectMutation atomically annotates project entries in the financial transaction.
+type ProjectMutation interface {
+	AttachProject(context.Context, int64, int64, int64, int64, int64) error
+}

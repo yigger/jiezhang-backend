@@ -1041,6 +1041,115 @@
                 }
             }
         },
+        "/calendar/journal": {
+            "get": {
+                "security": [
+                    {
+                        "AppID": [],
+                        "SessionKey": []
+                    }
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "CalendarJournal"
+                ],
+                "summary": "月度日历手帐",
+                "operationId": "CalendarJournalHandler_Month",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "账簿 ID",
+                        "name": "account_book_id",
+                        "in": "query"
+                    },
+                    {
+                        "type": "string",
+                        "description": "YYYY-MM",
+                        "name": "month",
+                        "in": "query",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/types.CalendarJournalMonth"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/types.APIResponse"
+                        }
+                    },
+                    "403": {
+                        "description": "Forbidden",
+                        "schema": {
+                            "$ref": "#/definitions/types.APIResponse"
+                        }
+                    }
+                }
+            },
+            "put": {
+                "security": [
+                    {
+                        "AppID": [],
+                        "SessionKey": []
+                    }
+                ],
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "CalendarJournal"
+                ],
+                "summary": "保存日历手帐",
+                "operationId": "CalendarJournalHandler_Save",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "账簿 ID",
+                        "name": "account_book_id",
+                        "in": "query"
+                    },
+                    {
+                        "description": "当天手帐",
+                        "name": "payload",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/types.CalendarJournalInput"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/types.CalendarJournalInput"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/types.APIResponse"
+                        }
+                    },
+                    "403": {
+                        "description": "Forbidden",
+                        "schema": {
+                            "$ref": "#/definitions/types.APIResponse"
+                        }
+                    }
+                }
+            }
+        },
         "/categories": {
             "post": {
                 "security": [
@@ -2224,6 +2333,388 @@
                     },
                     "500": {
                         "description": "服务错误",
+                        "schema": {
+                            "$ref": "#/definitions/types.APIResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/insights/annotation": {
+            "put": {
+                "security": [
+                    {
+                        "AppID": [],
+                        "SessionKey": []
+                    }
+                ],
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Insights"
+                ],
+                "summary": "设置项目、实际付款人和分摊",
+                "operationId": "InsightsHandler_SaveAnnotation",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "账簿 ID",
+                        "name": "account_book_id",
+                        "in": "query"
+                    },
+                    {
+                        "description": "完整标注，null 表示清除",
+                        "name": "payload",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/types.InsightAnnotationInput"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/types.InsightSavedResponse"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/types.APIResponse"
+                        }
+                    },
+                    "403": {
+                        "description": "Forbidden",
+                        "schema": {
+                            "$ref": "#/definitions/types.APIResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/insights/fixed_costs": {
+            "post": {
+                "security": [
+                    {
+                        "AppID": [],
+                        "SessionKey": []
+                    }
+                ],
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Insights"
+                ],
+                "summary": "保存固定开销规则",
+                "operationId": "InsightsHandler_SaveFixedCost",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "账簿 ID",
+                        "name": "account_book_id",
+                        "in": "query"
+                    },
+                    {
+                        "description": "规则资料",
+                        "name": "payload",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/types.InsightFixedCostInput"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/types.InsightSavedResponse"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/types.APIResponse"
+                        }
+                    },
+                    "403": {
+                        "description": "Forbidden",
+                        "schema": {
+                            "$ref": "#/definitions/types.APIResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/insights/merchants": {
+            "put": {
+                "security": [
+                    {
+                        "AppID": [],
+                        "SessionKey": []
+                    }
+                ],
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Insights"
+                ],
+                "summary": "合并商家统计",
+                "operationId": "InsightsHandler_SaveMerchantAliases",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "账簿 ID",
+                        "name": "account_book_id",
+                        "in": "query"
+                    },
+                    {
+                        "description": "商家 ID 和统一名称",
+                        "name": "payload",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/types.InsightMerchantAliasInput"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/types.InsightSavedResponse"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/types.APIResponse"
+                        }
+                    },
+                    "403": {
+                        "description": "Forbidden",
+                        "schema": {
+                            "$ref": "#/definitions/types.APIResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/insights/portfolio": {
+            "post": {
+                "security": [
+                    {
+                        "AppID": [],
+                        "SessionKey": []
+                    }
+                ],
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Insights"
+                ],
+                "summary": "保存当前资产组合快照",
+                "operationId": "InsightsHandler_CapturePortfolio",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "账簿 ID",
+                        "name": "account_book_id",
+                        "in": "query"
+                    },
+                    {
+                        "description": "快照备注",
+                        "name": "payload",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/types.InsightSnapshotInput"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/types.InsightSavedResponse"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/types.APIResponse"
+                        }
+                    },
+                    "403": {
+                        "description": "Forbidden",
+                        "schema": {
+                            "$ref": "#/definitions/types.APIResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/insights/projects": {
+            "post": {
+                "security": [
+                    {
+                        "AppID": [],
+                        "SessionKey": []
+                    }
+                ],
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Insights"
+                ],
+                "summary": "保存项目",
+                "operationId": "InsightsHandler_SaveProject",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "账簿 ID",
+                        "name": "account_book_id",
+                        "in": "query"
+                    },
+                    {
+                        "description": "项目资料",
+                        "name": "payload",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/types.InsightProjectInput"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/types.InsightSavedResponse"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/types.APIResponse"
+                        }
+                    },
+                    "403": {
+                        "description": "Forbidden",
+                        "schema": {
+                            "$ref": "#/definitions/types.APIResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/insights/report": {
+            "get": {
+                "security": [
+                    {
+                        "AppID": [],
+                        "SessionKey": []
+                    }
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Insights"
+                ],
+                "summary": "年度收支与多维汇总（整数分）",
+                "operationId": "InsightsHandler_Report",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "账簿 ID，沿用账簿访问权限",
+                        "name": "account_book_id",
+                        "in": "query"
+                    },
+                    {
+                        "type": "integer",
+                        "description": "年份，默认今年",
+                        "name": "year",
+                        "in": "query"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/types.InsightReport"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/types.APIResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/types.APIResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/insights/workspace": {
+            "get": {
+                "security": [
+                    {
+                        "AppID": [],
+                        "SessionKey": []
+                    }
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Insights"
+                ],
+                "summary": "全历史分析工作区",
+                "operationId": "InsightsHandler_Workspace",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "账簿 ID",
+                        "name": "account_book_id",
+                        "in": "query"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/types.InsightWorkspace"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
                         "schema": {
                             "$ref": "#/definitions/types.APIResponse"
                         }
@@ -5329,6 +5820,40 @@
                 }
             }
         },
+        "types.CalendarJournalInput": {
+            "type": "object",
+            "properties": {
+                "date": {
+                    "type": "string"
+                },
+                "mood": {
+                    "type": "string"
+                },
+                "note": {
+                    "type": "string"
+                },
+                "zero_expense": {
+                    "type": "boolean"
+                }
+            }
+        },
+        "types.CalendarJournalMonth": {
+            "type": "object",
+            "properties": {
+                "entries": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/types.CalendarJournalInput"
+                    }
+                },
+                "revoked_dates": {
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    }
+                }
+            }
+        },
         "types.CategoryHeader": {
             "type": "object",
             "properties": {
@@ -5745,6 +6270,630 @@
                     }
                 },
                 "uid": {
+                    "type": "integer"
+                }
+            }
+        },
+        "types.InsightAllocation": {
+            "type": "object",
+            "properties": {
+                "amount_cents": {
+                    "type": "integer"
+                },
+                "member_id": {
+                    "type": "integer"
+                }
+            }
+        },
+        "types.InsightAnnotation": {
+            "type": "object",
+            "properties": {
+                "allocations": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/types.InsightAllocation"
+                    }
+                },
+                "can_edit": {
+                    "type": "boolean"
+                },
+                "consumer_id": {
+                    "type": "integer"
+                },
+                "fixed_cost_id": {
+                    "type": "integer"
+                },
+                "payer_id": {
+                    "type": "integer"
+                },
+                "project_id": {
+                    "type": "integer"
+                },
+                "split_valid": {
+                    "type": "boolean"
+                },
+                "statement_id": {
+                    "type": "integer"
+                }
+            }
+        },
+        "types.InsightAnnotationInput": {
+            "type": "object",
+            "properties": {
+                "allocations": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/types.InsightAllocation"
+                    }
+                },
+                "consumer_id": {
+                    "type": "integer"
+                },
+                "fixed_cost_id": {
+                    "type": "integer"
+                },
+                "payer_id": {
+                    "type": "integer"
+                },
+                "project_id": {
+                    "type": "integer"
+                },
+                "statement_id": {
+                    "type": "integer"
+                }
+            }
+        },
+        "types.InsightAssetBalance": {
+            "type": "object",
+            "properties": {
+                "amount_cents": {
+                    "type": "integer"
+                },
+                "id": {
+                    "type": "integer"
+                },
+                "name": {
+                    "type": "string"
+                },
+                "type": {
+                    "type": "string"
+                }
+            }
+        },
+        "types.InsightAssetChange": {
+            "type": "object",
+            "properties": {
+                "after_cents": {
+                    "type": "integer"
+                },
+                "before_cents": {
+                    "type": "integer"
+                },
+                "id": {
+                    "type": "integer"
+                },
+                "name": {
+                    "type": "string"
+                },
+                "net_delta_cents": {
+                    "type": "integer"
+                },
+                "reason": {
+                    "type": "string"
+                }
+            }
+        },
+        "types.InsightCategory": {
+            "type": "object",
+            "properties": {
+                "amount_cents": {
+                    "type": "integer"
+                },
+                "count": {
+                    "type": "integer"
+                },
+                "id": {
+                    "type": "integer"
+                },
+                "name": {
+                    "type": "string"
+                }
+            }
+        },
+        "types.InsightFixedCostInput": {
+            "type": "object",
+            "properties": {
+                "active": {
+                    "type": "boolean"
+                },
+                "amount_cents": {
+                    "type": "integer"
+                },
+                "asset_id": {
+                    "type": "integer"
+                },
+                "candidate_key": {
+                    "type": "string"
+                },
+                "category_id": {
+                    "type": "integer"
+                },
+                "due_day": {
+                    "type": "integer"
+                },
+                "id": {
+                    "type": "integer"
+                },
+                "interval_months": {
+                    "type": "integer"
+                },
+                "name": {
+                    "type": "string"
+                }
+            }
+        },
+        "types.InsightFixedCostSummary": {
+            "type": "object",
+            "properties": {
+                "active": {
+                    "type": "boolean"
+                },
+                "amount_cents": {
+                    "type": "integer"
+                },
+                "annual_cents": {
+                    "type": "integer"
+                },
+                "asset_id": {
+                    "type": "integer"
+                },
+                "can_edit": {
+                    "type": "boolean"
+                },
+                "candidate_key": {
+                    "type": "string"
+                },
+                "category_id": {
+                    "type": "integer"
+                },
+                "creator_id": {
+                    "type": "integer"
+                },
+                "due_day": {
+                    "type": "integer"
+                },
+                "id": {
+                    "type": "integer"
+                },
+                "interval_months": {
+                    "type": "integer"
+                },
+                "monthly_cents": {
+                    "type": "integer"
+                },
+                "name": {
+                    "type": "string"
+                },
+                "next_run_date": {
+                    "type": "string"
+                }
+            }
+        },
+        "types.InsightGroup": {
+            "type": "object",
+            "properties": {
+                "average_cents": {
+                    "type": "integer"
+                },
+                "balance_cents": {
+                    "type": "integer"
+                },
+                "categories": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/types.InsightCategory"
+                    }
+                },
+                "count": {
+                    "type": "integer"
+                },
+                "expend_cents": {
+                    "type": "integer"
+                },
+                "ids": {
+                    "type": "array",
+                    "items": {
+                        "type": "integer"
+                    }
+                },
+                "income_cents": {
+                    "type": "integer"
+                },
+                "key": {
+                    "type": "string"
+                },
+                "last_date": {
+                    "type": "string"
+                },
+                "name": {
+                    "type": "string"
+                },
+                "statement_ids": {
+                    "type": "array",
+                    "items": {
+                        "type": "integer"
+                    }
+                }
+            }
+        },
+        "types.InsightLargeExpense": {
+            "type": "object",
+            "properties": {
+                "amount_cents": {
+                    "type": "integer"
+                },
+                "category": {
+                    "type": "string"
+                },
+                "date": {
+                    "type": "string"
+                },
+                "description": {
+                    "type": "string"
+                },
+                "id": {
+                    "type": "integer"
+                }
+            }
+        },
+        "types.InsightMemberOption": {
+            "type": "object",
+            "properties": {
+                "id": {
+                    "type": "integer"
+                },
+                "name": {
+                    "type": "string"
+                }
+            }
+        },
+        "types.InsightMerchantAliasInput": {
+            "type": "object",
+            "properties": {
+                "name": {
+                    "type": "string"
+                },
+                "payee_ids": {
+                    "type": "array",
+                    "items": {
+                        "type": "integer"
+                    }
+                }
+            }
+        },
+        "types.InsightMonth": {
+            "type": "object",
+            "properties": {
+                "balance_cents": {
+                    "type": "integer"
+                },
+                "complete": {
+                    "type": "boolean"
+                },
+                "count": {
+                    "type": "integer"
+                },
+                "expend_cents": {
+                    "type": "integer"
+                },
+                "income_cents": {
+                    "type": "integer"
+                },
+                "month": {
+                    "type": "integer"
+                },
+                "started": {
+                    "type": "boolean"
+                }
+            }
+        },
+        "types.InsightPortfolioPoint": {
+            "type": "object",
+            "properties": {
+                "assets_cents": {
+                    "type": "integer"
+                },
+                "balances": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/types.InsightAssetBalance"
+                    }
+                },
+                "changes": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/types.InsightAssetChange"
+                    }
+                },
+                "date": {
+                    "type": "string"
+                },
+                "delta_cents": {
+                    "type": "integer"
+                },
+                "id": {
+                    "type": "integer"
+                },
+                "liabilities_cents": {
+                    "type": "integer"
+                },
+                "net_cents": {
+                    "type": "integer"
+                },
+                "note": {
+                    "type": "string"
+                }
+            }
+        },
+        "types.InsightProjectInput": {
+            "type": "object",
+            "properties": {
+                "archived": {
+                    "type": "boolean"
+                },
+                "budget_cents": {
+                    "type": "integer"
+                },
+                "color": {
+                    "type": "string"
+                },
+                "end_date": {
+                    "type": "string"
+                },
+                "icon": {
+                    "type": "string"
+                },
+                "id": {
+                    "type": "integer"
+                },
+                "name": {
+                    "type": "string"
+                },
+                "participant_ids": {
+                    "type": "array",
+                    "items": {
+                        "type": "integer"
+                    }
+                },
+                "start_date": {
+                    "type": "string"
+                }
+            }
+        },
+        "types.InsightProjectSummary": {
+            "type": "object",
+            "properties": {
+                "archived": {
+                    "type": "boolean"
+                },
+                "budget_cents": {
+                    "type": "integer"
+                },
+                "can_edit": {
+                    "type": "boolean"
+                },
+                "color": {
+                    "type": "string"
+                },
+                "creator_id": {
+                    "type": "integer"
+                },
+                "end_date": {
+                    "type": "string"
+                },
+                "icon": {
+                    "type": "string"
+                },
+                "id": {
+                    "type": "integer"
+                },
+                "name": {
+                    "type": "string"
+                },
+                "participant_ids": {
+                    "type": "array",
+                    "items": {
+                        "type": "integer"
+                    }
+                },
+                "payers": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/types.InsightGroup"
+                    }
+                },
+                "start_date": {
+                    "type": "string"
+                },
+                "summary": {
+                    "$ref": "#/definitions/types.InsightGroup"
+                }
+            }
+        },
+        "types.InsightRecurringCandidate": {
+            "type": "object",
+            "properties": {
+                "amount_cents": {
+                    "type": "integer"
+                },
+                "annual_cents": {
+                    "type": "integer"
+                },
+                "asset_id": {
+                    "type": "integer"
+                },
+                "category_id": {
+                    "type": "integer"
+                },
+                "due_day": {
+                    "type": "integer"
+                },
+                "key": {
+                    "type": "string"
+                },
+                "months": {
+                    "type": "integer"
+                },
+                "name": {
+                    "type": "string"
+                },
+                "statement_ids": {
+                    "type": "array",
+                    "items": {
+                        "type": "integer"
+                    }
+                }
+            }
+        },
+        "types.InsightReport": {
+            "type": "object",
+            "properties": {
+                "as_of": {
+                    "type": "string"
+                },
+                "balance_cents": {
+                    "type": "integer"
+                },
+                "count": {
+                    "type": "integer"
+                },
+                "end_date": {
+                    "type": "string"
+                },
+                "expend_cents": {
+                    "type": "integer"
+                },
+                "income_cents": {
+                    "type": "integer"
+                },
+                "large_expenses": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/types.InsightLargeExpense"
+                    }
+                },
+                "members": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/types.InsightGroup"
+                    }
+                },
+                "merchants": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/types.InsightGroup"
+                    }
+                },
+                "months": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/types.InsightMonth"
+                    }
+                },
+                "recurring_candidates": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/types.InsightRecurringCandidate"
+                    }
+                },
+                "start_date": {
+                    "type": "string"
+                },
+                "year": {
+                    "type": "integer"
+                }
+            }
+        },
+        "types.InsightSavedResponse": {
+            "type": "object",
+            "properties": {
+                "id": {
+                    "type": "integer"
+                }
+            }
+        },
+        "types.InsightSnapshotInput": {
+            "type": "object",
+            "properties": {
+                "note": {
+                    "type": "string"
+                }
+            }
+        },
+        "types.InsightWorkspace": {
+            "type": "object",
+            "properties": {
+                "annotations": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/types.InsightAnnotation"
+                    }
+                },
+                "annual_fixed_cents": {
+                    "type": "integer"
+                },
+                "burdens": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/types.InsightGroup"
+                    }
+                },
+                "editable_statement_ids": {
+                    "type": "array",
+                    "items": {
+                        "type": "integer"
+                    }
+                },
+                "fixed_costs": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/types.InsightFixedCostSummary"
+                    }
+                },
+                "invalid_split_count": {
+                    "type": "integer"
+                },
+                "members": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/types.InsightMemberOption"
+                    }
+                },
+                "monthly_fixed_cents": {
+                    "type": "integer"
+                },
+                "payers": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/types.InsightGroup"
+                    }
+                },
+                "portfolio": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/types.InsightPortfolioPoint"
+                    }
+                },
+                "projects": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/types.InsightProjectSummary"
+                    }
+                },
+                "unallocated_cents": {
+                    "type": "integer"
+                },
+                "unknown_payer_cents": {
                     "type": "integer"
                 }
             }
@@ -6488,6 +7637,9 @@
                 "city": {
                     "type": "string"
                 },
+                "consumer_id": {
+                    "type": "integer"
+                },
                 "date": {
                     "type": "string"
                 },
@@ -6510,6 +7662,9 @@
                     "type": "string"
                 },
                 "payee_id": {
+                    "type": "integer"
+                },
+                "project_id": {
                     "type": "integer"
                 },
                 "province": {

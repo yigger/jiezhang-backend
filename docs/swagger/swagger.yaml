@@ -354,6 +354,28 @@ definitions:
       income:
         type: number
     type: object
+  types.CalendarJournalInput:
+    properties:
+      date:
+        type: string
+      mood:
+        type: string
+      note:
+        type: string
+      zero_expense:
+        type: boolean
+    type: object
+  types.CalendarJournalMonth:
+    properties:
+      entries:
+        items:
+          $ref: '#/definitions/types.CalendarJournalInput'
+        type: array
+      revoked_dates:
+        items:
+          type: string
+        type: array
+    type: object
   types.CategoryHeader:
     properties:
       all:
@@ -624,6 +646,415 @@ definitions:
           $ref: '#/definitions/types.Theme'
         type: array
       uid:
+        type: integer
+    type: object
+  types.InsightAllocation:
+    properties:
+      amount_cents:
+        type: integer
+      member_id:
+        type: integer
+    type: object
+  types.InsightAnnotation:
+    properties:
+      allocations:
+        items:
+          $ref: '#/definitions/types.InsightAllocation'
+        type: array
+      can_edit:
+        type: boolean
+      consumer_id:
+        type: integer
+      fixed_cost_id:
+        type: integer
+      payer_id:
+        type: integer
+      project_id:
+        type: integer
+      split_valid:
+        type: boolean
+      statement_id:
+        type: integer
+    type: object
+  types.InsightAnnotationInput:
+    properties:
+      allocations:
+        items:
+          $ref: '#/definitions/types.InsightAllocation'
+        type: array
+      consumer_id:
+        type: integer
+      fixed_cost_id:
+        type: integer
+      payer_id:
+        type: integer
+      project_id:
+        type: integer
+      statement_id:
+        type: integer
+    type: object
+  types.InsightAssetBalance:
+    properties:
+      amount_cents:
+        type: integer
+      id:
+        type: integer
+      name:
+        type: string
+      type:
+        type: string
+    type: object
+  types.InsightAssetChange:
+    properties:
+      after_cents:
+        type: integer
+      before_cents:
+        type: integer
+      id:
+        type: integer
+      name:
+        type: string
+      net_delta_cents:
+        type: integer
+      reason:
+        type: string
+    type: object
+  types.InsightCategory:
+    properties:
+      amount_cents:
+        type: integer
+      count:
+        type: integer
+      id:
+        type: integer
+      name:
+        type: string
+    type: object
+  types.InsightFixedCostInput:
+    properties:
+      active:
+        type: boolean
+      amount_cents:
+        type: integer
+      asset_id:
+        type: integer
+      candidate_key:
+        type: string
+      category_id:
+        type: integer
+      due_day:
+        type: integer
+      id:
+        type: integer
+      interval_months:
+        type: integer
+      name:
+        type: string
+    type: object
+  types.InsightFixedCostSummary:
+    properties:
+      active:
+        type: boolean
+      amount_cents:
+        type: integer
+      annual_cents:
+        type: integer
+      asset_id:
+        type: integer
+      can_edit:
+        type: boolean
+      candidate_key:
+        type: string
+      category_id:
+        type: integer
+      creator_id:
+        type: integer
+      due_day:
+        type: integer
+      id:
+        type: integer
+      interval_months:
+        type: integer
+      monthly_cents:
+        type: integer
+      name:
+        type: string
+      next_run_date:
+        type: string
+    type: object
+  types.InsightGroup:
+    properties:
+      average_cents:
+        type: integer
+      balance_cents:
+        type: integer
+      categories:
+        items:
+          $ref: '#/definitions/types.InsightCategory'
+        type: array
+      count:
+        type: integer
+      expend_cents:
+        type: integer
+      ids:
+        items:
+          type: integer
+        type: array
+      income_cents:
+        type: integer
+      key:
+        type: string
+      last_date:
+        type: string
+      name:
+        type: string
+      statement_ids:
+        items:
+          type: integer
+        type: array
+    type: object
+  types.InsightLargeExpense:
+    properties:
+      amount_cents:
+        type: integer
+      category:
+        type: string
+      date:
+        type: string
+      description:
+        type: string
+      id:
+        type: integer
+    type: object
+  types.InsightMemberOption:
+    properties:
+      id:
+        type: integer
+      name:
+        type: string
+    type: object
+  types.InsightMerchantAliasInput:
+    properties:
+      name:
+        type: string
+      payee_ids:
+        items:
+          type: integer
+        type: array
+    type: object
+  types.InsightMonth:
+    properties:
+      balance_cents:
+        type: integer
+      complete:
+        type: boolean
+      count:
+        type: integer
+      expend_cents:
+        type: integer
+      income_cents:
+        type: integer
+      month:
+        type: integer
+      started:
+        type: boolean
+    type: object
+  types.InsightPortfolioPoint:
+    properties:
+      assets_cents:
+        type: integer
+      balances:
+        items:
+          $ref: '#/definitions/types.InsightAssetBalance'
+        type: array
+      changes:
+        items:
+          $ref: '#/definitions/types.InsightAssetChange'
+        type: array
+      date:
+        type: string
+      delta_cents:
+        type: integer
+      id:
+        type: integer
+      liabilities_cents:
+        type: integer
+      net_cents:
+        type: integer
+      note:
+        type: string
+    type: object
+  types.InsightProjectInput:
+    properties:
+      archived:
+        type: boolean
+      budget_cents:
+        type: integer
+      color:
+        type: string
+      end_date:
+        type: string
+      icon:
+        type: string
+      id:
+        type: integer
+      name:
+        type: string
+      participant_ids:
+        items:
+          type: integer
+        type: array
+      start_date:
+        type: string
+    type: object
+  types.InsightProjectSummary:
+    properties:
+      archived:
+        type: boolean
+      budget_cents:
+        type: integer
+      can_edit:
+        type: boolean
+      color:
+        type: string
+      creator_id:
+        type: integer
+      end_date:
+        type: string
+      icon:
+        type: string
+      id:
+        type: integer
+      name:
+        type: string
+      participant_ids:
+        items:
+          type: integer
+        type: array
+      payers:
+        items:
+          $ref: '#/definitions/types.InsightGroup'
+        type: array
+      start_date:
+        type: string
+      summary:
+        $ref: '#/definitions/types.InsightGroup'
+    type: object
+  types.InsightRecurringCandidate:
+    properties:
+      amount_cents:
+        type: integer
+      annual_cents:
+        type: integer
+      asset_id:
+        type: integer
+      category_id:
+        type: integer
+      due_day:
+        type: integer
+      key:
+        type: string
+      months:
+        type: integer
+      name:
+        type: string
+      statement_ids:
+        items:
+          type: integer
+        type: array
+    type: object
+  types.InsightReport:
+    properties:
+      as_of:
+        type: string
+      balance_cents:
+        type: integer
+      count:
+        type: integer
+      end_date:
+        type: string
+      expend_cents:
+        type: integer
+      income_cents:
+        type: integer
+      large_expenses:
+        items:
+          $ref: '#/definitions/types.InsightLargeExpense'
+        type: array
+      members:
+        items:
+          $ref: '#/definitions/types.InsightGroup'
+        type: array
+      merchants:
+        items:
+          $ref: '#/definitions/types.InsightGroup'
+        type: array
+      months:
+        items:
+          $ref: '#/definitions/types.InsightMonth'
+        type: array
+      recurring_candidates:
+        items:
+          $ref: '#/definitions/types.InsightRecurringCandidate'
+        type: array
+      start_date:
+        type: string
+      year:
+        type: integer
+    type: object
+  types.InsightSavedResponse:
+    properties:
+      id:
+        type: integer
+    type: object
+  types.InsightSnapshotInput:
+    properties:
+      note:
+        type: string
+    type: object
+  types.InsightWorkspace:
+    properties:
+      annotations:
+        items:
+          $ref: '#/definitions/types.InsightAnnotation'
+        type: array
+      annual_fixed_cents:
+        type: integer
+      burdens:
+        items:
+          $ref: '#/definitions/types.InsightGroup'
+        type: array
+      editable_statement_ids:
+        items:
+          type: integer
+        type: array
+      fixed_costs:
+        items:
+          $ref: '#/definitions/types.InsightFixedCostSummary'
+        type: array
+      invalid_split_count:
+        type: integer
+      members:
+        items:
+          $ref: '#/definitions/types.InsightMemberOption'
+        type: array
+      monthly_fixed_cents:
+        type: integer
+      payers:
+        items:
+          $ref: '#/definitions/types.InsightGroup'
+        type: array
+      portfolio:
+        items:
+          $ref: '#/definitions/types.InsightPortfolioPoint'
+        type: array
+      projects:
+        items:
+          $ref: '#/definitions/types.InsightProjectSummary'
+        type: array
+      unallocated_cents:
+        type: integer
+      unknown_payer_cents:
         type: integer
     type: object
   types.InviteInformationBook:
@@ -1107,6 +1538,8 @@ definitions:
         type: integer
       city:
         type: string
+      consumer_id:
+        type: integer
       date:
         type: string
       description:
@@ -1122,6 +1555,8 @@ definitions:
       nation:
         type: string
       payee_id:
+        type: integer
+      project_id:
         type: integer
       province:
         type: string
@@ -2093,6 +2528,76 @@ paths:
       summary: '父级分类预算列表，Query: `year`, `month`'
       tags:
       - Budgets
+  /calendar/journal:
+    get:
+      operationId: CalendarJournalHandler_Month
+      parameters:
+      - description: 账簿 ID
+        in: query
+        name: account_book_id
+        type: integer
+      - description: YYYY-MM
+        in: query
+        name: month
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/types.CalendarJournalMonth'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/types.APIResponse'
+        "403":
+          description: Forbidden
+          schema:
+            $ref: '#/definitions/types.APIResponse'
+      security:
+      - AppID: []
+        SessionKey: []
+      summary: 月度日历手帐
+      tags:
+      - CalendarJournal
+    put:
+      consumes:
+      - application/json
+      operationId: CalendarJournalHandler_Save
+      parameters:
+      - description: 账簿 ID
+        in: query
+        name: account_book_id
+        type: integer
+      - description: 当天手帐
+        in: body
+        name: payload
+        required: true
+        schema:
+          $ref: '#/definitions/types.CalendarJournalInput'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/types.CalendarJournalInput'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/types.APIResponse'
+        "403":
+          description: Forbidden
+          schema:
+            $ref: '#/definitions/types.APIResponse'
+      security:
+      - AppID: []
+        SessionKey: []
+      summary: 保存日历手帐
+      tags:
+      - CalendarJournal
   /categories:
     post:
       consumes:
@@ -2840,6 +3345,249 @@ paths:
       summary: '首页账单列表，Query: `range`（today/yesterday/week/month/year）'
       tags:
       - Home
+  /insights/annotation:
+    put:
+      consumes:
+      - application/json
+      operationId: InsightsHandler_SaveAnnotation
+      parameters:
+      - description: 账簿 ID
+        in: query
+        name: account_book_id
+        type: integer
+      - description: 完整标注，null 表示清除
+        in: body
+        name: payload
+        required: true
+        schema:
+          $ref: '#/definitions/types.InsightAnnotationInput'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/types.InsightSavedResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/types.APIResponse'
+        "403":
+          description: Forbidden
+          schema:
+            $ref: '#/definitions/types.APIResponse'
+      security:
+      - AppID: []
+        SessionKey: []
+      summary: 设置项目、实际付款人和分摊
+      tags:
+      - Insights
+  /insights/fixed_costs:
+    post:
+      consumes:
+      - application/json
+      operationId: InsightsHandler_SaveFixedCost
+      parameters:
+      - description: 账簿 ID
+        in: query
+        name: account_book_id
+        type: integer
+      - description: 规则资料
+        in: body
+        name: payload
+        required: true
+        schema:
+          $ref: '#/definitions/types.InsightFixedCostInput'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/types.InsightSavedResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/types.APIResponse'
+        "403":
+          description: Forbidden
+          schema:
+            $ref: '#/definitions/types.APIResponse'
+      security:
+      - AppID: []
+        SessionKey: []
+      summary: 保存固定开销规则
+      tags:
+      - Insights
+  /insights/merchants:
+    put:
+      consumes:
+      - application/json
+      operationId: InsightsHandler_SaveMerchantAliases
+      parameters:
+      - description: 账簿 ID
+        in: query
+        name: account_book_id
+        type: integer
+      - description: 商家 ID 和统一名称
+        in: body
+        name: payload
+        required: true
+        schema:
+          $ref: '#/definitions/types.InsightMerchantAliasInput'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/types.InsightSavedResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/types.APIResponse'
+        "403":
+          description: Forbidden
+          schema:
+            $ref: '#/definitions/types.APIResponse'
+      security:
+      - AppID: []
+        SessionKey: []
+      summary: 合并商家统计
+      tags:
+      - Insights
+  /insights/portfolio:
+    post:
+      consumes:
+      - application/json
+      operationId: InsightsHandler_CapturePortfolio
+      parameters:
+      - description: 账簿 ID
+        in: query
+        name: account_book_id
+        type: integer
+      - description: 快照备注
+        in: body
+        name: payload
+        required: true
+        schema:
+          $ref: '#/definitions/types.InsightSnapshotInput'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/types.InsightSavedResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/types.APIResponse'
+        "403":
+          description: Forbidden
+          schema:
+            $ref: '#/definitions/types.APIResponse'
+      security:
+      - AppID: []
+        SessionKey: []
+      summary: 保存当前资产组合快照
+      tags:
+      - Insights
+  /insights/projects:
+    post:
+      consumes:
+      - application/json
+      operationId: InsightsHandler_SaveProject
+      parameters:
+      - description: 账簿 ID
+        in: query
+        name: account_book_id
+        type: integer
+      - description: 项目资料
+        in: body
+        name: payload
+        required: true
+        schema:
+          $ref: '#/definitions/types.InsightProjectInput'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/types.InsightSavedResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/types.APIResponse'
+        "403":
+          description: Forbidden
+          schema:
+            $ref: '#/definitions/types.APIResponse'
+      security:
+      - AppID: []
+        SessionKey: []
+      summary: 保存项目
+      tags:
+      - Insights
+  /insights/report:
+    get:
+      operationId: InsightsHandler_Report
+      parameters:
+      - description: 账簿 ID，沿用账簿访问权限
+        in: query
+        name: account_book_id
+        type: integer
+      - description: 年份，默认今年
+        in: query
+        name: year
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/types.InsightReport'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/types.APIResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/types.APIResponse'
+      security:
+      - AppID: []
+        SessionKey: []
+      summary: 年度收支与多维汇总（整数分）
+      tags:
+      - Insights
+  /insights/workspace:
+    get:
+      operationId: InsightsHandler_Workspace
+      parameters:
+      - description: 账簿 ID
+        in: query
+        name: account_book_id
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/types.InsightWorkspace'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/types.APIResponse'
+      security:
+      - AppID: []
+        SessionKey: []
+      summary: 全历史分析工作区
+      tags:
+      - Insights
   /message:
     get:
       operationId: MessagesHandler_List
