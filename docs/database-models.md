@@ -10,6 +10,10 @@
 
 `user_assets` 是媒体附件表，`users_assets` 是资产分配表，分别使用 `UserAsset` 和 `UserAssetAssignment`；后者的 `asset_id` 在数据库中是 varchar。`ar_internal_metadata` 和 `schema_migrations` 使用字符串主键。
 
+全部表结构统一维护在 `migrations/`。[`00000000_initial_schema.sql`](../migrations/00000000_initial_schema.sql) 是最早的结构基线，包含原有 24 张核心表的显式 DDL；按文件名顺序执行其余增量迁移后，得到当前完整的 31 张表。基线只用于空库，不包含凭据、用户或交易记录，也不从元数据快照初始化。已有数据库只执行尚未应用的增量迁移。
+
+Docker 的 [`01-migrations.sql`](../docker/mysql/01-migrations.sql) 从基线开始执行上述迁移，再由独立的 [`02-dev-seed.sql`](../docker/mysql/02-dev-seed.sql) 添加合成的开发用户、账本、分类和零余额资产。这些脚本只在新建的 Compose MySQL 数据卷初始化时执行，不属于运行时 AutoMigrate。新增迁移应同步更新 Docker 初始化清单；已有卷仍需手动执行迁移。
+
 | 数据表 | Go 模型 |
 | --- | --- |
 | `account_books` | [`AccountBook`](../internal/model/account_book.go) |
@@ -36,6 +40,12 @@
 | `users` | [`User`](../internal/model/user.go) |
 | `user_assets` | [`UserAsset`](../internal/model/user_asset.go) |
 | `users_assets` | [`UserAssetAssignment`](../internal/model/user_asset_assignment.go) |
+
+## 历史补录来源与余额行为
+
+[`migrations/20261011_statement_import.sql`](../migrations/20261011_statement_import.sql) 给 `statements` 添加可空 `balance_applied`（`*bool`），NULL 兼容普通账单，false 表示历史补录，创建、更新和删除均不改变资产余额。补录文件没有钱包历史余额，现有 `residue` 保持零值，不代表真实历史余额；原有金额 float64 和 nullable/零值兼容保持不变。
+
+导入不新增表。现有 `statements` 增加可空 `import_key`、`import_fingerprint`（均为 `*string`、ascii_bin 的 char(64)）：前者是平台和原订单号的 SHA-256，后者是原始流水内容的 SHA-256（时间、整数分金额、交易对方等，独立于资产/分类映射）。唯一索引 `idx_statements_import_key` 为 `(account_book_id, user_id, import_key)`；普通账单保留 NULL，可重复存在。两个指纹和账单、自动创建的分类/资产同事务提交，编辑时保留原值以识别重导及来源内容冲突；删除账单会删除指纹，再次导入允许重新创建。时间、金额、交易对方相同的不同订单不会被误合并。元数据快照按迁移定义增加覆盖，并标记为 planned migration，尚未在线采集验证；服务不执行 AutoMigrate。
 
 ## 分析功能新增表
 

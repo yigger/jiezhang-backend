@@ -1,0 +1,12 @@
+{
+  "assets": {
+    "alipay:余额": { "name": "支付宝", "parent": "虚拟账户" },
+    "wechat:零钱": { "name": "微信", "parent": "虚拟账户" }
+  },
+  "categories": {
+    "expend:餐饮美食": { "name": "日常饮食", "parent": "伙食餐饮" }
+  },
+  "rules": [
+    { "type": "expend", "contains": ["早餐", "早饭"], "target": { "name": "早餐", "parent": "伙食餐饮" } }
+  ]
+}

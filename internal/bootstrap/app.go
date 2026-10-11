@@ -15,6 +15,7 @@ import (
 	"github.com/gin-gonic/gin"
 	"github.com/yigger/jiezhang-backend/internal/config"
 	"github.com/yigger/jiezhang-backend/internal/controller"
+	"github.com/yigger/jiezhang-backend/internal/infrastructure/billfile"
 	"github.com/yigger/jiezhang-backend/internal/infrastructure/db"
 	"github.com/yigger/jiezhang-backend/internal/infrastructure/excel"
 	"github.com/yigger/jiezhang-backend/internal/infrastructure/filestore"
@@ -31,6 +32,7 @@ import (
 	accountbook "github.com/yigger/jiezhang-backend/internal/service/accountbook"
 	asset "github.com/yigger/jiezhang-backend/internal/service/asset"
 	auth "github.com/yigger/jiezhang-backend/internal/service/auth"
+	"github.com/yigger/jiezhang-backend/internal/service/billimport"
 	budget "github.com/yigger/jiezhang-backend/internal/service/budget"
 	"github.com/yigger/jiezhang-backend/internal/service/calendarjournal"
 	category "github.com/yigger/jiezhang-backend/internal/service/category"
@@ -55,6 +57,24 @@ type App struct {
 	fixedCosts     *fixedcostscheduler.Scheduler
 	server         *http.Server
 	closeResources func() error
+}
+
+// NewBillImporter assembles the standalone CLI without starting HTTP, Redis or cron.
+func NewBillImporter(dsn string) (*billimport.Service, func() error, error) {
+	if dsn == "" {
+		return nil, nil, errors.New("MYSQL_DSN is required")
+	}
+	database, err := db.NewMySQLQuiet(dsn)
+	if err != nil {
+		return nil, nil, errors.New("cannot connect to MySQL; check MYSQL_DSN")
+	}
+	sqlDB, err := database.DB()
+	if err != nil {
+		return nil, nil, errors.New("cannot initialize MySQL connection")
+	}
+	imports := mysql.NewStatementImportRepository(database)
+	service := billimport.New(imports, billfile.Reader{})
+	return service, sqlDB.Close, nil
 }
 
 func New(cfg config.Config) (*App, error) {

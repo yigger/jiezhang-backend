@@ -1,0 +1,106 @@
+name: jiezhang-dev
+
+services:
+  dev-secrets:
+    image: busybox:1.37
+    entrypoint: ["sh", "/init-secrets.sh"]
+    volumes:
+      - ./docker/init-secrets.sh:/init-secrets.sh:ro
+      - dev-secrets:/run/dev-secrets
+    restart: "no"
+
+  mysql:
+    image: mysql:8.4
+    environment:
+      MYSQL_DATABASE: jiezhang
+      MYSQL_USER: jiezhang
+      MYSQL_PASSWORD_FILE: /run/dev-secrets/mysql-password
+      MYSQL_ROOT_PASSWORD_FILE: /run/dev-secrets/mysql-root-password
+      TZ: Asia/Shanghai
+    command: ["--character-set-server=utf8mb4", "--collation-server=utf8mb4_unicode_ci", "--default-time-zone=+08:00"]
+    ports:
+      - "127.0.0.1:${DEV_MYSQL_PORT:-13306}:3306"
+    volumes:
+      - mysql-data:/var/lib/mysql
+      - dev-secrets:/run/dev-secrets:ro
+      - ./docker/mysql/01-migrations.sql:/docker-entrypoint-initdb.d/01-migrations.sql:ro
+      - ./docker/mysql/02-dev-seed.sql:/docker-entrypoint-initdb.d/02-dev-seed.sql:ro
+      - ./migrations:/docker-entrypoint-initdb.d/migrations:ro
+    depends_on:
+      dev-secrets:
+        condition: service_completed_successfully
+    healthcheck:
+      test: ["CMD-SHELL", "MYSQL_PWD=$$(cat /run/dev-secrets/mysql-password) mysql --protocol=TCP -h 127.0.0.1 -ujiezhang jiezhang -Nse 'SELECT 1' >/dev/null"]
+      interval: 5s
+      timeout: 5s
+      retries: 30
+      start_period: 30s
+    restart: unless-stopped
+
+  redis:
+    image: redis:7.4-alpine
+    command: ["redis-server", "--appendonly", "yes"]
+    ports:
+      - "127.0.0.1:${DEV_REDIS_PORT:-16379}:6379"
+    volumes:
+      - redis-data:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+    restart: unless-stopped
+
+  api:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      args:
+        GOPROXY: ${DOCKER_GOPROXY:-https://proxy.golang.org,direct}
+    environment:
+      APP_NAME: jiezhang-backend
+      ENV: dev
+      GIN_MODE: debug
+      PORT: "10240"
+      PUBLIC_BASE_URL: http://localhost:${DEV_HTTP_PORT:-10240}
+      MYSQL_HOST: mysql
+      MYSQL_DATABASE: jiezhang
+      MYSQL_USER: jiezhang
+      REDIS_URL: redis://redis:6379/0
+      MINIPROGRAM_APPID: ${MINIPROGRAM_APPID:-docker-dev-app}
+      MINIPROGRAM_SECRET: ${MINIPROGRAM_SECRET:-docker-dev-placeholder}
+      MCP_API_KEY: ""
+      GOPROXY: ${DOCKER_GOPROXY:-https://proxy.golang.org,direct}
+      TZ: Asia/Shanghai
+    ports:
+      - "127.0.0.1:${DEV_HTTP_PORT:-10240}:10240"
+    volumes:
+      - .:/app
+      # Keep the host's personal .env outside the container's configuration.
+      - ./docker/empty.env:/app/.env:ro
+      - dev-secrets:/run/dev-secrets:ro
+      - go-modules:/go/pkg/mod
+      - go-build:/root/.cache/go-build
+      - go-binaries:/app/tmp
+    depends_on:
+      mysql:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "curl", "--fail", "--silent", "--output", "/dev/null", "http://127.0.0.1:10240/swagger/doc.json"]
+      interval: 5s
+      timeout: 3s
+      retries: 30
+      start_period: 120s
+    init: true
+    stop_grace_period: 20s
+    restart: unless-stopped
+
+volumes:
+  dev-secrets:
+  mysql-data:
+  redis-data:
+  go-modules:
+  go-build:
+  go-binaries:

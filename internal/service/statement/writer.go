@@ -259,7 +259,9 @@ func (s Writer) UpdateStatement(ctx context.Context, input UpdateInput) (types.S
 		if err != nil {
 			return err
 		}
-		return tx.UpdateByID(ctx, input.StatementID, input.AccountBookID, record, statementEffect(current.Type, current.Amount), statementEffect(record.Type, record.Amount))
+		record.BalanceApplied = current.BalanceApplied
+		record.ImportKey, record.ImportFingerprint = current.ImportKey, current.ImportFingerprint
+		return tx.UpdateByID(ctx, input.StatementID, input.AccountBookID, record, recordEffect(current), recordEffect(record))
 	})
 	if err != nil {
 		return types.StatementListItem{}, err
@@ -279,6 +281,6 @@ func (s Writer) DeleteStatement(ctx context.Context, id, userID, bookID int64) e
 		if current.UserID != userID {
 			return ErrStatementPermissionDenied
 		}
-		return tx.DeleteByID(ctx, id, bookID, statementEffect(current.Type, current.Amount))
+		return tx.DeleteByID(ctx, id, bookID, recordEffect(current))
 	})
 }

@@ -1,0 +1,6 @@
+# The route contract is compared byte for byte on every platform.
+internal/router/testdata/routes.golden text eol=lf
+Dockerfile text eol=lf
+.air.toml text eol=lf
+compose.yaml text eol=lf
+docker/** text eol=lf

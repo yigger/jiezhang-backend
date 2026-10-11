@@ -3404,7 +3404,7 @@
       "CHARACTER_MAXIMUM_LENGTH": null,
       "COLUMN_COMMENT": "账本号",
       "COLUMN_DEFAULT": null,
-      "COLUMN_KEY": "",
+      "COLUMN_KEY": "MUL",
       "COLUMN_NAME": "account_book_id",
       "COLUMN_TYPE": "int",
       "DATA_TYPE": "int",
@@ -4972,6 +4972,57 @@
       "COLUMN_DEFAULT": null,
       "DATA_TYPE": "datetime",
       "ORDINAL_POSITION": 9
+    },
+    {
+      "CHARACTER_MAXIMUM_LENGTH": null,
+      "COLUMN_COMMENT": "",
+      "COLUMN_DEFAULT": null,
+      "COLUMN_KEY": "",
+      "COLUMN_NAME": "balance_applied",
+      "COLUMN_TYPE": "tinyint(1)",
+      "DATA_TYPE": "tinyint",
+      "DATETIME_PRECISION": null,
+      "EXTRA": "",
+      "GENERATION_EXPRESSION": "",
+      "IS_NULLABLE": "YES",
+      "NUMERIC_PRECISION": 3,
+      "NUMERIC_SCALE": 0,
+      "ORDINAL_POSITION": 29,
+      "TABLE_NAME": "statements"
+    },
+    {
+      "CHARACTER_MAXIMUM_LENGTH": 64,
+      "COLUMN_COMMENT": "",
+      "COLUMN_DEFAULT": null,
+      "COLUMN_KEY": "",
+      "COLUMN_NAME": "import_key",
+      "COLUMN_TYPE": "char(64)",
+      "DATA_TYPE": "char",
+      "DATETIME_PRECISION": null,
+      "EXTRA": "",
+      "GENERATION_EXPRESSION": "",
+      "IS_NULLABLE": "YES",
+      "NUMERIC_PRECISION": null,
+      "NUMERIC_SCALE": null,
+      "ORDINAL_POSITION": 30,
+      "TABLE_NAME": "statements"
+    },
+    {
+      "CHARACTER_MAXIMUM_LENGTH": 64,
+      "COLUMN_COMMENT": "",
+      "COLUMN_DEFAULT": null,
+      "COLUMN_KEY": "",
+      "COLUMN_NAME": "import_fingerprint",
+      "COLUMN_TYPE": "char(64)",
+      "DATA_TYPE": "char",
+      "DATETIME_PRECISION": null,
+      "EXTRA": "",
+      "GENERATION_EXPRESSION": "",
+      "IS_NULLABLE": "YES",
+      "NUMERIC_PRECISION": null,
+      "NUMERIC_SCALE": null,
+      "ORDINAL_POSITION": 31,
+      "TABLE_NAME": "statements"
     }
   ],
   "foreign_keys": [
@@ -5585,6 +5636,33 @@
       "NON_UNIQUE": 0,
       "SEQ_IN_INDEX": 3,
       "SUB_PART": null
+    },
+    {
+      "COLUMN_NAME": "account_book_id",
+      "INDEX_NAME": "idx_statements_import_key",
+      "INDEX_TYPE": "BTREE",
+      "NON_UNIQUE": 0,
+      "SEQ_IN_INDEX": 1,
+      "SUB_PART": null,
+      "TABLE_NAME": "statements"
+    },
+    {
+      "COLUMN_NAME": "user_id",
+      "INDEX_NAME": "idx_statements_import_key",
+      "INDEX_TYPE": "BTREE",
+      "NON_UNIQUE": 0,
+      "SEQ_IN_INDEX": 2,
+      "SUB_PART": null,
+      "TABLE_NAME": "statements"
+    },
+    {
+      "COLUMN_NAME": "import_key",
+      "INDEX_NAME": "idx_statements_import_key",
+      "INDEX_TYPE": "BTREE",
+      "NON_UNIQUE": 0,
+      "SEQ_IN_INDEX": 3,
+      "SUB_PART": null,
+      "TABLE_NAME": "statements"
     }
   ],
   "tables": [
@@ -5796,6 +5874,13 @@
         "calendar_journals"
       ],
       "source": "migration specification; not captured from a live database"
+    },
+    {
+      "file": "migrations/20261011_statement_import.sql",
+      "tables": [
+        "statements"
+      ],
+      "source": "additive migration specification; not captured from a live database"
     }
   ]
 }

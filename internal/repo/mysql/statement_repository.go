@@ -32,6 +32,10 @@ func (r *statementMutation) Create(ctx context.Context, input tablemodel.Stateme
 		model := input
 		model.UpdatedAt = time.Now()
 		model.Residue = assetAmount + effect.Source
+		if input.BalanceApplied != nil && !*input.BalanceApplied {
+			// The file has no historical wallet balance; do not snapshot today's balance.
+			model.Residue = 0
+		}
 		if err := tx.Create(&model).Error; err != nil {
 			return err
 		}
@@ -82,6 +86,24 @@ func (r *statementMutation) UpdateByID(ctx context.Context, statementID int64, a
 		oldStatement, err := r.getStatementForUpdate(tx, statementID, accountBookID)
 		if err != nil {
 			return err
+		}
+		if oldStatement.BalanceApplied != nil && !*oldStatement.BalanceApplied {
+			// Zero deltas still require validating the replacement references' book.
+			if _, err := r.getAssetAmountForUpdate(tx, input.AssetID, accountBookID); err != nil {
+				return err
+			}
+			if input.TargetAssetID != nil && *input.TargetAssetID > 0 {
+				if _, err := r.getAssetAmountForUpdate(tx, *input.TargetAssetID, accountBookID); err != nil {
+					return err
+				}
+			}
+			var category tablemodel.Category
+			if err := tx.Where("id = ? AND account_book_id = ?", input.CategoryID, accountBookID).Take(&category).Error; err != nil {
+				if errors.Is(err, gorm.ErrRecordNotFound) {
+					return repo.ErrCategoryNotFound
+				}
+				return err
+			}
 		}
 
 		if err := r.applyStatementEffect(tx, accountBookID, oldEffect, oldStatement.AssetID, oldStatement.TargetAssetID, -1); err != nil {

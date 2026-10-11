@@ -1,6 +1,16 @@
 package statement
 
-import "github.com/yigger/jiezhang-backend/internal/repo"
+import (
+	"github.com/yigger/jiezhang-backend/internal/model"
+	"github.com/yigger/jiezhang-backend/internal/repo"
+)
+
+func recordEffect(record model.Statement) repo.BalanceEffect {
+	if record.BalanceApplied != nil && !*record.BalanceApplied {
+		return repo.BalanceEffect{}
+	}
+	return statementEffect(record.Type, record.Amount)
+}
 
 func statementEffect(kind string, amount float64) repo.BalanceEffect {
 	switch kind {

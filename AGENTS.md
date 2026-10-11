@@ -2,7 +2,7 @@
 
 ## 入口与结构
 
-- 唯一入口是根目录 `main.go`。启动、资源关闭、依赖组装和路由配置集中在 `internal/bootstrap/app.go`，组装函数为 `setupRoutes`。
+- HTTP 服务入口是根目录 `main.go`；独立账单导入管理工具入口是 `cmd/bill-import/main.go`。启动、资源关闭和依赖组装集中在 `internal/bootstrap/app.go`，HTTP 路由组装函数为 `setupRoutes`。
 - 使用显式构造函数和具名变量表达依赖，不使用 dig、运行时 DI 容器或全局业务服务注册表。不再创建 `cmd/server`、`bootstrap/modules` 或单独的 setup/wiring 文件。
 - 当前路径约定优先于外部架构 skill 中旧的 handler/repository/DTO 路径；分层隔离原则仍然适用。
 
@@ -23,6 +23,7 @@
 
 - 保留现有接口方法、路径、字段和兼容错误格式，除非任务明确要求变更；HTTP 200 可能承载业务失败。
 - 账单和资产余额必须原子提交或回滚。更新、删除在事务内锁定账单后检查归属，部分更新在锁内合并；余额规则由 Service 计算，Repo 应用增减值，响应查询在提交后执行。
+- 历史补录账单持久化 `balance_applied=false`，导入和后续更新、删除均不改变资产余额；NULL 保留普通账单的兼容行为。导入唯一键和原始内容指纹存放在账单表，与自动创建的分类和资产同事务提交，编辑账单时保留；账单删除后允许重新导入。
 - 不弱化账本权限、Session 校验或文件 URL 签名检查。`ENV=dev` 使用用户 ID 1 的开发鉴权，`GIN_MODE` 不控制该行为。
 - 表模型变更以真实 schema 为依据，不凭命名猜测字段类型。新增可空字段保留 NULL；已有零值兼容和 float64 金额表示的变动需同时审查业务影响。
 - 服务不执行 AutoMigrate。不要把 `internal/model/testdata/schema_snapshot.json` 当作迁移或初始化脚本；它仅包含 schema 元数据，禁止写入凭据或业务记录。

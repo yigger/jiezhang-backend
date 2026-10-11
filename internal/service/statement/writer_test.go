@@ -139,6 +139,25 @@ func TestCreateAndDeletePassBalanceEffects(t *testing.T) {
 	}
 }
 
+func TestHistoricalStatementEditsAndDeletionLeaveBalanceUnchanged(t *testing.T) {
+	flag := false
+	key, fingerprint := "original-source-key", "original-content-fingerprint"
+	store := &writerStore{current: tablemodel.Statement{ID: 1, UserID: 2, AccountBookID: 5, Type: "expend", Amount: 10, AssetID: 3, CategoryID: 4, CreatedAt: time.Date(2026, 1, 1, 8, 0, 0, 0, time.UTC), BalanceApplied: &flag, ImportKey: &key, ImportFingerprint: &fingerprint}}
+	writer := NewWriter(store, nil, store, nil, NewRowMapper(nil))
+	amount, asset, kind := float64(50), int64(6), "income"
+	_, err := writer.UpdateStatement(context.Background(), UpdateInput{StatementID: 1, UserID: 2, AccountBookID: 5, Patch: PatchInput{Amount: &amount, AssetID: &asset, Type: &kind}})
+	if err != nil || store.oldEffect != (repo.BalanceEffect{}) || store.effect != (repo.BalanceEffect{}) || store.written.BalanceApplied == nil || *store.written.BalanceApplied {
+		t.Fatalf("historical edit affected balance: %v %+v", err, store)
+	}
+	if store.written.ImportKey == nil || *store.written.ImportKey != key || store.written.ImportFingerprint == nil || *store.written.ImportFingerprint != fingerprint {
+		t.Fatal("edit lost the original import identity or contents fingerprint")
+	}
+	err = writer.DeleteStatement(context.Background(), 1, 2, 5)
+	if err != nil || store.effect != (repo.BalanceEffect{}) || !store.deleted {
+		t.Fatalf("historical delete affected balance: %v %+v", err, store)
+	}
+}
+
 type projectWriterStore struct {
 	*writerStore
 	project, consumer int64
