@@ -97,3 +97,5 @@ docker compose exec api /usr/local/bin/dev-entrypoint.sh go test ./...
 - [项目修改约定](AGENTS.md)
 - [数据库模型](docs/database-models.md)
 - [接口文档](docs/swagger/swagger.yaml)
+
+HTTP 启动组装集中在 `internal/bootstrap/app.go`：`assembleDependencies` 按业务创建仓储、服务和 Controller，`setupRoutes` 将具名 `router.Handlers` 与鉴权中间件交给路由注册，`New` 将固定开销任务接入调度器。对象组装与路由注册不查询数据库；资源连接及关闭由应用生命周期管理。

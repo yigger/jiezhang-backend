@@ -132,17 +132,34 @@ func New(cfg config.Config) (*App, error) {
 	engine.Static("/images", filepath.Join(publicDir, "images"))
 	engine.Static("/private", filepath.Join(publicDir, "private"))
 	engine.Static("/public", publicDir)
-	recurring := setupRoutes(engine, cfg, mysqlDB, cache)
-	fixedCosts, err := fixedcostscheduler.New(recurring.RunDueFixedCosts)
+	dependencies := assembleDependencies(cfg, mysqlDB, cache)
+	setupRoutes(engine, dependencies.authenticate, dependencies.handlers)
+	fixedCosts, err := fixedcostscheduler.New(dependencies.runDueFixedCosts)
 	if err != nil {
 		_ = cleanup()
 		return nil, err
 	}
-	return &App{fixedCosts: fixedCosts, server: &http.Server{Addr: cfg.ListenAddr(), Handler: engine, ReadHeaderTimeout: 10 * time.Second}, closeResources: cleanup}, nil
+	return &App{
+		fixedCosts: fixedCosts,
+		server: &http.Server{
+			Addr:              cfg.ListenAddr(),
+			Handler:           engine,
+			ReadHeaderTimeout: 10 * time.Second,
+		},
+		closeResources: cleanup,
+	}, nil
 }
 
-// setupRoutes assembles dependencies explicitly and registers routes without querying the database.
-func setupRoutes(engine *gin.Engine, cfg config.Config, db *gorm.DB, cache sessioncache.Cache) *insights.StorageService {
+// applicationDependencies contains the entry points consumed by HTTP and scheduled jobs.
+type applicationDependencies struct {
+	handlers         router.Handlers
+	authenticate     gin.HandlerFunc
+	runDueFixedCosts func(context.Context, time.Time) (int, error)
+}
+
+// assembleDependencies constructs the application without querying the database.
+func assembleDependencies(cfg config.Config, db *gorm.DB, cache sessioncache.Cache) applicationDependencies {
+	// Shared repositories and capabilities.
 	users := mysql.NewUserRepository(db)
 	books := mysql.NewAccountBookRepository(db)
 	statements := mysql.NewStatementRepository(db)
@@ -152,73 +169,113 @@ func setupRoutes(engine *gin.Engine, cfg config.Config, db *gorm.DB, cache sessi
 	urls := urlbuilder.NewPublicURLBuilderWithSigner(cfg.PublicBaseURL, signer)
 	shareTokens := sharetoken.Codec{Secret: cfg.SessionTokenSecret}
 	mapper := statement.NewRowMapper(urls)
-	reader := statement.NewReader(statements, categories, assets, mapper)
-	writer := statement.NewWriter(statements, statements, statements, categories, mapper)
-	shares := sharing.New(reader, users, cache, shareTokens, mapper)
-	exports := exportservice.New(statements, cache, excel.Renderer{})
+
+	// Authentication, uploads and user profile.
 	wechatClient := wechat.NewHTTPClient(cfg.MiniProgramAppID, cfg.MiniProgramSecret)
 	sessionTokens := sessiontoken.Generator{Secret: cfg.SessionTokenSecret}
 	login := auth.NewCheckOpenIDService(users, wechatClient, sessionTokens, cache)
 	uploadRepo := mysql.NewUploadRepository(db)
 	uploads := upload.NewUploadService(users, uploadRepo, statements, urls, filestore.Local{Root: "public"})
-	// Build each service explicitly so its dependencies are visible at the call site.
+	authHandler := controller.NewAuthHandler(login, uploads)
 	userService := user.NewUserService(users, cache)
+	userHandler := controller.NewUserHandler(userService)
 	sessions := auth.NewSessionService(users, cache, cfg.MiniProgramAppID, cfg.Env == "dev")
 	access := accountbook.NewAccessService(books)
 	authenticate := middleware.AuthenticateAPIV1(cfg.Env == "dev", sessions, access)
 
+	// Statements, sharing and exports.
+	reader := statement.NewReader(statements, categories, assets, mapper)
+	// The statement repository implements transactions, attachment writes and detail reads.
+	writer := statement.NewWriter(statements, statements, statements, categories, mapper)
+	shares := sharing.New(reader, users, cache, shareTokens, mapper)
+	exports := exportservice.New(statements, cache, excel.Renderer{})
+	statementsHandler := controller.NewStatementsHandler(reader, writer, shares, exports)
+
+	// Home and finance.
 	homeRepo := mysql.NewHomeRepository(db)
 	homeService := home.NewHomeService(homeRepo, reader, cfg.PublicBaseURL)
+	homeHandler := controller.NewHomeHandler(homeService)
 	financeRepo := mysql.NewFinanceRepository(db)
 	financeService := finance.NewFinanceService(financeRepo, statements, mapper)
+	financesHandler := controller.NewFinancesHandler(financeService)
+
+	// Categories, assets and account books.
 	categoryService := category.NewCategoryService(categories, urls)
+	categoriesHandler := controller.NewCategoriesHandler(categoryService)
 	assetService := asset.NewAssetService(assets, urls)
+	assetsHandler := controller.NewAssetsHandler(assetService)
 	bookService := accountbook.NewAccountBookService(books)
+	accountBookHandler := controller.NewAccountBookHandler(bookService)
+
+	// Budgets, messages, payees, friends and settings.
 	budgetRepo := mysql.NewBudgetRepository(db)
 	budgetService := budget.NewBudgetService(budgetRepo, urls)
+	budgetsHandler := controller.NewBudgetsHandler(budgetService)
 	messageRepo := mysql.NewMessageRepository(db)
 	messageService := message.NewMessageService(messageRepo)
+	messagesHandler := controller.NewMessagesHandler(messageService, cfg.PublicBaseURL)
 	payeeRepo := mysql.NewPayeeRepository(db)
 	payeeService := payee.NewPayeeService(payeeRepo)
+	payeesHandler := controller.NewPayeesHandler(payeeService)
 	friendRepo := mysql.NewFriendRepository(db)
 	friendService := friend.NewFriendService(friendRepo, urls, shareTokens)
+	friendsHandler := controller.NewFriendsHandler(friendService)
 	settingRepo := mysql.NewSettingRepository(db)
 	settingService := setting.NewSettingService(settingRepo)
+	settingsHandler := controller.NewSettingsHandler(settingService)
+
+	// Reports and statistics.
 	superStatementRepo := mysql.NewSuperStatementRepository(db)
 	superStatementService := reporting.NewSuperStatementService(superStatementRepo, mapper)
+	superStatementsHandler := controller.NewSuperStatementsHandler(superStatementService)
 	superChartRepo := mysql.NewSuperChartRepository(db)
 	superChartService := reporting.NewSuperChartService(superChartRepo)
+	superChartHandler := controller.NewSuperChartHandler(superChartService)
 	statisticsRepo := mysql.NewStatisticsRepository(db)
 	statisticsService := statistics.NewStatisticsService(statisticsRepo, statements, mapper)
-
-	authHandler := controller.NewAuthHandler(login, uploads)
-	userHandler := controller.NewUserHandler(userService)
-	homeHandler := controller.NewHomeHandler(homeService)
-	statementsHandler := controller.NewStatementsHandler(reader, writer, shares, exports)
-	financesHandler := controller.NewFinancesHandler(financeService)
-	categoriesHandler := controller.NewCategoriesHandler(categoryService)
-	assetsHandler := controller.NewAssetsHandler(assetService)
-	accountBookHandler := controller.NewAccountBookHandler(bookService)
-	budgetsHandler := controller.NewBudgetsHandler(budgetService)
-	messagesHandler := controller.NewMessagesHandler(messageService, cfg.PublicBaseURL)
-	payeesHandler := controller.NewPayeesHandler(payeeService)
-	friendsHandler := controller.NewFriendsHandler(friendService)
-	settingsHandler := controller.NewSettingsHandler(settingService)
-	superStatementsHandler := controller.NewSuperStatementsHandler(superStatementService)
-	superChartHandler := controller.NewSuperChartHandler(superChartService)
 	statisticsHandler := controller.NewStatisticsHandler(statisticsService)
 
-	router.RegisterCalendarJournal(engine, authenticate, controller.NewCalendarJournalHandler(calendarjournal.New(mysql.NewCalendarJournalRepository(db))))
-	insightsService := insights.New(mysql.NewInsightsRepository(db))
-	insightsStorage := insights.NewStorage(mysql.NewInsightsStorage(db), mysql.NewInsightsRepository(db))
-	router.RegisterInsights(engine, authenticate, controller.NewInsightsHandler(insightsService, insightsStorage))
-	router.Register(engine,
-		authHandler, userHandler, authenticate, homeHandler, statementsHandler,
-		financesHandler, categoriesHandler, assetsHandler, accountBookHandler,
-		budgetsHandler, messagesHandler, payeesHandler, friendsHandler,
-		settingsHandler, superStatementsHandler, superChartHandler, statisticsHandler,
-	)
-	return insightsStorage
+	// Calendar journal.
+	journalRepo := mysql.NewCalendarJournalRepository(db)
+	journalService := calendarjournal.New(journalRepo)
+	journalHandler := controller.NewCalendarJournalHandler(journalService)
+
+	// Insights and the recurring-cost job share the same storage service.
+	insightsRepo := mysql.NewInsightsRepository(db)
+	insightsStorageRepo := mysql.NewInsightsStorage(db)
+	insightsService := insights.New(insightsRepo)
+	insightsStorage := insights.NewStorage(insightsStorageRepo, insightsRepo)
+	insightsHandler := controller.NewInsightsHandler(insightsService, insightsStorage)
+
+	return applicationDependencies{
+		authenticate:     authenticate,
+		runDueFixedCosts: insightsStorage.RunDueFixedCosts,
+		handlers: router.Handlers{
+			Auth:            authHandler,
+			Users:           userHandler,
+			Home:            homeHandler,
+			Statements:      statementsHandler,
+			Finances:        financesHandler,
+			Categories:      categoriesHandler,
+			Assets:          assetsHandler,
+			AccountBooks:    accountBookHandler,
+			Budgets:         budgetsHandler,
+			Messages:        messagesHandler,
+			Payees:          payeesHandler,
+			Friends:         friendsHandler,
+			Settings:        settingsHandler,
+			SuperStatements: superStatementsHandler,
+			SuperChart:      superChartHandler,
+			Statistics:      statisticsHandler,
+			CalendarJournal: journalHandler,
+			Insights:        insightsHandler,
+		},
+	}
+}
+
+// setupRoutes only binds the assembled HTTP handlers and authentication middleware.
+func setupRoutes(engine *gin.Engine, authenticate gin.HandlerFunc, handlers router.Handlers) {
+	router.Register(engine, authenticate, handlers)
 }
 
 func (a *App) Close() error {

@@ -7,32 +7,12 @@ import (
 	"testing"
 
 	"github.com/gin-gonic/gin"
-	"github.com/yigger/jiezhang-backend/internal/controller"
 )
 
 func TestRouteContract(t *testing.T) {
 	gin.SetMode(gin.TestMode)
 	engine := gin.New()
-	Register(engine,
-		controller.AuthHandler{},
-		controller.UserHandler{},
-		func(c *gin.Context) { c.Next() },
-		controller.HomeHandler{},
-		controller.StatementsHandler{},
-		controller.FinancesHandler{},
-		controller.CategoriesHandler{},
-		controller.AssetsHandler{},
-		controller.AccountBookHandler{},
-		controller.BudgetsHandler{},
-		controller.MessagesHandler{},
-		controller.PayeesHandler{},
-		controller.FriendsHandler{},
-		controller.SettingsHandler{},
-		controller.SuperStatementsHandler{},
-		controller.SuperChartHandler{},
-		controller.StatisticsHandler{})
-	RegisterInsights(engine, func(c *gin.Context) { c.Next() }, controller.InsightsHandler{})
-	RegisterCalendarJournal(engine, func(c *gin.Context) { c.Next() }, controller.CalendarJournalHandler{})
+	Register(engine, func(c *gin.Context) { c.Next() }, Handlers{})
 	var routes []string
 	for _, r := range engine.Routes() {
 		if strings.HasPrefix(r.Path, "/api/") {
